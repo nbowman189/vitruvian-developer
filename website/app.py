@@ -74,6 +74,15 @@ def set_security_headers(response):
         response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
     return response
 
+# Health check endpoint for Docker
+@app.route('/api/health')
+def health_check():
+    """Health check endpoint for monitoring and Docker healthchecks"""
+    return jsonify({
+        'status': 'healthy',
+        'service': 'vitruvian-developer'
+    })
+
 @app.route('/')
 def index():
     return render_template('index.html')
