@@ -22,7 +22,9 @@ class BaseConfig:
     # SECRET_KEY must be set via environment variable
     SECRET_KEY = os.environ.get('SECRET_KEY')
     if not SECRET_KEY:
-        raise ValueError("SECRET_KEY environment variable must be set. Generate with: python scripts/generate_secret_key.py")
+        import warnings
+        warnings.warn("SECRET_KEY environment variable not set. Application may not start correctly.")
+        SECRET_KEY = 'dev-key-insecure-change-me'  # Fallback for import, will fail validation in create_app()
 
     # Session Configuration
     SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to session cookie
@@ -36,14 +38,16 @@ class BaseConfig:
 
     # ==================== Database Settings ====================
     # PostgreSQL database configuration
-    POSTGRES_USER = os.environ.get('POSTGRES_USER', 'portfolio_user')
+    POSTGRES_USER = os.environ.get('POSTGRES_USER', 'postgres')
     POSTGRES_PASSWORD = os.environ.get('POSTGRES_PASSWORD')
-    POSTGRES_DB = os.environ.get('POSTGRES_DB', 'portfolio_db')
-    POSTGRES_HOST = os.environ.get('POSTGRES_HOST', 'localhost')
+    POSTGRES_DB = os.environ.get('POSTGRES_DB', 'primary_assistant')
+    POSTGRES_HOST = os.environ.get('POSTGRES_HOST', 'db')  # 'db' for Docker, 'localhost' for local
     POSTGRES_PORT = os.environ.get('POSTGRES_PORT', '5432')
 
     if not POSTGRES_PASSWORD:
-        raise ValueError("POSTGRES_PASSWORD environment variable must be set")
+        import warnings
+        warnings.warn("POSTGRES_PASSWORD environment variable not set. Database connection will fail.")
+        POSTGRES_PASSWORD = 'dev-password-insecure'  # Fallback for import
 
     SQLALCHEMY_DATABASE_URI = (
         f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@"
@@ -82,6 +86,20 @@ class BaseConfig:
     # File paths
     BLOG_DIR = os.path.join(BASE_DIR, 'blog')
     PROJECT_DIRS = ['AI_Development', 'Health_and_Fitness']
+
+    # Project metadata
+    PROJECT_METADATA = {
+        'Health_and_Fitness': {
+            'display_name': 'Health & Fitness',
+            'disciplines': ['fitness', 'meta'],
+            'description': 'Complete health and fitness management system with meal plans, workout tracking, and progress monitoring.'
+        },
+        'AI_Development': {
+            'display_name': 'AI Development',
+            'disciplines': ['ai', 'code'],
+            'description': 'Exploration and development of artificial intelligence concepts, applications, and research.'
+        }
+    }
 
     # Health & Fitness file ordering
     HEALTH_FITNESS_FILE_ORDER = [
