@@ -1,8 +1,47 @@
-# Nginx Container Unhealthy - Troubleshooting
+# Docker Troubleshooting Guide
+
+This guide helps diagnose and fix common Docker deployment issues.
+
+## 🚀 Quick Fix (Recommended)
+
+If you're experiencing any Docker issues, the fastest solution is to use the automated fix script:
+
+```bash
+cd /opt/vitruvian-developer  # or your install directory
+./scripts/docker-fix-and-start.sh
+```
+
+This script automatically:
+- Cleans up old containers (fixes ContainerConfig bug)
+- Validates environment configuration
+- Rebuilds images without cache
+- Starts containers and waits for health checks
+- Verifies deployment success
+
+## 🔍 Automated Diagnostics
+
+To diagnose issues without fixing them:
+
+```bash
+./scripts/docker-diagnostics.sh
+```
+
+This will check:
+- Container status
+- Environment configuration
+- Health endpoints
+- Network connectivity
+- Recent errors
+
+---
+
+## 📋 Manual Troubleshooting
+
+### Common Error: Nginx Container Unhealthy
 
 **Error**: `ERROR: for nginx Container "3bc24a844d90" is unhealthy.`
 
-## 🔍 Diagnosis Steps
+### Diagnosis Steps
 
 Run these commands on your server to diagnose the issue:
 
