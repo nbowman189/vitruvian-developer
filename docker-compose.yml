@@ -57,7 +57,7 @@ services:
       - backend
       - frontend
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -76,7 +76,8 @@ services:
     volumes:
       - static_files:/app/static:ro
       - user_uploads:/app/uploads:ro
-      - ./docker/nginx/ssl:/etc/nginx/ssl:ro
+      # SSL directory - create with: mkdir -p docker/nginx/ssl
+      # - ./docker/nginx/ssl:/etc/nginx/ssl:ro
       - nginx_logs:/var/log/nginx
     depends_on:
       web:
@@ -84,7 +85,7 @@ services:
     networks:
       - frontend
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      test: ["CMD", "curl", "-f", "http://localhost/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3

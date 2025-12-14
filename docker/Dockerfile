@@ -33,6 +33,7 @@ ENV PYTHONUNBUFFERED=1 \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     postgresql-client \
     libpq5 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
@@ -47,9 +48,9 @@ COPY --from=builder --chown=appuser:appuser /root/.local /home/appuser/.local
 # Copy application code
 COPY --chown=appuser:appuser website/ .
 
-# Copy project documentation directories
-COPY --chown=appuser:appuser AI_Development/docs/ ../AI_Development/docs/
-COPY --chown=appuser:appuser Health_and_Fitness/docs/ ../Health_and_Fitness/docs/
+# Copy project directories to root level (app.py expects them at parent directory)
+COPY --chown=appuser:appuser AI_Development/ /AI_Development/
+COPY --chown=appuser:appuser Health_and_Fitness/ /Health_and_Fitness/
 
 # Create directories for logs and uploads
 RUN mkdir -p logs uploads static/uploads && \
@@ -60,7 +61,7 @@ USER appuser
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()" || exit 1
+    CMD curl -f http://localhost:8000/api/health || exit 1
 
 # Expose port
 EXPOSE 8000
