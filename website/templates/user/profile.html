@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - Vitruvian Tracker{% endblock %}
+
+{% block content %}
+<!-- Dashboard Navbar -->
+{% include 'components/navbar_auth.html' %}
+
+<!-- Flash Messages -->
+<div class="container mt-3">
+    {% include 'components/flash_messages.html' %}
+</div>
+
+<!-- Profile Content -->
+<div class="page-container">
+    <div class="page-header">
+        <div class="page-title-section">
+            <h1 class="page-title">
+                <i class="bi bi-person-circle"></i> Profile
+            </h1>
+            <p class="page-subtitle">Manage your personal information</p>
+        </div>
+    </div>
+
+    <!-- Profile Card -->
+    <div class="profile-container">
+        <div class="profile-header">
+            <div class="profile-avatar">
+                <div class="avatar-circle">
+                    <span class="avatar-initials" id="avatar-initials">--</span>
+                </div>
+                <button class="btn btn-sm btn-outline-primary avatar-upload-btn" data-bs-toggle="modal" data-bs-target="#uploadAvatarModal">
+                    <i class="bi bi-camera"></i> Change Photo
+                </button>
+            </div>
+            <div class="profile-info">
+                <h2 class="profile-name" id="profile-name">--</h2>
+                <p class="profile-email" id="profile-email">--</p>
+                <span class="badge bg-primary" id="profile-role">--</span>
+            </div>
+        </div>
+
+        <!-- Profile Details Form -->
+        <form id="profile-form" class="profile-form">
+            <div class="form-section">
+                <h3 class="form-section-title">Personal Information</h3>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="profile-name-input" class="form-label">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="profile-name-input" name="name"
+                               placeholder="John Doe" required>
+                        <div class="invalid-feedback">Please enter your name.</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="profile-email-input" class="form-label">Email <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="profile-email-input" name="email"
+                               placeholder="john@example.com" required>
+                        <div class="invalid-feedback">Please enter a valid email.</div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="profile-birthdate" class="form-label">Birth Date</label>
+                        <input type="date" class="form-control" id="profile-birthdate" name="birthdate">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="profile-height" class="form-label">Height (inches)</label>
+                        <input type="number" class="form-control" id="profile-height" name="height"
+                               placeholder="70" min="0" max="96">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3 class="form-section-title">Nutrition Targets</h3>
+
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label for="target-calories-input" class="form-label">Daily Calories</label>
+                        <input type="number" class="form-control" id="target-calories-input" name="target_calories"
+                               placeholder="2000" min="0">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="target-protein-input" class="form-label">Protein (g)</label>
+                        <input type="number" step="0.1" class="form-control" id="target-protein-input" name="target_protein"
+                               placeholder="150" min="0">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="target-carbs-input" class="form-label">Carbs (g)</label>
+                        <input type="number" step="0.1" class="form-control" id="target-carbs-input" name="target_carbs"
+                               placeholder="200" min="0">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="target-fat-input" class="form-label">Fat (g)</label>
+                        <input type="number" step="0.1" class="form-control" id="target-fat-input" name="target_fat"
+                               placeholder="65" min="0">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i> Save Changes
+                </button>
+            </div>
+        </form>
+
+        <!-- Change Password Section -->
+        <div class="password-section">
+            <h3 class="section-title">Change Password</h3>
+            <form id="password-form">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="current-password" class="form-label">Current Password</label>
+                        <input type="password" class="form-control" id="current-password" name="current_password" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="new-password" class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="new-password" name="new_password" required
+                               minlength="8">
+                        <div class="form-text">At least 8 characters</div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="confirm-password" class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" id="confirm-password" name="confirm_password" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-outline-primary">
+                    <i class="bi bi-key"></i> Update Password
+                </button>
+            </form>
+        </div>
+
+        <!-- Account Stats -->
+        <div class="account-stats-section">
+            <h3 class="section-title">Account Statistics</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-label">Member Since</div>
+                    <div class="stat-value" id="member-since">--</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Total Workouts</div>
+                    <div class="stat-value" id="total-workouts">--</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Total Metrics</div>
+                    <div class="stat-value" id="total-metrics">--</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Total Sessions</div>
+                    <div class="stat-value" id="total-sessions">--</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Avatar Modal -->
+<div class="modal fade" id="uploadAvatarModal" tabindex="-1" aria-labelledby="uploadAvatarModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadAvatarModalLabel">Change Profile Photo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="avatar-upload-form" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="avatar-file" class="form-label">Choose Photo</label>
+                        <input type="file" class="form-control" id="avatar-file" name="avatar"
+                               accept="image/*" required>
+                        <div class="form-text">Max file size: 5MB. Formats: JPG, PNG</div>
+                    </div>
+                    <div id="avatar-preview" style="display: none;">
+                        <label class="form-label">Preview</label>
+                        <div class="preview-container text-center">
+                            <img id="preview-avatar" alt="Avatar preview" class="img-fluid rounded-circle"
+                                 style="max-width: 200px; max-height: 200px;">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-upload"></i> Upload
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/common.js"></script>
+<script src="/static/js/profile.js"></script>
+{% endblock %}

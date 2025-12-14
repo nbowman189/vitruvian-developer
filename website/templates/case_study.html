@@ -1,0 +1,874 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project_title }} - Case Study | Nathan Bowman{% endblock %}
+
+{% block content %}
+<div class="case-study-wrapper">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="Breadcrumb" class="breadcrumb-nav breadcrumb-container">
+        <div class="container">
+            <ol class="breadcrumb-list">
+                <li><a href="/">Home</a></li>
+                <li><a href="/#portfolio">Projects</a></li>
+                <li aria-current="page">{{ project_title }}</li>
+            </ol>
+        </div>
+    </nav>
+
+    <!-- Case Study Hero Header -->
+    <header class="case-study-hero">
+        <div class="case-study-hero-content">
+            <div class="case-study-hero-badge" id="discipline-badge">
+                <!-- Discipline badge will be inserted here -->
+            </div>
+            <h1 class="case-study-title" id="cs-title">{{ project_title }}</h1>
+            <p class="case-study-tagline" id="cs-tagline">Loading case study details...</p>
+            <div class="case-study-meta-quick" id="quick-meta">
+                <!-- Quick metadata will go here -->
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Case Study Content -->
+    <main class="case-study-main">
+        <div class="container">
+            <div class="case-study-content-wrapper">
+                <!-- Sidebar: Key Information -->
+                <aside class="case-study-sidebar">
+                    <div class="sidebar-section">
+                        <h3>Quick Facts</h3>
+                        <dl class="facts-list">
+                            <dt>My Role</dt>
+                            <dd id="role-info">Loading...</dd>
+                            <dt>Timeline</dt>
+                            <dd id="timeline-info">Loading...</dd>
+                            <dt>Status</dt>
+                            <dd id="status-info">Loading...</dd>
+                        </dl>
+                    </div>
+
+                    <div class="sidebar-section">
+                        <h3>Technologies</h3>
+                        <div id="tech-tags" class="tech-tags-list">
+                            <!-- Technology tags will be inserted here -->
+                        </div>
+                    </div>
+
+                    <div class="sidebar-section">
+                        <h3>Disciplines</h3>
+                        <div id="discipline-tags" class="discipline-tags-list">
+                            <!-- Discipline badges will be inserted here -->
+                        </div>
+                    </div>
+
+                    <div class="sidebar-cta">
+                        <a href="#links" class="cta-box">
+                            <span class="cta-label">View Links</span>
+                            <span class="cta-arrow">→</span>
+                        </a>
+                    </div>
+                </aside>
+
+                <!-- Main Article Content -->
+                <article class="case-study-article">
+                    <!-- Problem Statement Section -->
+                    <section id="problem" class="cs-section">
+                        <h2>The Problem</h2>
+                        <p id="problem-statement" class="section-intro">Loading problem statement...</p>
+                    </section>
+
+                    <hr class="cs-divider">
+
+                    <!-- Solution Approach Section -->
+                    <section id="solution" class="cs-section">
+                        <h2>The Solution</h2>
+                        <p id="solution-statement" class="section-intro">Loading solution approach...</p>
+                    </section>
+
+                    <hr class="cs-divider">
+
+                    <!-- Technologies & Tools Section -->
+                    <section id="technologies" class="cs-section">
+                        <h2>Technologies & Tools</h2>
+                        <div id="tech-details" class="tech-details">
+                            <p>Loading technologies...</p>
+                        </div>
+                    </section>
+
+                    <hr class="cs-divider">
+
+                    <!-- My Contributions Section -->
+                    <section id="contributions" class="cs-section">
+                        <h2>My Role & Contributions</h2>
+                        <div id="contributions-content" class="contributions-list">
+                            <p>Loading contributions...</p>
+                        </div>
+                    </section>
+
+                    <hr class="cs-divider">
+
+                    <!-- Challenges Section -->
+                    <section id="challenges" class="cs-section">
+                        <h2>Challenges & Solutions</h2>
+                        <div id="challenges-content" class="challenges-list">
+                            <p>Loading challenges...</p>
+                        </div>
+                    </section>
+
+                    <hr class="cs-divider">
+
+                    <!-- Results & Impact Section -->
+                    <section id="results" class="cs-section">
+                        <h2>Results & Impact</h2>
+                        <div id="results-content" class="results-showcase">
+                            <p>Loading results...</p>
+                        </div>
+                    </section>
+
+                    <hr class="cs-divider">
+
+                    <!-- Key Learnings Section -->
+                    <section id="learnings" class="cs-section">
+                        <h2>Key Learnings</h2>
+                        <div id="learnings-content" class="learnings-list">
+                            <p>Loading learnings...</p>
+                        </div>
+                    </section>
+
+                    <!-- Links & Resources Section -->
+                    <section id="links" class="cs-section links-section">
+                        <h2>Links & Resources</h2>
+                        <div class="links-grid" id="links-content">
+                            <p>Loading links...</p>
+                        </div>
+                    </section>
+                </article>
+            </div>
+        </div>
+    </main>
+
+    <!-- Navigation & Related Content -->
+    <section class="case-study-footer">
+        <div class="container">
+            <div class="footer-navigation">
+                <a href="/#portfolio" class="btn btn-secondary">← Back to Projects</a>
+                <a href="/" class="btn btn-secondary">← Home</a>
+            </div>
+        </div>
+    </section>
+</div>
+
+<style>
+    /* Case Study Page Styles */
+    .case-study-wrapper {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    /* Hero Section */
+    .case-study-hero {
+        background: var(--gradient-primary);
+        color: white;
+        padding: 4rem 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .case-study-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1), transparent);
+        border-radius: 50%;
+    }
+
+    .case-study-hero-content {
+        position: relative;
+        z-index: 2;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .case-study-hero-badge {
+        display: inline-block;
+        margin-bottom: 1rem;
+    }
+
+    .case-study-title {
+        font-size: 2.8rem;
+        font-weight: 800;
+        margin-bottom: 0.75rem;
+        letter-spacing: -1px;
+    }
+
+    .case-study-tagline {
+        font-size: 1.1rem;
+        opacity: 0.95;
+        margin-bottom: 1.5rem;
+        line-height: 1.5;
+    }
+
+    .case-study-meta-quick {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        flex-wrap: wrap;
+        font-size: 0.95rem;
+        opacity: 0.9;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Main Content Layout */
+    .case-study-main {
+        flex: 1;
+        padding: 3rem 0;
+        background-color: #fff;
+    }
+
+    .case-study-content-wrapper {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 3rem;
+    }
+
+    /* Sidebar Styling */
+    .case-study-sidebar {
+        position: sticky;
+        top: 2rem;
+        height: fit-content;
+    }
+
+    .sidebar-section {
+        background-color: var(--light-bg);
+        border-left: 4px solid var(--accent-color);
+        padding: 1.5rem;
+        border-radius: 6px;
+        margin-bottom: 1.5rem;
+    }
+
+    .sidebar-section h3 {
+        font-size: 0.95rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+
+    .facts-list {
+        font-size: 0.95rem;
+    }
+
+    .facts-list dt {
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-top: 0.75rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .facts-list dt:first-child {
+        margin-top: 0;
+    }
+
+    .facts-list dd {
+        color: var(--text-dark);
+        margin: 0 0 1rem 0;
+        padding-left: 0;
+    }
+
+    .tech-tags-list,
+    .discipline-tags-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .tech-tag {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        background-color: rgba(26, 35, 126, 0.1);
+        color: var(--primary-color);
+        border: 1px solid rgba(26, 35, 126, 0.2);
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .sidebar-cta {
+        margin-top: 2rem;
+    }
+
+    .cta-box {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        background: var(--gradient-accent);
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .cta-box:hover {
+        transform: translateX(4px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .cta-arrow {
+        font-size: 1.2rem;
+    }
+
+    /* Article Content */
+    .case-study-article {
+        padding: 0;
+    }
+
+    .cs-section {
+        margin-bottom: 3rem;
+        padding-bottom: 2rem;
+    }
+
+    .cs-section h2 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 1.25rem;
+        position: relative;
+        padding-bottom: 0.75rem;
+    }
+
+    .cs-section h2::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 60px;
+        height: 4px;
+        background: var(--accent-color);
+        border-radius: 2px;
+    }
+
+    .cs-section h3 {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .section-intro {
+        font-size: 1.05rem;
+        line-height: 1.7;
+        color: var(--text-dark);
+        margin-bottom: 1.25rem;
+    }
+
+    .cs-divider {
+        border: none;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+        margin: 2.5rem 0;
+    }
+
+    /* Content Lists */
+    .tech-details,
+    .contributions-list,
+    .challenges-list,
+    .results-showcase,
+    .learnings-list {
+        font-size: 1rem;
+        line-height: 1.7;
+    }
+
+    .tech-details ul,
+    .contributions-list ul,
+    .challenges-list ul,
+    .learnings-list ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .tech-details li,
+    .contributions-list li,
+    .challenges-list li,
+    .learnings-list li {
+        margin-bottom: 0.75rem;
+        color: var(--text-dark);
+    }
+
+    .tech-category {
+        margin-bottom: 1.5rem;
+    }
+
+    .tech-category h4 {
+        color: var(--accent-color);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .challenge-item {
+        background-color: var(--light-bg);
+        padding: 1rem;
+        border-radius: 6px;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--accent-color);
+    }
+
+    .challenge-item strong {
+        color: var(--primary-color);
+    }
+
+    .result-metric {
+        display: inline-block;
+        background: var(--light-bg);
+        padding: 1rem 1.5rem;
+        border-radius: 6px;
+        margin: 0.5rem 0.5rem 0.5rem 0;
+        border-left: 4px solid var(--accent-color);
+    }
+
+    .result-value {
+        display: block;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--accent-color);
+    }
+
+    .result-label {
+        display: block;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+    }
+
+    /* Links Section */
+    .links-section {
+        background-color: var(--light-bg);
+        padding: 2rem;
+        border-radius: 8px;
+        border: 2px solid var(--border-color);
+    }
+
+    .links-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .link-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .link-card:hover {
+        box-shadow: var(--shadow-md);
+        border-color: var(--accent-color);
+        transform: translateY(-2px);
+    }
+
+    .link-card h4 {
+        color: var(--primary-color);
+        margin: 0;
+        font-size: 1rem;
+    }
+
+    .link-card p {
+        font-size: 0.9rem;
+        color: var(--text-light);
+        margin: 0;
+    }
+
+    .link-card a {
+        color: var(--accent-color);
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: auto;
+    }
+
+    .link-card a:hover {
+        text-decoration: underline;
+    }
+
+    .link-icon {
+        display: inline-block;
+        font-size: 1.2rem;
+    }
+
+    /* Footer Navigation */
+    .case-study-footer {
+        background-color: var(--light-bg);
+        padding: 2.5rem 0;
+        border-top: 2px solid var(--border-color);
+        margin-top: 3rem;
+    }
+
+    .footer-navigation {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    /* Button Styling */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        font-size: 0.95rem;
+        white-space: nowrap;
+    }
+
+    .btn-primary {
+        background: var(--gradient-primary);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+        background-color: white;
+        color: var(--primary-color);
+        border: 2px solid var(--primary-color);
+    }
+
+    .btn-secondary:hover {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+        .case-study-content-wrapper {
+            grid-template-columns: 1fr;
+        }
+
+        .case-study-sidebar {
+            position: static;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-section {
+            margin-bottom: 0;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .case-study-hero {
+            padding: 2.5rem 1.5rem;
+        }
+
+        .case-study-title {
+            font-size: 2rem;
+        }
+
+        .case-study-tagline {
+            font-size: 1rem;
+        }
+
+        .case-study-meta-quick {
+            gap: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .case-study-sidebar {
+            grid-template-columns: 1fr;
+        }
+
+        .cs-section h2 {
+            font-size: 1.5rem;
+        }
+
+        .cs-section h3 {
+            font-size: 1.1rem;
+        }
+
+        .links-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .case-study-main {
+            padding: 2rem 0;
+        }
+
+        .container {
+            padding: 0 1rem;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .case-study-hero {
+            padding: 2rem 1rem;
+        }
+
+        .case-study-title {
+            font-size: 1.75rem;
+        }
+
+        .case-study-tagline {
+            font-size: 0.95rem;
+        }
+
+        .cs-section {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+        }
+
+        .sidebar-section {
+            padding: 1rem;
+        }
+
+        .section-intro {
+            font-size: 1rem;
+        }
+
+        .case-study-article {
+            font-size: 0.95rem;
+        }
+
+        .footer-navigation {
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+    }
+
+    /* Print Styles */
+    @media print {
+        .breadcrumb-nav,
+        .case-study-sidebar,
+        .case-study-footer,
+        .cta-box {
+            display: none;
+        }
+
+        .case-study-content-wrapper {
+            grid-template-columns: 1fr;
+        }
+
+        .case-study-main {
+            padding: 0;
+        }
+
+        .case-study-article {
+            break-inside: avoid;
+        }
+
+        .cs-section {
+            page-break-inside: avoid;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Extract project name from URL
+    const projectName = window.location.pathname.split('/project-case-study/')[1];
+
+    if (!projectName) {
+        displayError('Project not found');
+        return;
+    }
+
+    // Fetch the project case study data
+    fetch(`/api/project/${projectName}/summary`)
+        .then(response => {
+            if (!response.ok) throw new Error('Project not found');
+            return response.json();
+        })
+        .then(data => {
+            populateCaseStudy(data);
+        })
+        .catch(error => {
+            displayError(`Error loading case study: ${error.message}`);
+        });
+
+    function displayError(message) {
+        const contentDiv = document.querySelector('.case-study-article');
+        if (contentDiv) {
+            contentDiv.innerHTML = `<p class="error-message" style="color: var(--danger-color); font-weight: 600;">${message}</p>`;
+        }
+    }
+
+    function populateCaseStudy(data) {
+        const metadata = data.metadata || {};
+
+        // Update title and metadata
+        document.title = `${metadata.title || projectName} - Case Study | Nathan Bowman`;
+        document.getElementById('cs-title').textContent = metadata.title || projectName;
+        document.getElementById('cs-tagline').textContent = metadata.tagline || metadata.description || '';
+
+        // Set role and timeline
+        document.getElementById('role-info').textContent = metadata.role || 'Not specified';
+        document.getElementById('timeline-info').textContent = metadata.timeline || 'Not specified';
+        document.getElementById('status-info').textContent = metadata.status || 'Completed';
+
+        // Add discipline badge to hero
+        if (metadata.disciplines && metadata.disciplines.length > 0) {
+            const badges = metadata.disciplines.map(d => {
+                const badgeClass = `badge-${d}`;
+                const displayName = {
+                    'code': 'Code & Engineering',
+                    'ai': 'AI & Learning',
+                    'fitness': 'Fitness & Discipline',
+                    'meta': 'Philosophy & Meta'
+                }[d] || d;
+                return `<span class="badge ${badgeClass}">${displayName}</span>`;
+            }).join('');
+            document.getElementById('discipline-badge').innerHTML = badges;
+            document.getElementById('discipline-tags').innerHTML = badges;
+        }
+
+        // Add quick metadata to hero
+        if (metadata.quick_facts) {
+            const quickMeta = metadata.quick_facts.map(fact =>
+                `<div class="meta-item">${fact}</div>`
+            ).join('');
+            document.getElementById('quick-meta').innerHTML = quickMeta;
+        }
+
+        // Add technology tags
+        if (metadata.technologies && metadata.technologies.length > 0) {
+            const techHTML = metadata.technologies.map(tech =>
+                `<span class="tech-tag">${tech}</span>`
+            ).join('');
+            document.getElementById('tech-tags').innerHTML = techHTML;
+
+            // Add detailed technologies section
+            let techDetails = '<div class="tech-category"><h4>Stack:</h4><ul>';
+            metadata.technologies.forEach(tech => {
+                techDetails += `<li>${tech}</li>`;
+            });
+            techDetails += '</ul></div>';
+            document.getElementById('tech-details').innerHTML = techDetails;
+        }
+
+        // Add content sections
+        if (metadata.problem) {
+            document.getElementById('problem-statement').innerHTML = metadata.problem;
+        }
+
+        if (metadata.solution) {
+            document.getElementById('solution-statement').innerHTML = metadata.solution;
+        }
+
+        if (metadata.contributions) {
+            let contribHTML = '<ul>';
+            if (typeof metadata.contributions === 'string') {
+                contribHTML += `<li>${metadata.contributions}</li>`;
+            } else if (Array.isArray(metadata.contributions)) {
+                metadata.contributions.forEach(contrib => {
+                    contribHTML += `<li>${contrib}</li>`;
+                });
+            }
+            contribHTML += '</ul>';
+            document.getElementById('contributions-content').innerHTML = contribHTML;
+        }
+
+        if (metadata.challenges) {
+            let challengeHTML = '';
+            if (Array.isArray(metadata.challenges)) {
+                metadata.challenges.forEach(challenge => {
+                    if (typeof challenge === 'string') {
+                        challengeHTML += `<div class="challenge-item">${challenge}</div>`;
+                    } else if (challenge.challenge && challenge.solution) {
+                        challengeHTML += `<div class="challenge-item"><strong>${challenge.challenge}</strong><br>${challenge.solution}</div>`;
+                    }
+                });
+            }
+            document.getElementById('challenges-content').innerHTML = challengeHTML || '<p>No challenges recorded</p>';
+        }
+
+        if (metadata.results) {
+            let resultHTML = '';
+            if (Array.isArray(metadata.results)) {
+                metadata.results.forEach(result => {
+                    if (typeof result === 'string') {
+                        resultHTML += `<p>${result}</p>`;
+                    } else if (result.metric && result.value) {
+                        resultHTML += `<span class="result-metric"><span class="result-value">${result.value}</span><span class="result-label">${result.metric}</span></span>`;
+                    }
+                });
+            }
+            document.getElementById('results-content').innerHTML = resultHTML || '<p>Results pending</p>';
+        }
+
+        if (metadata.learnings) {
+            let learningsHTML = '<ul>';
+            if (Array.isArray(metadata.learnings)) {
+                metadata.learnings.forEach(learning => {
+                    learningsHTML += `<li>${learning}</li>`;
+                });
+            }
+            learningsHTML += '</ul>';
+            document.getElementById('learnings-content').innerHTML = learningsHTML;
+        }
+
+        // Add links section
+        if (metadata.links) {
+            let linksHTML = '';
+            Object.entries(metadata.links).forEach(([key, value]) => {
+                const icon = getIconForLink(key);
+                linksHTML += `
+                    <div class="link-card">
+                        <h4>${key}</h4>
+                        <p>${value.description || ''}</p>
+                        <a href="${value.url}" target="_blank" rel="noopener noreferrer">
+                            <span class="link-icon">${icon}</span>
+                            View ${key}
+                        </a>
+                    </div>
+                `;
+            });
+            document.getElementById('links-content').innerHTML = linksHTML;
+        }
+    }
+
+    function getIconForLink(type) {
+        const icons = {
+            'GitHub': '🔗',
+            'Live Demo': '🚀',
+            'Documentation': '📚',
+            'Article': '📝',
+            'Repository': '📦',
+            'Website': '🌐'
+        };
+        return icons[type] || '→';
+    }
+});
+</script>
+{% endblock %}

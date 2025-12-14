@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit Session' if session else 'New Session' }} - Vitruvian Tracker{% endblock %}
+
+{% block content %}
+<!-- Dashboard Navbar -->
+{% include 'components/navbar_auth.html' %}
+
+<!-- Flash Messages -->
+<div class="container mt-3">
+    {% include 'components/flash_messages.html' %}
+</div>
+
+<!-- Session Form Content -->
+<div class="page-container">
+    <div class="page-header">
+        <div class="page-title-section">
+            <a href="/coaching/sessions" class="back-link">
+                <i class="bi bi-arrow-left"></i> Back to Sessions
+            </a>
+            <h1 class="page-title">
+                <i class="bi bi-chat-left-text"></i> {{ 'Edit Session' if session else 'New Session' }}
+            </h1>
+        </div>
+    </div>
+
+    <!-- Session Form -->
+    <form id="session-form" class="form-container">
+        <input type="hidden" id="session-id" name="session_id" value="{{ session.id if session else '' }}">
+
+        <div class="form-section">
+            <h3 class="form-section-title">Session Details</h3>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="session-date" class="form-label">Date <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" id="session-date" name="date"
+                           value="{{ session.date.strftime('%Y-%m-%d') if session else '' }}" required>
+                    <div class="invalid-feedback">Please select a date.</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="session-coach" class="form-label">Coach</label>
+                    <input type="text" class="form-control" id="session-coach" name="coach"
+                           placeholder="Coach name" value="{{ session.coach if session else '' }}">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="session-notes" class="form-label">Session Notes <span class="text-danger">*</span></label>
+                <textarea class="form-control" id="session-notes" name="notes" rows="10"
+                          placeholder="What was discussed? Key takeaways?" required>{{ session.notes if session else '' }}</textarea>
+                <div class="invalid-feedback">Please enter session notes.</div>
+            </div>
+            <div class="mb-3">
+                <label for="session-highlights" class="form-label">Highlights</label>
+                <input type="text" class="form-control" id="session-highlights" name="highlights"
+                       placeholder="Key highlights from the session" value="{{ session.highlights if session else '' }}">
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <a href="/coaching/sessions" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-circle"></i> Save Session
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/common.js"></script>
+<script src="/static/js/session-form.js"></script>
+{% endblock %}

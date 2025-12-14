@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project_title }} - Case Study{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb Navigation -->
+<nav aria-label="Breadcrumb" class="breadcrumb-nav breadcrumb-container">
+    <div class="container">
+        <ol class="breadcrumb-list">
+            <li><a href="/">Home</a></li>
+            <li aria-current="page">{{ project_title }}</li>
+        </ol>
+    </div>
+</nav>
+
+<div class="case-study-container">
+    <!-- Case Study Header -->
+    <header class="case-study-header">
+        <div class="container">
+            <div class="case-study-header-content">
+                <div class="case-study-header-left">
+                    <h1 id="case-study-title" class="case-study-title">Loading...</h1>
+                    <p id="case-study-description" class="case-study-description">Loading...</p>
+                    <div id="case-study-metadata" class="case-study-metadata">
+                        <div class="metadata-section">
+                            <h3>Role</h3>
+                            <p id="metadata-role">Loading...</p>
+                        </div>
+                        <div class="metadata-section">
+                            <h3>Technologies</h3>
+                            <div id="metadata-technologies" class="technologies-list">
+                                <!-- Technologies will be loaded here -->
+                            </div>
+                        </div>
+                        <div class="metadata-section">
+                            <h3>Disciplines</h3>
+                            <div id="metadata-disciplines" class="disciplines-list">
+                                <!-- Disciplines will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="case-study-header-actions">
+                    <a href="/#/project" class="btn btn-secondary">← Back to Projects</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Case Study Content -->
+    <main class="case-study-body">
+        <div class="container">
+            <div id="case-study-content" class="case-study-markdown">
+                Loading case study...
+            </div>
+        </div>
+    </main>
+
+    <!-- Navigation -->
+    <div class="case-study-footer">
+        <div class="container">
+            <a href="/#/project" class="btn btn-secondary">← Back to Projects</a>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Extract project name from URL
+    const projectName = window.location.pathname.split('/project-case-study/')[1];
+
+    if (!projectName) {
+        document.getElementById('case-study-content').innerHTML = '<p class="error">Project not found</p>';
+        return;
+    }
+
+    // Fetch the project case study
+    fetch(`/api/project/${projectName}/summary`)
+        .then(response => {
+            if (!response.ok) throw new Error('Project not found');
+            return response.json();
+        })
+        .then(data => {
+            displayCaseStudy(data);
+        })
+        .catch(error => {
+            document.getElementById('case-study-content').innerHTML = `<p class="error">Error loading case study: ${error.message}</p>`;
+        });
+
+    function displayCaseStudy(data) {
+        const metadata = data.metadata;
+
+        // Set title
+        document.title = `${metadata.title} - Case Study`;
+        document.getElementById('case-study-title').textContent = metadata.title;
+
+        // Set description
+        if (metadata.description) {
+            document.getElementById('case-study-description').textContent = metadata.description;
+        }
+
+        // Set role
+        if (metadata.role) {
+            document.getElementById('metadata-role').textContent = metadata.role;
+        }
+
+        // Set technologies
+        const technologiesList = document.getElementById('metadata-technologies');
+        if (metadata.technologies && Array.isArray(metadata.technologies)) {
+            technologiesList.innerHTML = metadata.technologies
+                .map(tech => `<span class="tech-tag">${tech}</span>`)
+                .join('');
+        }
+
+        // Set disciplines
+        const disciplinesList = document.getElementById('metadata-disciplines');
+        if (metadata.disciplines && Array.isArray(metadata.disciplines)) {
+            disciplinesList.innerHTML = metadata.disciplines
+                .map(discipline => {
+                    const names = {
+                        'code': 'Code & Engineering',
+                        'ai': 'AI & Learning',
+                        'fitness': 'Fitness & Discipline',
+                        'meta': 'Philosophy & Meta'
+                    };
+                    const displayName = names[discipline] || discipline;
+                    return `<span class="discipline-badge badge-${discipline}">${displayName}</span>`;
+                })
+                .join('');
+        }
+
+        // Set content
+        const contentDiv = document.getElementById('case-study-content');
+        contentDiv.innerHTML = data.html;
+
+        // Add smooth scrolling for anchor links
+        addSmoothScrolling();
+    }
+
+    function addSmoothScrolling() {
+        const links = document.querySelectorAll('a[href^="#"]');
+        links.forEach(link => {
+            link.addEventListener('click', function(e) {
+                const href = this.getAttribute('href');
+                if (href === '#') return;
+
+                const target = document.querySelector(href);
+                if (target) {
+                    e.preventDefault();
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

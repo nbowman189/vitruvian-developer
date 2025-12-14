@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Coaching Sessions - Vitruvian Tracker{% endblock %}
+
+{% block content %}
+<!-- Dashboard Navbar -->
+{% include 'components/navbar_auth.html' %}
+
+<!-- Flash Messages -->
+<div class="container mt-3">
+    {% include 'components/flash_messages.html' %}
+</div>
+
+<!-- Coaching Sessions Content -->
+<div class="page-container">
+    <div class="page-header">
+        <div class="page-title-section">
+            <h1 class="page-title">
+                <i class="bi bi-chat-left-text"></i> Coaching Sessions
+            </h1>
+            <p class="page-subtitle">Track your coaching sessions and action items</p>
+        </div>
+        <div class="page-actions">
+            <a href="/coaching/goals" class="btn btn-outline-primary">
+                <i class="bi bi-bullseye"></i> Goals
+            </a>
+            <a href="/coaching/progress-photos" class="btn btn-outline-primary">
+                <i class="bi bi-images"></i> Progress Photos
+            </a>
+            <a href="/coaching/session/new" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> New Session
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-section">
+        <div class="filters-row">
+            <div class="filter-group">
+                <label for="date-range-filter" class="filter-label">Date Range</label>
+                <select id="date-range-filter" class="form-select filter-select">
+                    <option value="30" selected>Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                    <option value="180">Last 6 Months</option>
+                    <option value="all">All Time</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <input type="text" id="search-sessions" class="form-control filter-input"
+                       placeholder="Search sessions...">
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="coaching-summary">
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-label">Total Sessions</div>
+                <div class="summary-value" id="total-sessions">--</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Next Session</div>
+                <div class="summary-value-text" id="next-session">--</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Active Goals</div>
+                <div class="summary-value" id="active-goals">--</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Action Items</div>
+                <div class="summary-value" id="pending-actions">--</div>
+                <div class="summary-detail">pending</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sessions Timeline -->
+    <div class="sessions-timeline" id="sessions-timeline">
+        <!-- Loading State -->
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div id="pagination-container"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/common.js"></script>
+<script src="/static/js/coaching.js"></script>
+{% endblock %}

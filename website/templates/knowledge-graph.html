@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Knowledge Graph - Content Connections{% endblock %}
+
+{% block content %}
+<div class="knowledge-graph-container">
+    <!-- Header -->
+    <section class="kg-header">
+        <div class="container">
+            <h1>Knowledge Graph</h1>
+            <p class="kg-subtitle">Explore how my articles, projects, and disciplines interconnect</p>
+            <div class="kg-controls">
+                <div class="control-group">
+                    <label for="filter-discipline">Filter by Discipline:</label>
+                    <select id="filter-discipline">
+                        <option value="">All Disciplines</option>
+                        <option value="code">Code & Engineering</option>
+                        <option value="ai">AI & Learning</option>
+                        <option value="fitness">Fitness & Discipline</option>
+                        <option value="meta">Philosophy & Meta</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="filter-type">Filter by Type:</label>
+                    <select id="filter-type">
+                        <option value="">All Content</option>
+                        <option value="post">Blog Posts Only</option>
+                        <option value="project">Projects Only</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Canvas for Graph -->
+    <section class="kg-canvas-container">
+        <div class="kg-canvas-wrapper">
+            <canvas id="knowledge-graph-canvas"></canvas>
+            <div class="kg-loading" id="kg-loading">
+                <p>Loading knowledge graph...</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Legend -->
+    <section class="kg-legend">
+        <div class="container">
+            <h2>Legend</h2>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <span class="legend-node node-post"></span>
+                    <span>Blog Post</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-node node-project"></span>
+                    <span>Project</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-edge edge-strong"></span>
+                    <span>Direct Connection</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-edge edge-medium"></span>
+                    <span>Shared Discipline</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-edge edge-weak"></span>
+                    <span>Shared Tag</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Statistics -->
+    <section class="kg-stats">
+        <div class="container">
+            <h2>Content Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="stat-nodes">0</div>
+                    <div class="stat-label">Total Content Items</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="stat-edges">0</div>
+                    <div class="stat-label">Connections</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="stat-posts">0</div>
+                    <div class="stat-label">Articles</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="stat-projects">0</div>
+                    <div class="stat-label">Projects</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Discipline Overview -->
+    <section class="discipline-overview">
+        <div class="container">
+            <h2>Discipline Overview</h2>
+            <div class="discipline-grid" id="discipline-grid">
+                <!-- Discipline cards will be loaded here -->
+            </div>
+        </div>
+    </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+<script src="/static/js/knowledge-graph.js"></script>
+{% endblock %}

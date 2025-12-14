@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit Workout' if workout else 'New Workout' }} - Vitruvian Tracker{% endblock %}
+
+{% block content %}
+<!-- Dashboard Navbar -->
+{% include 'components/navbar_auth.html' %}
+
+<!-- Flash Messages -->
+<div class="container mt-3">
+    {% include 'components/flash_messages.html' %}
+</div>
+
+<!-- Workout Form Content -->
+<div class="page-container">
+    <div class="page-header">
+        <div class="page-title-section">
+            <a href="/workout/workouts" class="back-link">
+                <i class="bi bi-arrow-left"></i> Back to Workouts
+            </a>
+            <h1 class="page-title">
+                <i class="bi bi-fire"></i> {{ 'Edit Workout' if workout else 'New Workout' }}
+            </h1>
+        </div>
+    </div>
+
+    <!-- Workout Form -->
+    <form id="workout-form" class="workout-form-container">
+        <input type="hidden" id="workout-id" name="workout_id" value="{{ workout.id if workout else '' }}">
+
+        <!-- Workout Metadata -->
+        <div class="form-section">
+            <h3 class="form-section-title">Workout Details</h3>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="workout-date" class="form-label">Date <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" id="workout-date" name="date"
+                           value="{{ workout.date.strftime('%Y-%m-%d') if workout else '' }}" required>
+                    <div class="invalid-feedback">Please select a date.</div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="workout-duration" class="form-label">Duration (mins)</label>
+                    <input type="number" class="form-control" id="workout-duration" name="duration"
+                           placeholder="60" min="1" max="500" value="{{ workout.duration if workout else '' }}">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="workout-type" class="form-label">Workout Type</label>
+                    <select class="form-select" id="workout-type" name="workout_type">
+                        <option value="strength" {% if workout and workout.workout_type == 'strength' %}selected{% endif %}>Strength</option>
+                        <option value="cardio" {% if workout and workout.workout_type == 'cardio' %}selected{% endif %}>Cardio</option>
+                        <option value="flexibility" {% if workout and workout.workout_type == 'flexibility' %}selected{% endif %}>Flexibility</option>
+                        <option value="mixed" {% if workout and workout.workout_type == 'mixed' %}selected{% endif %}>Mixed</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="workout-notes" class="form-label">Notes</label>
+                <textarea class="form-control" id="workout-notes" name="notes" rows="3"
+                          placeholder="How did you feel? Any observations?">{{ workout.notes if workout else '' }}</textarea>
+            </div>
+        </div>
+
+        <!-- Exercise Entries -->
+        <div class="form-section">
+            <div class="form-section-header">
+                <h3 class="form-section-title">Exercises</h3>
+                <button type="button" class="btn btn-outline-primary btn-sm" id="add-exercise-btn">
+                    <i class="bi bi-plus-circle"></i> Add Exercise
+                </button>
+            </div>
+
+            <div id="exercises-container">
+                <!-- Exercise entries will be added here dynamically -->
+                {% if workout and workout.exercise_logs %}
+                    <!-- Pre-populate with existing exercises if editing -->
+                {% else %}
+                    <!-- Start with one empty exercise row -->
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <a href="/workout/workouts" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-circle"></i> Save Workout
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Exercise Row Template (hidden, cloned by JavaScript) -->
+<template id="exercise-row-template">
+    <div class="exercise-entry">
+        <div class="exercise-entry-header">
+            <div class="exercise-number">#<span class="entry-index">1</span></div>
+            <button type="button" class="btn-remove-exercise" aria-label="Remove exercise">
+                <i class="bi bi-x-circle"></i>
+            </button>
+        </div>
+        <div class="exercise-entry-body">
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <label class="form-label">Exercise Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control exercise-name-input" name="exercises[][name]"
+                           placeholder="Type to search exercises..." required autocomplete="off">
+                    <div class="exercise-autocomplete" style="display: none;"></div>
+                    <div class="invalid-feedback">Please enter an exercise name.</div>
+                </div>
+            </div>
+            <div class="sets-container">
+                <div class="sets-header">
+                    <label class="form-label">Sets</label>
+                    <button type="button" class="btn btn-sm btn-outline-secondary add-set-btn">
+                        <i class="bi bi-plus"></i> Add Set
+                    </button>
+                </div>
+                <div class="sets-list">
+                    <!-- Sets will be added here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- Set Row Template -->
+<template id="set-row-template">
+    <div class="set-row">
+        <div class="set-number">Set <span class="set-index">1</span></div>
+        <div class="set-inputs">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text">Reps</span>
+                <input type="number" class="form-control" name="reps" placeholder="10" min="1" required>
+            </div>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text">Weight</span>
+                <input type="number" class="form-control" name="weight" placeholder="135" min="0" step="0.5">
+                <span class="input-group-text">lbs</span>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger btn-remove-set">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    </div>
+</template>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/common.js"></script>
+<script src="/static/js/workout-form.js"></script>
+{% endblock %}

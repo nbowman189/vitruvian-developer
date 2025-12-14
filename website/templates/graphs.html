@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}My Journey - Health Graphs{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb Navigation -->
+<nav aria-label="Breadcrumb" class="breadcrumb-nav breadcrumb-container">
+    <div class="container">
+        <ol class="breadcrumb-list">
+            <li><a href="/">Home</a></li>
+            <li id="breadcrumb-project-graphs">Projects</li>
+            <li aria-current="page">Graphs</li>
+        </ol>
+    </div>
+</nav>
+
+<!-- Project Navigation Bar -->
+<nav id="project-nav-bar" class="project-nav-bar">
+    <div class="container-fluid">
+        <div class="project-nav-content">
+            <div class="project-nav-left">
+                <span id="project-title-nav" class="project-title">Health And Fitness</span>
+            </div>
+            <ul id="file-list" class="project-nav-links">
+                <!-- File links will be loaded here by JavaScript -->
+            </ul>
+            <div class="project-breadcrumb">
+                <a href="#" id="back-to-project" class="breadcrumb-link">Back to Project</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="mt-4">
+    <h1 id="page-title" style="font-size: 2rem; font-weight: 700; color: #4a5568; margin-bottom: 2rem;">Health & Fitness Progress</h1>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    Weight Change Over Time
+                </div>
+                <div class="card-body">
+                    <canvas id="weightChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    Body Fat % Change Over Time
+                </div>
+                <div class="card-body">
+                    <canvas id="bodyfatChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="/static/js/graphs.js"></script>
+{% endblock %}

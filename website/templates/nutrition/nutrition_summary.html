@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Nutrition Summary - Vitruvian Tracker{% endblock %}
+
+{% block content %}
+<!-- Dashboard Navbar -->
+{% include 'components/navbar_auth.html' %}
+
+<!-- Flash Messages -->
+<div class="container mt-3">
+    {% include 'components/flash_messages.html' %}
+</div>
+
+<!-- Nutrition Summary Content -->
+<div class="page-container">
+    <div class="page-header">
+        <div class="page-title-section">
+            <a href="/nutrition/meals" class="back-link">
+                <i class="bi bi-arrow-left"></i> Back to Meals
+            </a>
+            <h1 class="page-title">
+                <i class="bi bi-bar-chart"></i> Nutrition Summary
+            </h1>
+            <p class="page-subtitle">Analyze your nutrition trends and adherence</p>
+        </div>
+    </div>
+
+    <!-- Time Range Selector -->
+    <div class="filters-section">
+        <div class="filters-row">
+            <div class="filter-group">
+                <label for="time-range" class="filter-label">Time Range</label>
+                <select id="time-range" class="form-select filter-select">
+                    <option value="7" selected>Last 7 Days</option>
+                    <option value="14">Last 14 Days</option>
+                    <option value="30">Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="summary-stats-section">
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-label">Avg Daily Calories</div>
+                <div class="summary-value" id="avg-calories">--</div>
+                <div class="summary-detail" id="calories-vs-target">--</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Avg Daily Protein</div>
+                <div class="summary-value" id="avg-protein">--</div>
+                <div class="summary-unit">g</div>
+                <div class="summary-detail" id="protein-vs-target">--</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Avg Daily Carbs</div>
+                <div class="summary-value" id="avg-carbs">--</div>
+                <div class="summary-unit">g</div>
+                <div class="summary-detail" id="carbs-vs-target">--</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Avg Daily Fat</div>
+                <div class="summary-value" id="avg-fat">--</div>
+                <div class="summary-unit">g</div>
+                <div class="summary-detail" id="fat-vs-target">--</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Adherence Rate</div>
+                <div class="summary-value" id="adherence-rate">--</div>
+                <div class="summary-unit">%</div>
+                <div class="summary-detail">within ±10% of targets</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Logging Streak</div>
+                <div class="summary-value" id="logging-streak">--</div>
+                <div class="summary-unit">days</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="nutrition-charts-section">
+        <!-- Calorie Trend -->
+        <div class="chart-card chart-card-full">
+            <div class="chart-header">
+                <h3 class="chart-title">Calorie Trend</h3>
+                <div class="chart-legend">
+                    <span class="legend-item">
+                        <span class="legend-color" style="background-color: #1a237e;"></span>
+                        Daily Calories
+                    </span>
+                    <span class="legend-item">
+                        <span class="legend-color" style="background-color: #ef4444;"></span>
+                        Target
+                    </span>
+                </div>
+            </div>
+            <div class="chart-body">
+                <canvas id="caloriesTrendChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Macros Distribution -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3 class="chart-title">Average Macro Distribution</h3>
+            </div>
+            <div class="chart-body">
+                <canvas id="macrosDistributionChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Macros Over Time -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3 class="chart-title">Macros Over Time</h3>
+            </div>
+            <div class="chart-body">
+                <canvas id="macrosTrendChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Adherence Calendar -->
+        <div class="chart-card chart-card-full">
+            <div class="chart-header">
+                <h3 class="chart-title">Adherence Calendar</h3>
+                <div class="chart-legend">
+                    <span class="legend-item">
+                        <span class="legend-color adherence-excellent"></span>
+                        Excellent
+                    </span>
+                    <span class="legend-item">
+                        <span class="legend-color adherence-good"></span>
+                        Good
+                    </span>
+                    <span class="legend-item">
+                        <span class="legend-color adherence-fair"></span>
+                        Fair
+                    </span>
+                    <span class="legend-item">
+                        <span class="legend-color adherence-poor"></span>
+                        Poor
+                    </span>
+                    <span class="legend-item">
+                        <span class="legend-color adherence-none"></span>
+                        No Data
+                    </span>
+                </div>
+            </div>
+            <div class="chart-body">
+                <div id="adherence-calendar" class="adherence-calendar">
+                    <!-- Calendar will be generated via JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Insights Section -->
+    <div class="insights-section">
+        <h3 class="section-subtitle">Insights</h3>
+        <div class="insights-grid" id="insights-grid">
+            <!-- Insights will be generated via JavaScript -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="/static/js/common.js"></script>
+<script src="/static/js/nutrition-summary.js"></script>
+{% endblock %}

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Character Encoding & Viewport -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- SEO & Page Information -->
+    <title>{% block title %}Nathan Bowman - The Vitruvian Developer{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}Nathan Bowman - The Vitruvian Developer. Building smart solutions at the intersection of software engineering, artificial intelligence, and physical discipline. Code • AI • Discipline{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}software engineer, AI developer, full-stack developer, machine learning, Python, JavaScript, Nathan Bowman, portfolio{% endblock %}">
+    <meta name="author" content="Nathan Bowman">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{% block canonical %}https://nathanbowman.com{% endblock %}">
+
+    <!-- Open Graph Tags (Social Media) -->
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}Nathan Bowman - The Vitruvian Developer{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Building smart solutions at the intersection of software engineering, artificial intelligence, and physical discipline.{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}https://nathanbowman.com/static/images/branding/vitruvian-social.jpg{% endblock %}">
+    <meta property="og:url" content="{% block og_url %}https://nathanbowman.com{% endblock %}">
+    <meta property="og:site_name" content="Nathan Bowman - The Vitruvian Developer">
+
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="{% block twitter_card %}summary_large_image{% endblock %}">
+    <meta name="twitter:title" content="{% block twitter_title %}Nathan Bowman - The Vitruvian Developer{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Code • AI • Discipline - Building smart solutions at the intersection of software engineering, artificial intelligence, and physical discipline.{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}https://nathanbowman.com/static/images/branding/vitruvian-social.jpg{% endblock %}">
+
+    <!-- Favicon & App Icons -->
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/static/images/profile/me.jpg">
+
+    <!-- Stylesheets -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="stylesheet" href="/static/css/print.css" media="print">
+</head>
+<body>
+    <div class="container-fluid">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3 class="footer-title">Get in Touch</h3>
+                    <div class="footer-links">
+                        <a href="mailto:nbowman189@gmail.com" class="footer-link">📧 Email</a>
+                        <a href="https://www.linkedin.com/in/nathan-bowman-b27484103/" target="_blank" class="footer-link">🔗 LinkedIn</a>
+                        <a href="https://github.com/nbowman189" target="_blank" class="footer-link">💻 GitHub</a>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h3 class="footer-title">Explore</h3>
+                    <div class="footer-links">
+                        <a href="/#portfolio" class="footer-link">Work</a>
+                        <a href="#blog" class="footer-link">Articles</a>
+                        <a href="/#all-projects" class="footer-link">Projects</a>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h3 class="footer-title">About</h3>
+                    <p class="footer-description">The Vitruvian Developer: Engineering excellence across code, AI, and discipline.</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Nathan Bowman. Built with discipline and intention.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/script.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

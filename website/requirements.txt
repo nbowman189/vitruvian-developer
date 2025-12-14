@@ -1,0 +1,44 @@
+# Flask Web Framework
+Flask>=3.0.0,<4.0.0
+Werkzeug>=3.0.0,<4.0.0
+
+# Database
+Flask-SQLAlchemy>=3.1.0,<4.0.0
+Flask-Migrate>=4.0.0,<5.0.0
+psycopg2-binary>=2.9.9,<3.0.0
+alembic>=1.13.0,<2.0.0
+
+# Authentication & Security
+Flask-Login>=0.6.3,<1.0.0
+Flask-WTF>=1.2.0,<2.0.0
+bcrypt>=4.1.0,<5.0.0
+email-validator>=2.1.0,<3.0.0
+Flask-Limiter>=3.5.0,<4.0.0
+
+# CSRF Protection (included with Flask-WTF but explicit for clarity)
+WTForms>=3.1.0,<4.0.0
+
+# Environment & Configuration
+python-dotenv>=1.0.0,<2.0.0
+
+# Web Server (Production)
+gunicorn>=21.2.0,<22.0.0
+
+# Markdown Rendering
+markdown>=3.5.0,<4.0.0
+markdown2>=2.4.0,<3.0.0
+
+# Utilities
+python-dateutil>=2.8.2,<3.0.0
+
+# CORS Support (if needed for API access)
+Flask-CORS>=4.0.0,<5.0.0
+
+# Caching (optional but recommended)
+Flask-Caching>=2.1.0,<3.0.0
+
+# JSON Web Tokens (for future API authentication)
+PyJWT>=2.8.0,<3.0.0
+
+# Security Headers
+flask-talisman>=1.1.0,<2.0.0

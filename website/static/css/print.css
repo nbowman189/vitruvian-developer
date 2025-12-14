@@ -1,0 +1,57 @@
+@media print {
+    body {
+        padding-top: 0;
+        background-color: white;
+    }
+
+    /* Hide navigation elements */
+    .navbar,
+    #left-nav,
+    #print-button,
+    .project-nav-bar,
+    .footer,
+    nav,
+    .sidebar,
+    header {
+        display: none !important;
+    }
+
+    /* Reset container styles */
+    .col-md-9 {
+        width: 100%;
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    #content {
+        border: none;
+        padding: 0;
+        box-shadow: none;
+    }
+
+    /* Ensure images print properly */
+    img {
+        max-width: 100%;
+        height: auto;
+        page-break-inside: avoid;
+    }
+
+    /* Prevent breaking content */
+    h1, h2, h3, h4 {
+        page-break-after: avoid;
+    }
+
+    p, li {
+        page-break-inside: avoid;
+    }
+
+    /* Print-friendly link styling */
+    a[href]:after {
+        content: "";
+    }
+
+    /* Margin adjustments for printing */
+    .section {
+        page-break-inside: avoid;
+    }
+}

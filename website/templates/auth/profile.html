@@ -1,0 +1,497 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - Nathan Bowman{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-card">
+        <div class="profile-header">
+            <h1>Your Profile</h1>
+            <p class="profile-subtitle">Manage your account information</p>
+        </div>
+
+        <!-- User Info Section -->
+        <div class="user-info-section">
+            <div class="user-avatar">
+                {% if current_user.profile_photo_url %}
+                    <img src="{{ current_user.profile_photo_url }}" alt="Profile Photo">
+                {% else %}
+                    <div class="avatar-placeholder">{{ current_user.username[0]|upper }}</div>
+                {% endif %}
+            </div>
+            <div class="user-details">
+                <h2>{{ current_user.username }}</h2>
+                <p class="user-role">
+                    <span class="role-badge role-{{ current_user.role.value }}">
+                        {{ current_user.role.value|upper }}
+                    </span>
+                </p>
+                <p class="user-meta">Member since {{ current_user.created_at.strftime('%B %Y') }}</p>
+            </div>
+        </div>
+
+        <!-- Update Profile Form -->
+        <form method="POST" action="{{ url_for('auth.profile') }}" class="profile-form">
+            {{ form.hidden_tag() }}
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <h3>Profile Information</h3>
+
+            <!-- Full Name Field -->
+            <div class="form-group">
+                {{ form.full_name.label(class="form-label") }}
+                {{ form.full_name(class="form-control" + (" is-invalid" if form.full_name.errors else "")) }}
+                {% if form.full_name.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.full_name.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Email Field -->
+            <div class="form-group">
+                {{ form.email.label(class="form-label") }}
+                {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                {% if form.email.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.email.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Bio Field -->
+            <div class="form-group">
+                {{ form.bio.label(class="form-label") }}
+                {{ form.bio(class="form-control" + (" is-invalid" if form.bio.errors else "")) }}
+                {% if form.bio.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.bio.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <h3>Change Password</h3>
+            <p class="section-description">Leave blank to keep your current password</p>
+
+            <!-- Current Password Field -->
+            <div class="form-group">
+                {{ form.current_password.label(class="form-label") }}
+                {{ form.current_password(class="form-control" + (" is-invalid" if form.current_password.errors else "")) }}
+                {% if form.current_password.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.current_password.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- New Password Field -->
+            <div class="form-group">
+                {{ form.new_password.label(class="form-label") }}
+                {{ form.new_password(class="form-control" + (" is-invalid" if form.new_password.errors else "")) }}
+                {% if form.new_password.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.new_password.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Confirm New Password Field -->
+            <div class="form-group">
+                {{ form.new_password_confirm.label(class="form-label") }}
+                {{ form.new_password_confirm(class="form-control" + (" is-invalid" if form.new_password_confirm.errors else "")) }}
+                {% if form.new_password_confirm.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.new_password_confirm.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Submit Button -->
+            <div class="form-actions">
+                {{ form.submit(class="btn btn-primary profile-submit") }}
+                <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+
+        <!-- Danger Zone -->
+        <div class="danger-zone">
+            <h3>Danger Zone</h3>
+            <p>Permanently delete your account and all associated data.</p>
+            <button type="button" class="btn btn-danger" onclick="confirmDeleteAccount()">Delete Account</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Account Confirmation Modal -->
+<div id="deleteModal" class="modal">
+    <div class="modal-content">
+        <h2>Delete Account</h2>
+        <p>This action cannot be undone. All your data will be permanently deleted.</p>
+        <form method="POST" action="{{ url_for('auth.delete_account') }}" id="deleteForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="confirm-password" class="form-label">Enter your password to confirm:</label>
+                <input type="password" id="confirm-password" name="password" class="form-control" required>
+            </div>
+            <div class="modal-actions">
+                <button type="submit" class="btn btn-danger">Delete My Account</button>
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.profile-container {
+    min-height: calc(100vh - 200px);
+    padding: 3rem 1rem;
+    background: linear-gradient(135deg, rgba(26, 35, 126, 0.05) 0%, rgba(106, 90, 205, 0.05) 100%);
+}
+
+.profile-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    padding: 3rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.profile-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.profile-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.profile-subtitle {
+    color: var(--text-light);
+    font-size: 1rem;
+    margin-bottom: 0;
+}
+
+/* User Info Section */
+.user-info-section {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, rgba(26, 35, 126, 0.05) 0%, rgba(106, 90, 205, 0.05) 100%);
+    border-radius: 8px;
+}
+
+.user-avatar {
+    flex-shrink: 0;
+}
+
+.user-avatar img,
+.avatar-placeholder {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.avatar-placeholder {
+    background: var(--gradient-primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.user-details h2 {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-dark);
+}
+
+.user-role {
+    margin-bottom: 0.5rem;
+}
+
+.role-badge {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.role-user {
+    background-color: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #2563eb;
+}
+
+.role-admin {
+    background-color: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #dc2626;
+}
+
+.role-coach {
+    background-color: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #059669;
+}
+
+.user-meta {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin-bottom: 0;
+}
+
+/* Profile Form */
+.profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.profile-form h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--primary-color);
+    font-size: 1.25rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.section-description {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.form-control {
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.1);
+}
+
+.form-control.is-invalid {
+    border-color: var(--danger-color);
+}
+
+.invalid-feedback {
+    color: var(--danger-color);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.btn {
+    padding: 0.875rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-primary {
+    background: var(--gradient-primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-secondary {
+    background: #6b7280;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #4b5563;
+}
+
+.btn-danger {
+    background: var(--danger-color);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+/* Danger Zone */
+.danger-zone {
+    margin-top: 3rem;
+    padding: 2rem;
+    border: 2px solid var(--danger-color);
+    border-radius: 8px;
+    background-color: rgba(239, 68, 68, 0.05);
+}
+
+.danger-zone h3 {
+    color: var(--danger-color);
+    margin-bottom: 0.5rem;
+}
+
+.danger-zone p {
+    color: var(--text-dark);
+    margin-bottom: 1rem;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: var(--shadow-xl);
+}
+
+.modal-content h2 {
+    color: var(--danger-color);
+    margin-bottom: 1rem;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.flash-messages {
+    margin-bottom: 1.5rem;
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.alert-success {
+    background-color: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #059669;
+}
+
+.alert-danger {
+    background-color: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #dc2626;
+}
+
+.alert-info {
+    background-color: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #2563eb;
+}
+
+@media (max-width: 768px) {
+    .user-info-section {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .profile-card {
+        padding: 2rem 1.5rem;
+    }
+}
+</style>
+
+<script>
+function confirmDeleteAccount() {
+    document.getElementById('deleteModal').style.display = 'flex';
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').style.display = 'none';
+}
+
+// Close modal on outside click
+window.onclick = function(event) {
+    const modal = document.getElementById('deleteModal');
+    if (event.target === modal) {
+        closeDeleteModal();
+    }
+}
+</script>
+{% endblock %}

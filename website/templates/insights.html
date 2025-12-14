@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Reading Insights - Your Engagement Dashboard{% endblock %}
+
+{% block content %}
+<div class="insights-container">
+    <!-- Page Header -->
+    <section class="insights-header-section">
+        <div class="container">
+            <h1>Your Reading Insights</h1>
+            <p class="page-subtitle">Discover your reading patterns and engagement metrics</p>
+            <div class="insights-actions">
+                <button id="refresh-insights" class="btn-secondary" title="Refresh data">🔄 Refresh</button>
+                <button id="export-insights" class="btn-secondary" title="Export your data">📥 Export Data</button>
+                <button id="clear-insights" class="btn-secondary" title="Clear all data">🗑️ Clear Data</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Dashboard -->
+    <section class="insights-main">
+        <div class="container">
+            <div id="insights-dashboard">
+                <!-- Dashboard content will be loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Stats Sidebar -->
+    <section class="insights-sidebar">
+        <div class="container insights-sidebar-flex">
+            <div class="sidebar-section">
+                <h3>Quick Stats</h3>
+                <div id="compact-metrics">
+                    <!-- Compact metrics will be loaded here -->
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Your Achievements</h3>
+                <div id="achievements-widget">
+                    <!-- Achievements will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Data Management -->
+    <section class="insights-footer">
+        <div class="container">
+            <div class="data-management">
+                <h3>Data Management</h3>
+                <p>Your analytics data is stored locally in your browser. You can export it, refresh it, or clear it at any time.</p>
+                <div class="data-info">
+                    <div class="info-item">
+                        <span class="info-label">Storage Status</span>
+                        <span class="info-value" id="storage-status">Calculating...</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Last Updated</span>
+                        <span class="info-value" id="last-updated">Now</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script src="/static/js/analytics-service.js"></script>
+<script src="/static/js/insights-dashboard.js"></script>
+<script src="/static/js/insights.js"></script>
+{% endblock %}

@@ -1,0 +1,69 @@
+<!-- Authenticated User Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark dashboard-navbar">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard">
+            <span class="vitruvian-logo">⚡</span> Vitruvian Dashboard
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAuth"
+                aria-controls="navbarNavAuth" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNavAuth">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}"
+                       href="/dashboard" aria-current="{% if request.endpoint == 'dashboard' %}page{% endif %}">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if 'health' in request.endpoint %}active{% endif %}"
+                       href="/health/metrics">
+                        <i class="bi bi-heart-pulse"></i> Health
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if 'workout' in request.endpoint %}active{% endif %}"
+                       href="/workout/workouts">
+                        <i class="bi bi-fire"></i> Workouts
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if 'coaching' in request.endpoint %}active{% endif %}"
+                       href="/coaching/sessions">
+                        <i class="bi bi-chat-left-text"></i> Coaching
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if 'nutrition' in request.endpoint %}active{% endif %}"
+                       href="/nutrition/meals">
+                        <i class="bi bi-egg-fried"></i> Nutrition
+                    </a>
+                </li>
+            </ul>
+
+            <!-- User Dropdown -->
+            <ul class="navbar-nav">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle user-dropdown" href="#" id="userDropdown"
+                       role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-person-circle"></i>
+                        <span class="user-name">{{ current_user.name if current_user else 'User' }}</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item" href="/user/profile">
+                            <i class="bi bi-person"></i> Profile
+                        </a></li>
+                        <li><a class="dropdown-item" href="/user/settings">
+                            <i class="bi bi-gear"></i> Settings
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/logout">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>

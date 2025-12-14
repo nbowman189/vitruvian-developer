@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Saved Articles - Your Reading Collection{% endblock %}
+
+{% block content %}
+<div class="blog-container">
+    <!-- Blog Header -->
+    <section class="blog-header">
+        <div class="container">
+            <h1>Saved Articles</h1>
+            <p class="blog-header-subtitle">Your personalized reading collection</p>
+        </div>
+    </section>
+
+    <!-- Blog Listing -->
+    <section class="blog-listing">
+        <div class="container">
+            <div class="blog-filters">
+                <button class="filter-btn active" data-filter="all">All Saved</button>
+                <button class="filter-btn" data-filter="code">Code & Engineering</button>
+                <button class="filter-btn" data-filter="ai">AI & Learning</button>
+                <button class="filter-btn" data-filter="fitness">Fitness & Discipline</button>
+                <button class="filter-btn" data-filter="meta">Philosophy & Meta</button>
+                <button class="filter-btn collection-btn" data-filter="collections">Collections</button>
+            </div>
+
+            <!-- Collection Management (Hidden by default) -->
+            <div class="collections-view" id="collections-view" style="display: none;">
+                <div class="collections-grid" id="collections-grid">
+                    <!-- Collections will be loaded here -->
+                </div>
+                <div class="create-collection-form">
+                    <input type="text" id="new-collection-name" placeholder="Create a new collection...">
+                    <button id="create-collection-btn" class="btn-primary">Create</button>
+                </div>
+            </div>
+
+            <!-- Articles View -->
+            <div class="articles-view" id="articles-view">
+                <div class="articles-toolbar">
+                    <div class="view-options">
+                        <button class="view-toggle" data-view="grid" title="Grid view">⊞</button>
+                        <button class="view-toggle" data-view="list" title="List view">☰</button>
+                    </div>
+                    <div class="sort-options">
+                        <select id="sort-select" class="sort-select">
+                            <option value="recent">Recently Saved</option>
+                            <option value="date">Publication Date</option>
+                            <option value="title">Title (A-Z)</option>
+                            <option value="reading-time">Reading Time</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="blog-posts" id="blog-posts-list">
+                    <!-- Blog posts will be loaded here by JavaScript -->
+                </div>
+
+                <div class="no-posts" id="no-posts" style="display: none;">
+                    <p>No saved articles yet. Start bookmarking articles to build your collection!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script src="/static/js/saved-articles.js"></script>
+{% endblock %}

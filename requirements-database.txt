@@ -1,0 +1,24 @@
+# Database Requirements
+# ======================
+#
+# Install with: pip install -r requirements-database.txt
+
+# Core Database & ORM
+Flask-SQLAlchemy>=3.0.0
+SQLAlchemy>=2.0.0
+alembic>=1.12.0
+
+# PostgreSQL Driver
+psycopg2-binary>=2.9.0
+
+# Authentication & Security
+Flask-Login>=0.6.0
+bcrypt>=4.1.0
+
+# Optional: For better performance and features
+# psycopg[binary,pool]>=3.1.0  # Modern PostgreSQL driver (alternative to psycopg2)
+
+# Development & Testing
+# pytest>=7.4.0
+# pytest-cov>=4.1.0
+# faker>=20.0.0  # For generating test data

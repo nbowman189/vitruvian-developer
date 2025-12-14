@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Blog Article{% endblock %}
+
+{% block content %}
+<!-- Reading Progress Bar -->
+<div class="reading-progress" id="reading-progress"></div>
+
+<!-- Breadcrumb Navigation -->
+<nav aria-label="Breadcrumb" class="breadcrumb-nav breadcrumb-container">
+    <div class="container">
+        <ol class="breadcrumb-list">
+            <li><a href="/">Home</a></li>
+            <li><a href="/blog">Blog</a></li>
+            <li id="breadcrumb-article" aria-current="page">Article</li>
+        </ol>
+    </div>
+</nav>
+
+<div class="blog-article-container">
+
+    <!-- Article Header -->
+    <article class="blog-article" id="article-content">
+        <div class="article-header">
+            <div class="container">
+                <div class="article-meta-top">
+                    <a href="/blog" class="back-link">← Back to Blog</a>
+                    <div class="article-actions">
+                        <button class="action-btn bookmark-btn" id="bookmark-btn" title="Bookmark this article">
+                            <span class="bookmark-icon">🔖</span>
+                            <span class="bookmark-text">Save</span>
+                        </button>
+                    </div>
+                </div>
+                <h1 id="article-title" class="article-title">Loading...</h1>
+                <div class="article-meta">
+                    <span class="article-date" id="article-date"></span>
+                    <span class="article-separator">•</span>
+                    <span class="article-author" id="article-author"></span>
+                    <span class="article-separator">•</span>
+                    <span class="article-reading-time" id="article-reading-time"></span>
+                    <span class="article-separator">•</span>
+                    <span class="article-progress" id="article-progress">0% read</span>
+                </div>
+                <div class="article-tags" id="article-tags-container">
+                    <!-- Tags will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Article Content -->
+        <div class="article-body">
+            <div class="container">
+                <div id="article-body" class="article-markdown">
+                    Loading article...
+                </div>
+            </div>
+        </div>
+    </article>
+
+    <!-- Connection Map / Knowledge Graph -->
+    <section class="connection-map" id="connection-map-section" style="display: none;">
+        <div class="container">
+            <h2>Connection Map</h2>
+            <p class="section-subtitle">How this article connects to other content</p>
+            <div class="connection-indicators">
+                <div class="connection-category">
+                    <h3 class="connection-category-title">Related Disciplines</h3>
+                    <div class="discipline-badges" id="connection-disciplines">
+                        <!-- Discipline indicators will be loaded here -->
+                    </div>
+                </div>
+                <div class="connection-category">
+                    <h3 class="connection-category-title">Connected Posts</h3>
+                    <div class="connection-list" id="connection-posts">
+                        <!-- Connected posts will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Related Projects -->
+    <section class="related-projects" id="related-projects-section" style="display: none;">
+        <div class="container">
+            <h2>Related Projects</h2>
+            <p class="section-subtitle">Explore projects mentioned in this article</p>
+            <div class="portfolio-grid" id="related-projects-grid">
+                <!-- Related projects will be loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Personalized Recommendations -->
+    <section class="personalized-recommendations" id="recommendations-section" style="display: none;">
+        <div class="container">
+            <h2>Recommended For You</h2>
+            <p class="section-subtitle">Based on your reading history and interests</p>
+            <div class="recommendations-grid" id="personalized-recommendations">
+                <!-- Recommendations will be loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Related Articles -->
+    <section class="related-articles">
+        <div class="container">
+            <h2>More Articles</h2>
+            <div class="blog-grid" id="related-posts">
+                <!-- Related articles will be loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Article Navigation -->
+    <div class="article-nav">
+        <div class="container">
+            <a href="#" id="prev-article" class="nav-link prev-link" style="display: none;">
+                <span class="nav-arrow">←</span>
+                <span class="nav-text" id="prev-title">Previous Article</span>
+            </a>
+            <a href="/blog" class="nav-link home-link">Back to All Articles</a>
+            <a href="#" id="next-article" class="nav-link next-link" style="display: none;">
+                <span class="nav-text" id="next-title">Next Article</span>
+                <span class="nav-arrow">→</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/recommendation-engine.js"></script>
+<script src="/static/js/recommendation-widget.js"></script>
+<script src="/static/js/blog-article.js"></script>
+{% endblock %}

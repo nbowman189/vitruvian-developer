@@ -1,0 +1,994 @@
+{% extends "base.html" %}
+
+{% block title %}The Vitruvian Developer: Origin Story - Nathan Bowman{% endblock %}
+
+{% block content %}
+<style>
+    /* Origin Story Page Styles */
+    .origin-story-page {
+        background: #fff;
+    }
+
+    /* Breadcrumb Navigation */
+    .breadcrumb-container {
+        padding: 1rem 0;
+        background: #f8fafc;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .breadcrumb-list {
+        list-style: none;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+
+    .breadcrumb-list li {
+        display: flex;
+        align-items: center;
+    }
+
+    .breadcrumb-list li:not(:last-child)::after {
+        content: '/';
+        margin-left: 0.5rem;
+        color: var(--text-muted);
+    }
+
+    .breadcrumb-list a {
+        color: var(--primary-color);
+        font-size: 0.95rem;
+    }
+
+    .breadcrumb-list li[aria-current="page"] {
+        color: var(--text-muted);
+        font-weight: 600;
+    }
+
+    /* Hero Header */
+    .origin-story-header {
+        padding: 4rem 1rem;
+        background: var(--gradient-synergy);
+        color: white;
+        text-align: center;
+    }
+
+    .origin-story-hero h1 {
+        color: white;
+        margin-bottom: 0.5rem;
+        font-size: 3rem;
+    }
+
+    .origin-story-subtitle {
+        font-size: 1.5rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        opacity: 0.95;
+    }
+
+    .origin-story-tagline {
+        font-size: 1.1rem;
+        opacity: 0.85;
+    }
+
+    /* Main Content Wrapper */
+    .origin-story-content {
+        padding: 3rem 1rem;
+    }
+
+    .origin-story-wrapper {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 250px 1fr;
+        gap: 3rem;
+    }
+
+    /* Sidebar Navigation */
+    .origin-story-sidebar {
+        position: sticky;
+        top: 120px;
+        height: fit-content;
+    }
+
+    .story-toc {
+        background: #f8fafc;
+        padding: 1.5rem;
+        border-radius: 8px;
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .story-toc h4 {
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .story-toc ul {
+        list-style: none;
+    }
+
+    .story-toc li {
+        margin-bottom: 0.75rem;
+    }
+
+    .story-toc a {
+        font-size: 0.95rem;
+        color: var(--text-light);
+        padding-left: 1rem;
+        display: block;
+        border-left: 2px solid transparent;
+        transition: all 0.2s ease;
+    }
+
+    .story-toc a:hover {
+        color: var(--primary-color);
+        border-left-color: var(--primary-color);
+        transform: translateX(4px);
+    }
+
+    /* Reading Progress Indicator */
+    .reading-progress-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 3px;
+        background: var(--gradient-synergy);
+        z-index: 1000;
+        transition: width 0.1s ease;
+    }
+
+    /* Main Story Content */
+    .story-main {
+        min-width: 0;
+    }
+
+    .origin-story-text {
+        font-size: 1.05rem;
+        line-height: 1.8;
+        color: var(--text-dark);
+    }
+
+    .origin-story-text h2 {
+        font-size: 2.2rem;
+        margin-top: 3rem;
+        margin-bottom: 1.5rem;
+        color: var(--primary-color);
+        position: relative;
+        padding-bottom: 1rem;
+    }
+
+    .origin-story-text h2::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 60px;
+        height: 4px;
+        background: var(--gradient-accent);
+        border-radius: 2px;
+    }
+
+    .origin-story-text h3 {
+        font-size: 1.6rem;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        color: var(--secondary-color);
+    }
+
+    .origin-story-text p {
+        margin-bottom: 1.25rem;
+    }
+
+    /* Section Divider */
+    .origin-story-text hr {
+        margin: 3rem 0;
+        border: none;
+        height: 4px;
+        background: var(--gradient-synergy);
+        border-radius: 2px;
+        opacity: 0.6;
+    }
+
+    /* Pull Quotes */
+    .pull-quote {
+        margin: 2rem 0;
+        padding: 1.5rem;
+        padding-left: 2rem;
+        border-left: 4px solid var(--accent-color);
+        background: linear-gradient(to right, rgba(255, 179, 71, 0.05), transparent);
+        font-style: italic;
+        font-size: 1.2rem;
+        line-height: 1.8;
+        color: var(--text-dark);
+        font-weight: 500;
+    }
+
+    /* Emphasis Elements */
+    .highlight-principle {
+        background: linear-gradient(to right, rgba(255, 179, 71, 0.2), rgba(255, 179, 71, 0.05));
+        padding: 0.2rem 0.4rem;
+        border-radius: 3px;
+        font-weight: 600;
+        color: var(--accent-color);
+    }
+
+    /* Parallels Section Styling */
+    .parallels-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin: 2.5rem 0;
+        background: #f8fafc;
+        padding: 2rem;
+        border-radius: 8px;
+    }
+
+    .parallel-item {
+        padding: 1.5rem;
+        background: white;
+        border-radius: 6px;
+        border-top: 3px solid var(--primary-color);
+    }
+
+    .parallel-item.fitness-to-engineering {
+        border-top-color: var(--accent-color);
+    }
+
+    .parallel-item h4 {
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+        font-size: 1.15rem;
+    }
+
+    .parallel-item.fitness-to-engineering h4 {
+        color: var(--accent-color);
+    }
+
+    .parallel-item ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    .parallel-item li {
+        margin-bottom: 0.75rem;
+        padding-left: 1.5rem;
+        position: relative;
+    }
+
+    .parallel-item li::before {
+        content: '→';
+        position: absolute;
+        left: 0;
+        color: var(--primary-color);
+        font-weight: bold;
+    }
+
+    .parallel-item.fitness-to-engineering li::before {
+        color: var(--accent-color);
+    }
+
+    /* Four Pillars Framework Section */
+    .four-pillars-showcase {
+        padding: 4rem 1rem;
+        background: linear-gradient(180deg, #f8fafc 0%, white 100%);
+        border-top: 1px solid var(--border-color);
+    }
+
+    .four-pillars-showcase .container {
+        max-width: 1200px;
+    }
+
+    .four-pillars-showcase h2 {
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .four-pillars-showcase h2::after {
+        display: none;
+    }
+
+    .section-subtitle {
+        text-align: center;
+        color: var(--text-light);
+        font-size: 1.1rem;
+        margin-bottom: 3rem;
+    }
+
+    .pillars-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .pillar-card {
+        background: white;
+        padding: 2rem 1.5rem;
+        border-radius: 8px;
+        border-top: 4px solid var(--primary-color);
+        position: relative;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .pillar-card:nth-child(2) {
+        border-top-color: var(--secondary-color);
+    }
+
+    .pillar-card:nth-child(3) {
+        border-top-color: var(--accent-color);
+    }
+
+    .pillar-card:nth-child(4) {
+        border-top-color: var(--color-meta);
+    }
+
+    .pillar-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .pillar-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
+        background: var(--gradient-primary);
+        color: white;
+        border-radius: 50%;
+        font-size: 1.5rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+        margin-left: -1rem;
+    }
+
+    .pillar-card:nth-child(2) .pillar-number {
+        background: linear-gradient(135deg, var(--secondary-color) 0%, var(--color-ai) 100%);
+    }
+
+    .pillar-card:nth-child(3) .pillar-number {
+        background: linear-gradient(135deg, var(--accent-color) 0%, #ff8a3d 100%);
+    }
+
+    .pillar-card:nth-child(4) .pillar-number {
+        background: linear-gradient(135deg, var(--color-meta) 0%, #06b6d4 100%);
+    }
+
+    .pillar-card h3 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        color: var(--text-dark);
+    }
+
+    .pillar-card p {
+        color: var(--text-light);
+        line-height: 1.7;
+        margin-bottom: 0;
+    }
+
+    /* Projects Section */
+    .origin-story-projects {
+        padding: 4rem 1rem;
+        background: white;
+    }
+
+    .origin-story-projects .container {
+        max-width: 1200px;
+    }
+
+    .origin-story-projects h2 {
+        text-align: center;
+    }
+
+    .origin-story-projects h2::after {
+        margin: 0 auto;
+    }
+
+    .related-projects-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+
+    .project-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 8px;
+        border-left: 4px solid var(--primary-color);
+        box-shadow: var(--shadow-sm);
+        transition: all 0.3s ease;
+    }
+
+    .project-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .project-card h3 {
+        color: var(--primary-color);
+        margin-bottom: 0.75rem;
+    }
+
+    .project-card p {
+        color: var(--text-light);
+        margin-bottom: 1.5rem;
+    }
+
+    /* CTA Section */
+    .origin-story-cta {
+        padding: 4rem 1rem;
+        background: var(--gradient-synergy);
+        color: white;
+        text-align: center;
+    }
+
+    .origin-story-cta .container {
+        max-width: 800px;
+    }
+
+    .cta-content h2 {
+        color: white;
+        margin-bottom: 1rem;
+    }
+
+    .cta-content h2::after {
+        display: none;
+    }
+
+    .cta-content p {
+        font-size: 1.15rem;
+        margin-bottom: 2rem;
+        opacity: 0.95;
+    }
+
+    .cta-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 0.75rem 1.75rem;
+        border-radius: 6px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+        font-size: 1rem;
+    }
+
+    .btn-primary {
+        background: white;
+        color: var(--primary-color);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 2px solid white;
+    }
+
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+    }
+
+    /* Footer */
+    .origin-story-footer {
+        padding: 3rem 1rem;
+        background: #1a1a1a;
+        color: white;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .origin-story-footer .container {
+        max-width: 1200px;
+    }
+
+    .footer-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+
+    .author-info h4 {
+        color: white;
+        margin-bottom: 0.75rem;
+    }
+
+    .author-info p {
+        color: rgba(255, 255, 255, 0.8);
+        margin-bottom: 0.5rem;
+    }
+
+    .share-buttons h4 {
+        color: white;
+        margin-bottom: 1rem;
+    }
+
+    .share-btn {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        margin-right: 1rem;
+        margin-bottom: 0.5rem;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+        font-weight: 500;
+    }
+
+    .share-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 900px) {
+        .origin-story-wrapper {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        .origin-story-sidebar {
+            position: relative;
+            top: 0;
+        }
+
+        .story-toc {
+            display: none;
+        }
+
+        .origin-story-hero h1 {
+            font-size: 2.2rem;
+        }
+
+        .parallels-container {
+            grid-template-columns: 1fr;
+        }
+
+        .pillars-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .origin-story-hero h1 {
+            font-size: 1.8rem;
+        }
+
+        .origin-story-subtitle {
+            font-size: 1.2rem;
+        }
+
+        .origin-story-text {
+            font-size: 1rem;
+        }
+
+        .origin-story-text h2 {
+            font-size: 1.8rem;
+            margin-top: 2rem;
+        }
+
+        .pull-quote {
+            font-size: 1.1rem;
+            padding: 1.25rem 1rem 1.25rem 1.5rem;
+        }
+
+        .footer-content {
+            grid-template-columns: 1fr;
+        }
+
+        .cta-buttons {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="origin-story-page">
+    <!-- Reading Progress Bar -->
+    <div class="reading-progress-bar" id="progress-bar"></div>
+
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="Breadcrumb" class="breadcrumb-container">
+        <ol class="breadcrumb-list">
+            <li><a href="/">Home</a></li>
+            <li><a href="#about">About</a></li>
+            <li aria-current="page">The Vitruvian Developer</li>
+        </ol>
+    </nav>
+
+    <!-- Hero Header -->
+    <header class="origin-story-header">
+        <div class="origin-story-hero">
+            <h1>The Vitruvian Developer</h1>
+            <p class="origin-story-subtitle">Engineering a Life of Integration</p>
+            <p class="origin-story-tagline">A Story of Systems, Discipline, and Synergy</p>
+        </div>
+    </header>
+
+    <!-- Main Narrative Content -->
+    <article class="origin-story-content">
+        <div class="container">
+            <div class="origin-story-wrapper">
+                <!-- Sidebar Navigation -->
+                <aside class="origin-story-sidebar">
+                    <nav class="story-toc">
+                        <h4>Story Sections</h4>
+                        <ul>
+                            <li><a href="#act-1-the-foundation-learning-to-see-systems">Act 1: The Foundation</a></li>
+                            <li><a href="#act-2-the-detour-a-system-out-of-balance">Act 2: The Detour</a></li>
+                            <li><a href="#act-3-the-catalyst-the-return-and-the-insight">Act 3: The Catalyst</a></li>
+                            <li><a href="#act-4-the-synergy-where-everything-connects">Act 4: The Synergy</a></li>
+                            <li><a href="#act-5-the-expansion-ai-as-an-accelerator">Act 5: The Expansion</a></li>
+                            <li><a href="#act-6-the-four-pillars-the-framework">Act 6: The Four Pillars</a></li>
+                            <li><a href="#where-i-am-now-the-work-in-progress">Where I Am Now</a></li>
+                            <li><a href="#the-five-year-vision">Five-Year Vision</a></li>
+                        </ul>
+                    </nav>
+                </aside>
+
+                <!-- Main Content -->
+                <main class="story-main">
+                    <div id="markdown-content" class="origin-story-text">
+                        <!-- Content will be loaded from API -->
+                        <p>Loading story...</p>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </article>
+
+    <!-- The Four Pillars Framework -->
+    <section class="four-pillars-showcase">
+        <div class="container">
+            <h2>The Four Pillars Framework</h2>
+            <p class="section-subtitle">Principles for Engineering a Better Life</p>
+
+            <div class="pillars-grid">
+                <div class="pillar-card">
+                    <div class="pillar-number">1</div>
+                    <h3>Know Your System's Architecture</h3>
+                    <p>Before you can optimize anything, you must first understand it completely. Systems analysis is the foundational skill that separates those who engineer change from those who hope for it.</p>
+                </div>
+
+                <div class="pillar-card">
+                    <div class="pillar-number">2</div>
+                    <h3>Identify Failure Points Before They Fail</h3>
+                    <p>Systems don't fail suddenly. They fail because someone ignored the patterns. Continuous monitoring is how you catch problems early and prevent cascading failures.</p>
+                </div>
+
+                <div class="pillar-card">
+                    <div class="pillar-number">3</div>
+                    <h3>Deploy the Right Tools (Even If You Build Them)</h3>
+                    <p>The most dangerous phrase in engineering is "that's just how we do it." The Vitruvian Developer builds the tools they need, especially when they don't yet exist.</p>
+                </div>
+
+                <div class="pillar-card">
+                    <div class="pillar-number">4</div>
+                    <h3>Trust the Process (Even When Progress Is Slow)</h3>
+                    <p>The hardest part of engineering isn't design. It's patience. Building systems that last takes time. Maintain the system, and the results follow.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Related Projects Section -->
+    <section class="origin-story-projects">
+        <div class="container">
+            <h2>See It in Practice</h2>
+            <p class="section-subtitle">Explore how these principles are applied across my projects</p>
+
+            <div class="related-projects-grid" id="related-projects">
+                <!-- Related projects will be loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="origin-story-cta">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Ready to Engineer Your Life?</h2>
+                <p>The Vitruvian Developer philosophy is replicable. It's for people who refuse to choose between excellence in work and excellence in life.</p>
+
+                <div class="cta-buttons">
+                    <a href="/#portfolio" class="btn btn-primary">Explore My Projects</a>
+                    <a href="/blog" class="btn btn-secondary">Read More Articles</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer with Share -->
+    <footer class="origin-story-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="author-info">
+                    <h4>Nathan Bowman</h4>
+                    <p>Sr. Data Solutions Engineer | AI Developer | Fitness Enthusiast</p>
+                    <p>Building systems. Engineering lives. Creating synergy across disciplines.</p>
+                </div>
+
+                <div class="share-buttons">
+                    <h4>Share This Story</h4>
+                    <a href="https://www.linkedin.com/in/nathan-bowman-b27484103/" target="_blank" class="share-btn linkedin" aria-label="Share on LinkedIn">LinkedIn</a>
+                    <a href="https://twitter.com/intent/tweet?url=https://nathanbowman.dev/the-vitruvian-developer" target="_blank" class="share-btn twitter" aria-label="Share on Twitter">Twitter</a>
+                    <a href="mailto:?subject=Check out: The Vitruvian Developer&body=https://nathanbowman.dev/the-vitruvian-developer" class="share-btn email" aria-label="Share via Email">Email</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<script>
+// Load the origin story from API
+document.addEventListener('DOMContentLoaded', function() {
+    // Load the full origin story markdown
+    fetch('/api/origin-story')
+        .then(response => response.json())
+        .then(data => {
+            const markdownContent = document.getElementById('markdown-content');
+            markdownContent.innerHTML = data.content;
+
+            // Add IDs to headings for anchor navigation
+            const headings = markdownContent.querySelectorAll('h2, h3');
+            headings.forEach((heading) => {
+                const text = heading.textContent.trim().toLowerCase();
+                const id = text
+                    .replace(/[^\w\s-]/g, '')
+                    .replace(/\s+/g, '-')
+                    .replace(/-+/g, '-');
+
+                if (id) {
+                    heading.id = id;
+                }
+            });
+
+            // Transform specific content into pull quotes and emphasis
+            enhanceStoryContent();
+
+            // Set up sidebar navigation click handlers
+            setupSidebarNavigation();
+        })
+        .catch(error => {
+            console.error('Error loading origin story:', error);
+            document.getElementById('markdown-content').innerHTML =
+                '<p>Error loading story. Please try again later.</p>';
+        });
+
+    // Load related projects
+    fetch('/api/projects-metadata')
+        .then(response => response.json())
+        .then(data => {
+            const projectsContainer = document.getElementById('related-projects');
+            const featured = data.filter(p =>
+                p.key === 'AI_Development' || p.key === 'Health_and_Fitness'
+            );
+
+            projectsContainer.innerHTML = featured.map(project => `
+                <div class="project-card">
+                    <h3>${project.display_name}</h3>
+                    <p>${project.description}</p>
+                    <a href="/project-case-study/${project.key}" class="btn btn-secondary">Explore Project</a>
+                </div>
+            `).join('');
+        })
+        .catch(error => console.error('Error loading projects:', error));
+
+    // Set up reading progress bar
+    setupReadingProgress();
+
+    // Set up smooth scroll behavior for sidebar links
+    setupSmoothScroll();
+});
+
+function enhanceStoryContent() {
+    const content = document.getElementById('markdown-content');
+    const textNodes = [];
+
+    // Collect all text nodes
+    const walker = document.createTreeWalker(
+        content,
+        NodeFilter.SHOW_TEXT,
+        null,
+        false
+    );
+
+    let node;
+    while (node = walker.nextNode()) {
+        if (node.parentElement.tagName !== 'SCRIPT') {
+            textNodes.push(node);
+        }
+    }
+
+    // Transform key memorable lines into pull quotes
+    const pullQuotePatterns = [
+        { text: "Every system has failure points", type: 'quote' },
+        { text: "the disciplines strengthen each other", type: 'quote' },
+        { text: "The Vitruvian Developer compounds", type: 'quote' },
+        { text: "it's a system you design into your life", type: 'quote' },
+        { text: "You're not building a life. You're engineering one", type: 'quote' }
+    ];
+
+    textNodes.forEach(textNode => {
+        let text = textNode.textContent;
+        pullQuotePatterns.forEach(pattern => {
+            if (text.includes(pattern.text) && textNode.parentElement.tagName === 'P') {
+                const parent = textNode.parentElement;
+                if (!parent.classList.contains('pull-quote')) {
+                    parent.classList.add('pull-quote');
+                }
+            }
+        });
+    });
+
+    // Add emphasis to key principles
+    const principlePatterns = [
+        'Know Your System\'s Architecture',
+        'Identify Failure Points Before They Fail',
+        'Deploy the Right Tools',
+        'Trust the Process',
+        'systems analysis',
+        'continuous monitoring'
+    ];
+
+    // Transform emphasis in paragraphs
+    textNodes.forEach(textNode => {
+        let html = textNode.textContent;
+        let modified = false;
+
+        principlePatterns.forEach(pattern => {
+            if (html.includes(pattern)) {
+                html = html.replace(
+                    new RegExp(`\\b(${pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})\\b`, 'g'),
+                    '<span class="highlight-principle">$1</span>'
+                );
+                modified = true;
+            }
+        });
+
+        if (modified) {
+            const span = document.createElement('span');
+            span.innerHTML = html;
+            textNode.parentElement.replaceChild(span, textNode);
+        }
+    });
+
+    // Transform the Engineering ↔ Fitness parallels into cards
+    const allParagraphs = content.querySelectorAll('p');
+    let engineeringParaFound = false;
+    let fitnessParaFound = false;
+
+    allParagraphs.forEach((para, index) => {
+        if (para.textContent.includes('Engineering → Fitness:') && !engineeringParaFound) {
+            engineeringParaFound = true;
+            transformParallelsSection(para);
+        }
+    });
+}
+
+function transformParallelsSection(startPara) {
+    // Create parallels container
+    const container = document.createElement('div');
+    container.className = 'parallels-container';
+
+    // Create Engineering → Fitness section
+    const engDiv = document.createElement('div');
+    engDiv.className = 'parallel-item';
+    engDiv.innerHTML = `
+        <h4>Engineering → Fitness</h4>
+        <ul>
+            <li>Database optimization = caloric efficiency</li>
+            <li>System scaling principles = progressive overload</li>
+            <li>Debugging methodology = nutrition troubleshooting</li>
+            <li>Monitoring for degradation = tracking health metrics</li>
+        </ul>
+    `;
+
+    // Create Fitness → Engineering section
+    const fitDiv = document.createElement('div');
+    fitDiv.className = 'parallel-item fitness-to-engineering';
+    fitDiv.innerHTML = `
+        <h4>Fitness → Engineering</h4>
+        <ul>
+            <li>Long-term discipline = sustained focus in technical work</li>
+            <li>Marathon mindset = understanding project timelines</li>
+            <li>Accountability systems = persona frameworks</li>
+            <li>Measurable progress = driven behavior</li>
+        </ul>
+    `;
+
+    container.appendChild(engDiv);
+    container.appendChild(fitDiv);
+
+    // Insert the container and remove the old paragraphs
+    const parent = startPara.parentElement;
+    parent.insertBefore(container, startPara);
+
+    // Remove the old parallel paragraphs
+    let current = startPara;
+    let removed = 0;
+    while (current && removed < 6) {
+        const next = current.nextElementSibling;
+        if (current.textContent.includes('→') ||
+            current.textContent.includes('optimization') ||
+            current.textContent.includes('discipline')) {
+            current.remove();
+            removed++;
+        } else if (removed > 0) {
+            break;
+        }
+        current = next;
+    }
+}
+
+function setupSidebarNavigation() {
+    const sidebarLinks = document.querySelectorAll('.story-toc a');
+
+    sidebarLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            const targetElement = document.getElementById(targetId);
+
+            if (targetElement) {
+                targetElement.scrollIntoView({ behavior: 'smooth' });
+
+                // Update active link
+                sidebarLinks.forEach(l => l.style.borderLeftColor = 'transparent');
+                this.style.borderLeftColor = 'var(--primary-color)';
+            }
+        });
+    });
+}
+
+function setupReadingProgress() {
+    const progressBar = document.getElementById('progress-bar');
+
+    window.addEventListener('scroll', function() {
+        const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrollTop = window.scrollY;
+        const scrollPercent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+
+        progressBar.style.width = scrollPercent + '%';
+    });
+}
+
+function setupSmoothScroll() {
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            const href = this.getAttribute('href');
+            if (href !== '#' && href.length > 1) {
+                e.preventDefault();
+                const target = document.querySelector(href);
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            }
+        });
+    });
+}
+</script>
+{% endblock %}

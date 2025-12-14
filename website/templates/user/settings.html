@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Vitruvian Tracker{% endblock %}
+
+{% block content %}
+<!-- Dashboard Navbar -->
+{% include 'components/navbar_auth.html' %}
+
+<!-- Flash Messages -->
+<div class="container mt-3">
+    {% include 'components/flash_messages.html' %}
+</div>
+
+<!-- Settings Content -->
+<div class="page-container">
+    <div class="page-header">
+        <div class="page-title-section">
+            <h1 class="page-title">
+                <i class="bi bi-gear"></i> Settings
+            </h1>
+            <p class="page-subtitle">Customize your experience and preferences</p>
+        </div>
+    </div>
+
+    <!-- Settings Sections -->
+    <div class="settings-container">
+
+        <!-- Display Preferences -->
+        <div class="settings-section">
+            <h3 class="settings-section-title">Display Preferences</h3>
+            <form id="display-settings-form">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="weight-unit" class="form-label">Weight Unit</label>
+                        <select class="form-select" id="weight-unit" name="weight_unit">
+                            <option value="lbs" selected>Pounds (lbs)</option>
+                            <option value="kg">Kilograms (kg)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="height-unit" class="form-label">Height Unit</label>
+                        <select class="form-select" id="height-unit" name="height_unit">
+                            <option value="inches" selected>Inches</option>
+                            <option value="cm">Centimeters</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="date-format" class="form-label">Date Format</label>
+                        <select class="form-select" id="date-format" name="date_format">
+                            <option value="MM/DD/YYYY" selected>MM/DD/YYYY</option>
+                            <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                            <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="time-format" class="form-label">Time Format</label>
+                        <select class="form-select" id="time-format" name="time_format">
+                            <option value="12h" selected>12-hour (AM/PM)</option>
+                            <option value="24h">24-hour</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="items-per-page" class="form-label">Items Per Page</label>
+                    <select class="form-select" id="items-per-page" name="items_per_page">
+                        <option value="10">10</option>
+                        <option value="20" selected>20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i> Save Display Settings
+                </button>
+            </form>
+        </div>
+
+        <!-- Notification Preferences -->
+        <div class="settings-section">
+            <h3 class="settings-section-title">Notifications</h3>
+            <form id="notification-settings-form">
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="email-notifications" name="email_notifications" checked>
+                        <label class="form-check-label" for="email-notifications">
+                            Email Notifications
+                        </label>
+                    </div>
+                    <div class="form-text">Receive email updates about your progress and reminders</div>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="workout-reminders" name="workout_reminders" checked>
+                        <label class="form-check-label" for="workout-reminders">
+                            Workout Reminders
+                        </label>
+                    </div>
+                    <div class="form-text">Get reminders for scheduled workouts</div>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="nutrition-reminders" name="nutrition_reminders" checked>
+                        <label class="form-check-label" for="nutrition-reminders">
+                            Nutrition Logging Reminders
+                        </label>
+                    </div>
+                    <div class="form-text">Reminders to log your meals</div>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="goal-progress-updates" name="goal_progress_updates" checked>
+                        <label class="form-check-label" for="goal-progress-updates">
+                            Goal Progress Updates
+                        </label>
+                    </div>
+                    <div class="form-text">Weekly updates on your goal progress</div>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="coaching-session-reminders" name="coaching_session_reminders" checked>
+                        <label class="form-check-label" for="coaching-session-reminders">
+                            Coaching Session Reminders
+                        </label>
+                    </div>
+                    <div class="form-text">Reminders for upcoming coaching sessions</div>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i> Save Notification Settings
+                </button>
+            </form>
+        </div>
+
+        <!-- Privacy Settings -->
+        <div class="settings-section">
+            <h3 class="settings-section-title">Privacy</h3>
+            <form id="privacy-settings-form">
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="profile-visible" name="profile_visible" checked>
+                        <label class="form-check-label" for="profile-visible">
+                            Make Profile Visible to Coach
+                        </label>
+                    </div>
+                    <div class="form-text">Allow your coach to view your profile and progress</div>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="share-progress-photos" name="share_progress_photos">
+                        <label class="form-check-label" for="share-progress-photos">
+                            Share Progress Photos with Coach
+                        </label>
+                    </div>
+                    <div class="form-text">Automatically share progress photos with your coach</div>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i> Save Privacy Settings
+                </button>
+            </form>
+        </div>
+
+        <!-- Data Management -->
+        <div class="settings-section">
+            <h3 class="settings-section-title">Data Management</h3>
+            <div class="data-actions">
+                <div class="data-action-item">
+                    <div class="data-action-info">
+                        <h5 class="data-action-title">Export Your Data</h5>
+                        <p class="data-action-description">Download a copy of all your data in JSON format</p>
+                    </div>
+                    <button class="btn btn-outline-primary" id="export-data-btn">
+                        <i class="bi bi-download"></i> Export Data
+                    </button>
+                </div>
+                <div class="data-action-item">
+                    <div class="data-action-info">
+                        <h5 class="data-action-title">Clear Cache</h5>
+                        <p class="data-action-description">Clear locally stored cache and temporary data</p>
+                    </div>
+                    <button class="btn btn-outline-secondary" id="clear-cache-btn">
+                        <i class="bi bi-trash"></i> Clear Cache
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="settings-section settings-danger-zone">
+            <h3 class="settings-section-title text-danger">Danger Zone</h3>
+            <div class="data-actions">
+                <div class="data-action-item">
+                    <div class="data-action-info">
+                        <h5 class="data-action-title text-danger">Delete Account</h5>
+                        <p class="data-action-description">Permanently delete your account and all associated data. This action cannot be undone.</p>
+                    </div>
+                    <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+                        <i class="bi bi-exclamation-triangle"></i> Delete Account
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Account Confirmation Modal -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteAccountModalLabel">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Delete Account
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="fw-bold">This action is permanent and cannot be undone.</p>
+                <p>Deleting your account will:</p>
+                <ul>
+                    <li>Remove all your health metrics</li>
+                    <li>Delete all workout logs</li>
+                    <li>Remove all coaching sessions and goals</li>
+                    <li>Delete all nutrition data</li>
+                    <li>Remove all progress photos</li>
+                </ul>
+                <p>To confirm, please type <strong>DELETE</strong> below:</p>
+                <input type="text" class="form-control" id="delete-confirm-input" placeholder="Type DELETE">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirm-delete-account-btn" disabled>
+                    <i class="bi bi-trash"></i> Permanently Delete Account
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/common.js"></script>
+<script src="/static/js/settings.js"></script>
+{% endblock %}

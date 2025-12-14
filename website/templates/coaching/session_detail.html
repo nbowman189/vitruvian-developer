@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Session Details - Vitruvian Tracker{% endblock %}
+
+{% block content %}
+<!-- Dashboard Navbar -->
+{% include 'components/navbar_auth.html' %}
+
+<!-- Flash Messages -->
+<div class="container mt-3">
+    {% include 'components/flash_messages.html' %}
+</div>
+
+<!-- Session Detail Content -->
+<div class="page-container">
+    <div class="page-header">
+        <div class="page-title-section">
+            <a href="/coaching/sessions" class="back-link">
+                <i class="bi bi-arrow-left"></i> Back to Sessions
+            </a>
+            <h1 class="page-title">
+                <i class="bi bi-chat-left-text"></i> Session Details
+            </h1>
+            <div class="session-metadata">
+                <span class="metadata-item" id="session-date">--</span>
+            </div>
+        </div>
+        <div class="page-actions">
+            <button class="btn btn-outline-secondary" id="edit-session-btn">
+                <i class="bi bi-pencil"></i> Edit
+            </button>
+            <button class="btn btn-outline-danger" id="delete-session-btn">
+                <i class="bi bi-trash"></i> Delete
+            </button>
+        </div>
+    </div>
+
+    <!-- Session Notes -->
+    <div class="session-notes-section">
+        <h3 class="section-subtitle">Session Notes</h3>
+        <div class="notes-card">
+            <div class="notes-content" id="session-notes">
+                <!-- Loading State -->
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Items -->
+    <div class="action-items-section">
+        <div class="section-header">
+            <h3 class="section-subtitle">Action Items</h3>
+            <button class="btn btn-sm btn-outline-primary" id="add-action-btn">
+                <i class="bi bi-plus-circle"></i> Add Action
+            </button>
+        </div>
+        <div id="action-items-container">
+            <!-- Action items will be loaded via JavaScript -->
+        </div>
+    </div>
+
+    <!-- Related Goals -->
+    <div class="related-goals-section">
+        <h3 class="section-subtitle">Related Goals</h3>
+        <div id="related-goals-container">
+            <p class="text-muted">No goals linked to this session.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Add Action Item Modal -->
+<div class="modal fade" id="addActionModal" tabindex="-1" aria-labelledby="addActionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addActionModalLabel">Add Action Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="add-action-form">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="action-description" class="form-label">Description <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="action-description" name="description" rows="3"
+                                  placeholder="What action needs to be taken?" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="action-due-date" class="form-label">Due Date</label>
+                        <input type="date" class="form-control" id="action-due-date" name="due_date">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Add Action
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+{% from 'components/modal.html' import delete_modal %}
+{{ delete_modal('deleteSessionModal') }}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/common.js"></script>
+<script src="/static/js/session-detail.js"></script>
+{% endblock %}

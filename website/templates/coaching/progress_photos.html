@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Progress Photos - Vitruvian Tracker{% endblock %}
+
+{% block content %}
+<!-- Dashboard Navbar -->
+{% include 'components/navbar_auth.html' %}
+
+<!-- Flash Messages -->
+<div class="container mt-3">
+    {% include 'components/flash_messages.html' %}
+</div>
+
+<!-- Progress Photos Content -->
+<div class="page-container">
+    <div class="page-header">
+        <div class="page-title-section">
+            <a href="/coaching/sessions" class="back-link">
+                <i class="bi bi-arrow-left"></i> Back to Sessions
+            </a>
+            <h1 class="page-title">
+                <i class="bi bi-images"></i> Progress Photos
+            </h1>
+            <p class="page-subtitle">Visual tracking of your transformation journey</p>
+        </div>
+        <div class="page-actions">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadPhotoModal">
+                <i class="bi bi-upload"></i> Upload Photo
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-section">
+        <div class="filters-row">
+            <div class="filter-group">
+                <label for="date-range-filter" class="filter-label">Date Range</label>
+                <select id="date-range-filter" class="form-select filter-select">
+                    <option value="30">Last 30 Days</option>
+                    <option value="90" selected>Last 90 Days</option>
+                    <option value="180">Last 6 Months</option>
+                    <option value="365">Last Year</option>
+                    <option value="all">All Time</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="view-mode" class="filter-label">View Mode</label>
+                <select id="view-mode" class="form-select filter-select">
+                    <option value="grid">Grid View</option>
+                    <option value="timeline">Timeline</option>
+                    <option value="comparison">Comparison</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="photos-summary">
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-label">Total Photos</div>
+                <div class="summary-value" id="total-photos">--</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Latest Photo</div>
+                <div class="summary-value-text" id="latest-photo-date">--</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Journey Duration</div>
+                <div class="summary-value-text" id="journey-duration">--</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Photo Grid View -->
+    <div id="photo-grid-view" class="photo-view">
+        <div class="photos-grid" id="photos-grid">
+            <!-- Loading State -->
+            <div class="text-center py-5 w-100">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline View -->
+    <div id="photo-timeline-view" class="photo-view" style="display: none;">
+        <div class="photos-timeline" id="photos-timeline">
+            <!-- Timeline content loaded via JavaScript -->
+        </div>
+    </div>
+
+    <!-- Comparison View -->
+    <div id="photo-comparison-view" class="photo-view" style="display: none;">
+        <div class="comparison-container">
+            <div class="comparison-selector">
+                <div class="selector-group">
+                    <label>Before Photo</label>
+                    <select id="before-photo-select" class="form-select">
+                        <option value="">Select a photo...</option>
+                    </select>
+                </div>
+                <div class="selector-group">
+                    <label>After Photo</label>
+                    <select id="after-photo-select" class="form-select">
+                        <option value="">Select a photo...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="comparison-display" id="comparison-display">
+                <p class="text-muted text-center">Select before and after photos to compare</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div id="pagination-container"></div>
+</div>
+
+<!-- Upload Photo Modal -->
+<div class="modal fade" id="uploadPhotoModal" tabindex="-1" aria-labelledby="uploadPhotoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadPhotoModalLabel">Upload Progress Photo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="upload-photo-form" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="photo-date" class="form-label">Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="photo-date" name="date" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="photo-file" class="form-label">Photo <span class="text-danger">*</span></label>
+                        <input type="file" class="form-control" id="photo-file" name="photo"
+                               accept="image/*" required>
+                        <div class="form-text">Max file size: 10MB. Formats: JPG, PNG</div>
+                        <div class="invalid-feedback">Please select a photo.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="photo-notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="photo-notes" name="notes" rows="3"
+                                  placeholder="Any observations or context for this photo..."></textarea>
+                    </div>
+
+                    <div id="photo-preview" style="display: none;" class="mb-3">
+                        <label class="form-label">Preview</label>
+                        <div class="preview-container">
+                            <img id="preview-image" alt="Photo preview" class="img-fluid">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-upload"></i> Upload Photo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Photo Detail Modal -->
+<div class="modal fade" id="photoDetailModal" tabindex="-1" aria-labelledby="photoDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="photoDetailModalLabel">Progress Photo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="photo-detail-content">
+                    <!-- Content loaded via JavaScript -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger" id="delete-photo-btn">
+                    <i class="bi bi-trash"></i> Delete
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+{% from 'components/modal.html' import delete_modal %}
+{{ delete_modal('deletePhotoModal') }}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/common.js"></script>
+<script src="/static/js/progress-photos.js"></script>
+{% endblock %}

@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Vitruvian Tracker{% endblock %}
+
+{% block content %}
+<!-- Dashboard Navbar -->
+{% include 'components/navbar_auth.html' %}
+
+<!-- Flash Messages -->
+<div class="container mt-3">
+    {% include 'components/flash_messages.html' %}
+</div>
+
+<!-- Dashboard Content -->
+<div class="dashboard-container">
+    <!-- Welcome Section -->
+    <section class="dashboard-welcome">
+        <div class="welcome-content">
+            <h1 class="welcome-title">Welcome back, <span class="user-highlight">{{ current_user.name if current_user else 'Warrior' }}</span></h1>
+            <p class="welcome-subtitle">Your journey towards the Vitruvian ideal continues.</p>
+            <div class="welcome-date">
+                <i class="bi bi-calendar3"></i>
+                <span id="current-date"></span>
+            </div>
+        </div>
+        <div class="welcome-illustration">
+            <div class="synergy-circle">
+                <span class="synergy-icon">⚡</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Stats Cards -->
+    <section class="dashboard-stats">
+        <div class="stats-grid">
+            <!-- Weight Card -->
+            <div class="stat-card stat-card-fitness">
+                <div class="stat-header">
+                    <i class="bi bi-heart-pulse stat-icon"></i>
+                    <h3 class="stat-title">Latest Weight</h3>
+                </div>
+                <div class="stat-body">
+                    <div class="stat-value" id="latest-weight">--</div>
+                    <div class="stat-unit">lbs</div>
+                </div>
+                <div class="stat-footer">
+                    <span class="stat-change" id="weight-change">--</span>
+                    <span class="stat-date" id="weight-date">--</span>
+                </div>
+            </div>
+
+            <!-- Recent Workout Card -->
+            <div class="stat-card stat-card-code">
+                <div class="stat-header">
+                    <i class="bi bi-fire stat-icon"></i>
+                    <h3 class="stat-title">Recent Workout</h3>
+                </div>
+                <div class="stat-body">
+                    <div class="stat-value-text" id="recent-workout-name">--</div>
+                </div>
+                <div class="stat-footer">
+                    <span class="stat-detail" id="workout-duration">--</span>
+                    <span class="stat-date" id="workout-date">--</span>
+                </div>
+            </div>
+
+            <!-- Coaching Session Card -->
+            <div class="stat-card stat-card-ai">
+                <div class="stat-header">
+                    <i class="bi bi-chat-left-text stat-icon"></i>
+                    <h3 class="stat-title">Next Session</h3>
+                </div>
+                <div class="stat-body">
+                    <div class="stat-value-text" id="next-session-date">--</div>
+                </div>
+                <div class="stat-footer">
+                    <span class="stat-detail" id="session-countdown">--</span>
+                    <span class="stat-detail" id="active-goals-count">--</span>
+                </div>
+            </div>
+
+            <!-- Nutrition Streak Card -->
+            <div class="stat-card stat-card-meta">
+                <div class="stat-header">
+                    <i class="bi bi-egg-fried stat-icon"></i>
+                    <h3 class="stat-title">Nutrition Streak</h3>
+                </div>
+                <div class="stat-body">
+                    <div class="stat-value" id="nutrition-streak">--</div>
+                    <div class="stat-unit">days</div>
+                </div>
+                <div class="stat-footer">
+                    <span class="stat-detail" id="calories-today">--</span>
+                    <span class="stat-detail" id="protein-today">--</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Charts Section -->
+    <section class="dashboard-charts">
+        <div class="charts-grid">
+            <!-- Weight Trend Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Weight Trend (7 Days)</h3>
+                    <a href="/health/metrics" class="chart-link">View All <i class="bi bi-arrow-right"></i></a>
+                </div>
+                <div class="chart-body">
+                    <canvas id="weightTrendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Workout Volume Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Workout Volume (7 Days)</h3>
+                    <a href="/workout/workouts" class="chart-link">View All <i class="bi bi-arrow-right"></i></a>
+                </div>
+                <div class="chart-body">
+                    <canvas id="workoutVolumeChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Nutrition Adherence Chart -->
+            <div class="chart-card chart-card-full">
+                <div class="chart-header">
+                    <h3 class="chart-title">Nutrition Adherence (7 Days)</h3>
+                    <a href="/nutrition/summary" class="chart-link">View Summary <i class="bi bi-arrow-right"></i></a>
+                </div>
+                <div class="chart-body">
+                    <canvas id="nutritionAdherenceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Actions -->
+    <section class="dashboard-actions">
+        <h2 class="section-title">Quick Actions</h2>
+        <div class="actions-grid">
+            <a href="#" class="action-card" data-action="log-weight" role="button">
+                <i class="bi bi-plus-circle action-icon"></i>
+                <h3 class="action-title">Log Weight</h3>
+                <p class="action-description">Record today's weight and body fat</p>
+            </a>
+            <a href="#" class="action-card" data-action="log-workout" role="button">
+                <i class="bi bi-plus-circle action-icon"></i>
+                <h3 class="action-title">Log Workout</h3>
+                <p class="action-description">Record your training session</p>
+            </a>
+            <a href="#" class="action-card" data-action="log-meal" role="button">
+                <i class="bi bi-plus-circle action-icon"></i>
+                <h3 class="action-title">Log Meal</h3>
+                <p class="action-description">Track your nutrition</p>
+            </a>
+        </div>
+    </section>
+
+    <!-- Recent Activity Feed -->
+    <section class="dashboard-activity">
+        <div class="activity-header">
+            <h2 class="section-title">Recent Activity</h2>
+            <div class="activity-filters">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="health">Health</button>
+                <button class="filter-btn" data-filter="workout">Workout</button>
+                <button class="filter-btn" data-filter="coaching">Coaching</button>
+                <button class="filter-btn" data-filter="nutrition">Nutrition</button>
+            </div>
+        </div>
+        <div class="activity-feed" id="activity-feed">
+            <!-- Activity items will be loaded via JavaScript -->
+            <div class="activity-loading">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="/static/js/common.js"></script>
+<script src="/static/js/dashboard.js"></script>
+{% endblock %}

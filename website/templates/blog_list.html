@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Blog - Articles and Insights{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb Navigation -->
+<nav aria-label="Breadcrumb" class="breadcrumb-nav breadcrumb-container">
+    <div class="container">
+        <ol class="breadcrumb-list">
+            <li><a href="/">Home</a></li>
+            <li aria-current="page">Blog</li>
+        </ol>
+    </div>
+</nav>
+
+<div class="blog-container">
+    <!-- Blog Header -->
+    <section class="blog-header">
+        <div class="container">
+            <h1>Blog</h1>
+            <p class="blog-header-subtitle">Exploring development, AI, fitness, and the discipline that connects them all</p>
+        </div>
+    </section>
+
+    <!-- Blog Listing -->
+    <section class="blog-listing">
+        <div class="container">
+            <!-- View Toggle Buttons -->
+            <div class="blog-view-toggle">
+                <button class="view-toggle-btn active" data-view="all">All Articles</button>
+                <button class="view-toggle-btn" data-view="saved">Saved Articles</button>
+            </div>
+
+            <div class="blog-filters">
+                <button class="filter-btn active" data-filter="all">All Articles</button>
+                <button class="filter-btn" data-filter="code">Code & Engineering</button>
+                <button class="filter-btn" data-filter="ai">AI & Learning</button>
+                <button class="filter-btn" data-filter="fitness">Fitness & Discipline</button>
+                <button class="filter-btn" data-filter="meta">Philosophy & Meta</button>
+            </div>
+
+            <div class="blog-posts" id="blog-posts-list">
+                <!-- Blog posts will be loaded here by JavaScript -->
+            </div>
+
+            <div class="no-posts" id="no-posts" style="display: none;">
+                <p>No articles found with the selected filters.</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script src="/static/js/blog.js"></script>
+{% endblock %}

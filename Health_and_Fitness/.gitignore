@@ -1,0 +1,9 @@
+# Data and working files - not included in version control
+data/
+generated/
+.DS_Store
+
+# Large files
+*.xml
+*.bin
+*.db
