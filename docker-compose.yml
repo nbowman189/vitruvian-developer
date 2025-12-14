@@ -45,8 +45,8 @@ services:
       - APP_NAME=Primary Assistant
       - ADMIN_EMAIL=${ADMIN_EMAIL:-nbowman189@gmail.com}
     volumes:
-      - static_files:/app/website/static
-      - user_uploads:/app/website/uploads
+      - static_files:/app/static
+      - user_uploads:/app/uploads
       - logs:/app/logs
     depends_on:
       db:
