@@ -53,9 +53,11 @@ COPY --chown=appuser:appuser website/ .
 COPY --chown=appuser:appuser AI_Development/ /AI_Development/
 COPY --chown=appuser:appuser Health_and_Fitness/ /Health_and_Fitness/
 
-# Create directories for logs and uploads
+# Create directories for logs and uploads, and fix static file permissions
 RUN mkdir -p logs uploads static/uploads && \
-    chown -R appuser:appuser logs uploads static
+    chown -R appuser:appuser logs uploads static && \
+    find static -type f -exec chmod 644 {} \; && \
+    find static -type d -exec chmod 755 {} \;
 
 # Switch to non-root user
 USER appuser
