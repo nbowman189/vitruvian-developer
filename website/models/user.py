@@ -76,7 +76,7 @@ class User(UserMixin, db.Model):
     # Relationships
     health_metrics = relationship('HealthMetric', back_populates='user', cascade='all, delete-orphan')
     workout_sessions = relationship('WorkoutSession', back_populates='user', cascade='all, delete-orphan')
-    coaching_sessions = relationship('CoachingSession', back_populates='user', cascade='all, delete-orphan')
+    coaching_sessions = relationship('CoachingSession', foreign_keys='CoachingSession.user_id', back_populates='user', cascade='all, delete-orphan')
     coached_sessions = relationship('CoachingSession', foreign_keys='CoachingSession.coach_id', back_populates='coach', cascade='all, delete-orphan')
     goals = relationship('UserGoal', back_populates='user', cascade='all, delete-orphan')
     progress_photos = relationship('ProgressPhoto', back_populates='user', cascade='all, delete-orphan')

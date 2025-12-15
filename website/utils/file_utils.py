@@ -66,6 +66,17 @@ class BlogPostParser:
 class ProjectFileManager:
     """Manages project files and directories"""
 
+    # Virtual database-driven pages for Health_and_Fitness project
+    VIRTUAL_PAGES = {
+        'Health_and_Fitness': [
+            'data/health-metrics-log.md',
+            'data/workout-log.md',
+            'data/meal-log.md',
+            'data/progress-photos.md',
+            'data/coaching-sessions.md'
+        ]
+    }
+
     def __init__(self, project_root, project_dirs, allow_data_access=False):
         self.project_root = project_root
         self.project_dirs = project_dirs
@@ -73,7 +84,7 @@ class ProjectFileManager:
 
     def get_project_files(self, project_name, file_order=None):
         """
-        Get all markdown files for a project.
+        Get all markdown files for a project, including virtual database-driven pages.
 
         Args:
             project_name: Name of the project
@@ -94,6 +105,10 @@ class ProjectFileManager:
                     relative_path = os.path.relpath(os.path.join(root, file), project_path)
                     markdown_files.append(relative_path)
 
+        # Add virtual database-driven pages if data access is allowed
+        if self.allow_data_access and project_name in self.VIRTUAL_PAGES:
+            markdown_files.extend(self.VIRTUAL_PAGES[project_name])
+
         # Apply custom ordering if provided
         if file_order:
             markdown_files.sort(key=lambda f: (
@@ -104,17 +119,23 @@ class ProjectFileManager:
 
     def get_file_content(self, project_name, file_path):
         """
-        Get content of a specific file.
+        Get content of a specific file or generate virtual database-driven page.
 
         Args:
             project_name: Name of the project
             file_path: Path to the file within the docs/ subdirectory (or data/ if allow_data_access=True)
 
         Returns:
-            str: File content
+            str: File content or generated content for virtual pages
         """
         if project_name not in self.project_dirs:
             raise ValueError(f"Project '{project_name}' not found")
+
+        # Check if this is a virtual database-driven page
+        if (self.allow_data_access and
+            project_name in self.VIRTUAL_PAGES and
+            file_path in self.VIRTUAL_PAGES[project_name]):
+            return self._generate_virtual_page_content(project_name, file_path)
 
         project_path = os.path.realpath(os.path.join(self.project_root, project_name))
 
@@ -143,6 +164,204 @@ class ProjectFileManager:
 
         with open(real_path, 'r') as f:
             return f.read()
+
+    def _generate_virtual_page_content(self, project_name, file_path):
+        """
+        Generate content for virtual database-driven pages.
+
+        Args:
+            project_name: Name of the project
+            file_path: Virtual file path
+
+        Returns:
+            str: Generated markdown content from database
+        """
+        from ..models.health import HealthMetric
+        from ..models.workout import WorkoutSession
+        from ..models.nutrition import MealLog
+        from ..models.coaching import CoachingSession, ProgressPhoto
+        from flask import current_app
+        from flask_login import current_user
+
+        # Map virtual pages to content generators
+        if file_path == 'data/health-metrics-log.md':
+            return self._generate_health_metrics_log()
+        elif file_path == 'data/workout-log.md':
+            return self._generate_workout_log()
+        elif file_path == 'data/meal-log.md':
+            return self._generate_meal_log()
+        elif file_path == 'data/progress-photos.md':
+            return self._generate_progress_photos()
+        elif file_path == 'data/coaching-sessions.md':
+            return self._generate_coaching_sessions()
+        else:
+            raise FileNotFoundError(f"Unknown virtual page: {file_path}")
+
+    def _generate_health_metrics_log(self):
+        """Generate health metrics log from database"""
+        from ..models.health import HealthMetric
+        from flask_login import current_user
+
+        if not current_user.is_authenticated:
+            return "# Health Metrics Log\n\n*Please log in to view your health metrics.*"
+
+        metrics = HealthMetric.query.filter_by(user_id=current_user.id).order_by(HealthMetric.recorded_date.desc()).all()
+
+        content = "# Health Metrics Log\n\n"
+        content += "Track your weight, body fat percentage, and other health metrics over time.\n\n"
+
+        if not metrics:
+            content += "*No health metrics recorded yet.*\n"
+            return content
+
+        content += "| Date | Weight (lbs) | Body Fat % | BMI | Notes |\n"
+        content += "|------|--------------|------------|-----|-------|\n"
+
+        for metric in metrics:
+            date = metric.recorded_date.strftime('%Y-%m-%d')
+            weight = f"{metric.weight:.1f}" if metric.weight else "—"
+            bodyfat = f"{metric.body_fat_percentage:.1f}" if metric.body_fat_percentage else "—"
+            bmi = f"{metric.bmi:.1f}" if metric.bmi else "—"
+            notes = metric.notes or ""
+            content += f"| {date} | {weight} | {bodyfat} | {bmi} | {notes} |\n"
+
+        return content
+
+    def _generate_workout_log(self):
+        """Generate workout log from database"""
+        from ..models.workout import WorkoutSession
+        from flask_login import current_user
+
+        if not current_user.is_authenticated:
+            return "# Workout Log\n\n*Please log in to view your workout history.*"
+
+        workouts = WorkoutSession.query.filter_by(user_id=current_user.id).order_by(WorkoutSession.session_date.desc()).limit(50).all()
+
+        content = "# Workout Log\n\n"
+        content += "Recent workout sessions and exercise tracking.\n\n"
+
+        if not workouts:
+            content += "*No workouts recorded yet.*\n"
+            return content
+
+        for workout in workouts:
+            date = workout.session_date.strftime('%Y-%m-%d')
+            content += f"\n## {date} - {workout.workout_type or 'Workout'}\n\n"
+            if workout.duration_minutes:
+                content += f"**Duration:** {workout.duration_minutes} minutes\n\n"
+            if workout.notes:
+                content += f"{workout.notes}\n\n"
+
+            if workout.exercises:
+                content += "### Exercises\n\n"
+                for exercise in workout.exercises:
+                    content += f"- **{exercise.exercise_name}**: {exercise.sets} sets × {exercise.reps} reps"
+                    if exercise.weight:
+                        content += f" @ {exercise.weight} lbs"
+                    content += "\n"
+
+        return content
+
+    def _generate_meal_log(self):
+        """Generate meal log from database"""
+        from ..models.nutrition import MealLog
+        from flask_login import current_user
+
+        if not current_user.is_authenticated:
+            return "# Meal Log\n\n*Please log in to view your meal history.*"
+
+        meals = MealLog.query.filter_by(user_id=current_user.id).order_by(MealLog.meal_date.desc()).limit(30).all()
+
+        content = "# Meal Log\n\n"
+        content += "Daily nutrition tracking and meal records.\n\n"
+
+        if not meals:
+            content += "*No meals recorded yet.*\n"
+            return content
+
+        current_date = None
+        for meal in meals:
+            date = meal.meal_date.strftime('%Y-%m-%d')
+            if date != current_date:
+                content += f"\n## {date}\n\n"
+                current_date = date
+
+            content += f"### {meal.meal_type.value.title()}\n\n"
+            if meal.description:
+                content += f"{meal.description}\n\n"
+            if meal.calories or meal.protein_g or meal.carbs_g or meal.fat_g:
+                content += "**Macros:** "
+                parts = []
+                if meal.calories:
+                    parts.append(f"{meal.calories} cal")
+                if meal.protein_g:
+                    parts.append(f"{meal.protein_g}g protein")
+                if meal.carbs_g:
+                    parts.append(f"{meal.carbs_g}g carbs")
+                if meal.fat_g:
+                    parts.append(f"{meal.fat_g}g fat")
+                content += " | ".join(parts) + "\n\n"
+
+        return content
+
+    def _generate_progress_photos(self):
+        """Generate progress photos page from database"""
+        from ..models.coaching import ProgressPhoto
+        from flask_login import current_user
+
+        if not current_user.is_authenticated:
+            return "# Progress Photos\n\n*Please log in to view your progress photos.*"
+
+        photos = ProgressPhoto.query.filter_by(user_id=current_user.id).order_by(ProgressPhoto.photo_date.desc()).all()
+
+        content = "# Progress Photos\n\n"
+        content += "Visual tracking of your transformation journey.\n\n"
+
+        if not photos:
+            content += "*No progress photos uploaded yet.*\n"
+            return content
+
+        for photo in photos:
+            date = photo.photo_date.strftime('%Y-%m-%d')
+            content += f"## {date}\n\n"
+            if photo.photo_url:
+                content += f"![Progress Photo]({photo.photo_url})\n\n"
+            if photo.notes:
+                content += f"{photo.notes}\n\n"
+            content += "---\n\n"
+
+        return content
+
+    def _generate_coaching_sessions(self):
+        """Generate coaching sessions log from database"""
+        from ..models.coaching import CoachingSession
+        from flask_login import current_user
+
+        if not current_user.is_authenticated:
+            return "# Coaching Sessions\n\n*Please log in to view your coaching sessions.*"
+
+        sessions = CoachingSession.query.filter_by(user_id=current_user.id).order_by(CoachingSession.session_date.desc()).all()
+
+        content = "# Coaching Sessions\n\n"
+        content += "Record of coaching feedback, plans, and progress discussions.\n\n"
+
+        if not sessions:
+            content += "*No coaching sessions recorded yet.*\n"
+            return content
+
+        for session in sessions:
+            date = session.session_date.strftime('%Y-%m-%d')
+            content += f"\n## {date}\n\n"
+            if session.session_type:
+                content += f"**Type:** {session.session_type}\n\n"
+            if session.notes:
+                content += f"{session.notes}\n\n"
+            if session.action_items:
+                content += "### Action Items\n\n"
+                content += f"{session.action_items}\n\n"
+            content += "---\n\n"
+
+        return content
 
     def get_gemini_file(self, project_name):
         """Get GEMINI.md file content for a project"""

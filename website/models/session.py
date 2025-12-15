@@ -8,7 +8,7 @@ Provides session lifecycle management with expiration and security metadata.
 
 from datetime import datetime, timezone, timedelta
 from typing import Optional
-from sqlalchemy import String, DateTime, ForeignKey, Boolean, Index
+from sqlalchemy import String, Integer, DateTime, ForeignKey, Boolean, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import INET, UUID
 import uuid

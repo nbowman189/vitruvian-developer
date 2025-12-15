@@ -83,6 +83,10 @@ def initialize_extensions(app):
     db.init_app(app)
     migrate.init_app(app, db)
 
+    # Import models for Flask-Migrate to detect them
+    with app.app_context():
+        from . import models
+
     # Authentication
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
@@ -118,31 +122,23 @@ def register_blueprints(app):
     Args:
         app: Flask application instance
     """
-    # Import blueprints
-    from .routes.main import main_bp
-    from .routes.blog import blog_bp
-    from .routes.health import health_bp
-    from .routes.api_projects import api_projects_bp
-    from .routes.api_blog import api_blog_bp
-    from .routes.api_misc import api_misc_bp
-    from .routes.api_monitoring import api_monitoring_bp
+    # Import blueprints from routes/__init__.py
+    from .routes import main_bp, blog_bp, api_bp, health_bp, insights_bp
+
+    # Import route modules to register their decorated routes with blueprints
+    from .routes import main, blog, health
+    from .routes import api_projects, api_blog, api_misc, api_monitoring
 
     # Register blueprints
     app.register_blueprint(main_bp)
     app.register_blueprint(blog_bp)
     app.register_blueprint(health_bp)
-    app.register_blueprint(api_projects_bp)
-    app.register_blueprint(api_blog_bp)
-    app.register_blueprint(api_misc_bp)
-    app.register_blueprint(api_monitoring_bp)
+    app.register_blueprint(api_bp)
+    app.register_blueprint(insights_bp)
 
     # Authentication blueprint
     from .auth import auth_bp
     app.register_blueprint(auth_bp)
-
-    # RESTful API blueprint (Phase 4)
-    from .api import api_bp
-    app.register_blueprint(api_bp)
 
 
 def configure_logging(app):

@@ -22,7 +22,9 @@ document.addEventListener('DOMContentLoaded', function() {
         projectTitleNav.textContent = projectToTitle(projectName);
 
         // Fetch files for the project
-        fetch(`/api/project/${projectName}/files`)
+        fetch(`/api/project/${projectName}/files`, {
+            credentials: 'include'
+        })
             .then(response => response.json())
             .then(files => {
                 fileList.innerHTML = '';

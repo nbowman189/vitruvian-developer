@@ -419,7 +419,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Fetch GEMINI.md content
-        fetch(`/api/project/${projectName}`)
+        fetch(`/api/project/${projectName}`, {
+            credentials: 'include'
+        })
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
@@ -439,7 +441,9 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
         // Fetch list of markdown files
-        fetch(`/api/project/${projectName}/files`)
+        fetch(`/api/project/${projectName}/files`, {
+            credentials: 'include'
+        })
             .then(response => response.json())
             .then(files => {
                 fileList.innerHTML = '';
@@ -526,7 +530,9 @@ document.addEventListener('DOMContentLoaded', function() {
             };
         }
 
-        fetch(`/api/project/${projectName}/file/${filePath}`)
+        fetch(`/api/project/${projectName}/file/${filePath}`, {
+            credentials: 'include'
+        })
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
@@ -564,7 +570,9 @@ document.addEventListener('DOMContentLoaded', function() {
             };
         }
 
-        fetch(`/api/project/${projectName}`)
+        fetch(`/api/project/${projectName}`, {
+            credentials: 'include'
+        })
             .then(response => response.json())
             .then(data => {
                 if (data.error) {

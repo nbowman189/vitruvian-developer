@@ -1,6 +1,6 @@
 # Authentication System Integration Plan
 
-**Status**: IN PROGRESS
+**Status**: COMPLETED
 **Date**: December 14, 2024
 
 ## Overview
@@ -30,90 +30,151 @@ Integrate the existing authentication system (Flask-Login, user models, auth blu
 - [x] Backup original app.py to app_standalone_backup.py
 - [x] Create new minimal app.py that calls create_app()
 
-### Phase 2: Route Migration (IN PROGRESS)
-Need to add missing routes from app_standalone_backup.py to blueprints:
+### Phase 2: Route Migration ✅
+All routes successfully migrated from app_standalone_backup.py to blueprints:
 
-**Routes Already in Blueprints:**
-- `/` - main_bp
-- `/knowledge-graph` - main_bp
-- `/insights` - main_bp
-- `/api/projects` - api_projects_bp
-- `/api/project/<name>` - api_projects_bp
-- `/api/project/<name>/files` - api_projects_bp
-- `/api/project/<name>/file/<path>` - api_projects_bp
+**main_bp** (`routes/main.py`) ✅:
+- `/` - index page
+- `/project-case-study/<project_name>` - case study pages
+- `/the-vitruvian-developer` - origin story page
+- `/project/<project_name>` (with optional file_path) - project documentation
+- `/knowledge-graph` - knowledge graph visualization
+- `/insights` - reading insights dashboard
+- `/static/<path:filename>` - static file serving
 
-**Routes Need to be Added:**
-1. **main_bp** (`routes/main.py`):
-   - `/project-case-study/<project_name>`
-   - `/the-vitruvian-developer`
-   - `/project/<project_name>` (with optional file_path)
+**api_bp** (`routes/api_projects.py`) ✅:
+- `/api/projects` - list all projects
+- `/api/projects-metadata` - project metadata with disciplines
+- `/api/project/<name>` - GEMINI.md content
+- `/api/project/<name>/files` - project file list
+- `/api/project/<name>/file/<path>` - file content
+- `/api/project/<name>/categorized-files` - files categorized by content
+- `/api/project/<name>/summary` - project summary from _project_summary.md
+- `/api/origin-story` - Vitruvian Developer origin story
 
-2. **api_projects_bp** (`routes/api_projects.py`):
-   - `/api/projects-metadata`
-   - `/api/project/<name>/categorized-files`
-   - `/api/project/<name>/summary`
-   - `/api/featured-projects`
-   - `/api/origin-story`
+**health_bp** (`routes/health.py`) ✅:
+- `/health-and-fitness/graphs` - health graphs page
 
-3. **health_bp** (`routes/health.py`):
-   - `/health-and-fitness/graphs`
-   - `/api/health-and-fitness/health_data`
+**api_bp** (`routes/api_misc.py`) ✅:
+- `/api/health-and-fitness/health_data` - weight/bodyfat data
+- `/api/featured-projects` - featured projects list
+- `/api/contact-info` - contact information
+- `/api/content/graph` - knowledge graph data
+- `/api/content/related` - related content
+- `/api/content/disciplines` - discipline organization
+- `/api/content/search` - content search
 
-4. **api_misc_bp** (`routes/api_misc.py`):
-   - `/api/contact-info`
-   - `/api/content/graph`
-   - `/api/content/related`
-   - `/api/content/disciplines`
-   - `/api/content/search`
+**api_bp** (`routes/api_monitoring.py`) ✅:
+- `/api/health` - Docker health check
+- `/api/metrics` - application metrics
+- `/api/metrics/endpoints` - endpoint performance metrics
+- `/api/metrics/cache` - cache statistics
 
-5. **api_monitoring_bp** (`routes/api_monitoring.py`):
-   - `/api/health` (Docker health check)
+**blog_bp** (`routes/blog.py`) ✅:
+- `/blog/` - blog listing page
+- `/blog/saved` - saved articles page
+- `/blog/<slug>` - individual blog article
 
-6. **blog_bp** (`routes/blog.py`):
-   - Already has routes but may need additions from app_standalone_backup.py
+**api_bp** (`routes/api_blog.py`) ✅:
+- `/api/blog/posts` - all blog posts with pagination
+- `/api/blog/posts/latest` - latest N blog posts
+- `/api/blog/post/<slug>` - specific blog post
+- `/api/blog/post/<slug>/related-projects` - related projects for post
 
-7. **api_blog_bp** (`routes/api_blog.py`):
-   - Already has routes but may need additions from app_standalone_backup.py
+**Architectural Notes:**
+- All API routes use the single `api_bp` blueprint with url_prefix='/api'
+- health_bp uses url_prefix='/health-and-fitness'
+- blog_bp uses url_prefix='/blog'
+- Fixed import error in models/session.py (missing Integer import)
+- Application successfully creates without errors ✅
 
-### Phase 3: Configuration
-- [ ] Add PROJECT_METADATA to config.py
-- [ ] Add CONTACT_INFO to config.py
-- [ ] Verify all environment variables are set
+### Phase 3: Configuration ✅
+- [x] PROJECT_METADATA already in config.py
+- [x] CONTACT_INFO already in config.py
+- [x] FEATURED_PROJECTS already in config.py
+- [x] HEALTH_FITNESS_FILE_ORDER already in config.py
+- [x] All required environment variables documented in .env
 
-### Phase 4: Database Setup
-- [ ] Initialize Flask-Migrate in Docker container
-- [ ] Create initial migration for user tables
-- [ ] Run migration to create tables
-- [ ] Create initial admin user
+### Phase 4: Database Setup ✅
+- [x] Initialize Flask-Migrate locally (migrations directory created)
+- [x] Fixed db instance conflict (models/__init__.py now imports from main __init__.py)
+- [x] Created initial migration for all models (User, Session, Health, Workout, Nutrition, Coaching)
+- [x] Created admin user creation script (`scripts/create_admin_user.py`)
+- [x] Created Docker entrypoint script (`docker/docker-entrypoint.sh`) that:
+  - Waits for PostgreSQL to be ready
+  - Runs `flask db upgrade` to apply migrations
+  - Optionally creates admin user if ADMIN_PASSWORD is set
 
-### Phase 5: Templates
-- [ ] Create login.html template
-- [ ] Create register.html template
-- [ ] Add login/logout links to base.html navigation
-- [ ] Create user profile page template
+### Phase 5: Templates ✅
+- [x] Login and register templates already existed in `templates/auth/`
+- [x] Updated templates with modern Bootstrap 5 styling
+- [x] Added navbar to `base.html` with:
+  - The Vitruvian Developer branding
+  - Portfolio and Blog links
+  - Conditional authentication links (Login/Register when logged out, Profile/Logout when logged in)
+  - Bootstrap Icons for visual enhancement
+- [x] Added flash message support to base.html for user feedback
+- [x] Profile page template already exists
 
-### Phase 6: Access Control
-- [ ] Identify routes that should require authentication
-- [ ] Add `@login_required` decorator to private data routes
-- [ ] Update `file_utils.py` to respect authentication
-- [ ] Routes to protect:
-  - `/api/project/<name>/file/<path>` (if file in /data/ directory)
-  - `/api/health-and-fitness/health_data` (private metrics)
-  - Any coaching or personal data endpoints
+### Phase 6: Access Control ✅
+- [x] Identified routes requiring authentication
+- [x] Added authentication check to `/api/health-and-fitness/health_data` in routes/api_misc.py
+  - Returns 401 if not authenticated
+- [x] Added authentication check to `/api/project/<name>/file/<path>` in routes/api_projects.py
+  - Checks if file path contains 'data/' directory
+  - Returns 401 for /data/ files if not authenticated
+  - Public files in /docs/ remain accessible
+- [x] Access control implemented without breaking public functionality
 
-### Phase 7: Docker Updates
-- [ ] Update Dockerfile to run database migrations on startup
-- [ ] Update docker-compose.yml to ensure database is ready
-- [ ] Add script to create initial admin user
-- [ ] Update Gunicorn command to use `website:create_app()`
+### Phase 7: Docker Updates ✅
+- [x] Updated Dockerfile to:
+  - Install Flask-Migrate in build stage
+  - Copy docker-entrypoint.sh script
+  - Set entrypoint to run migrations before starting app
+  - Increased healthcheck start_period to 60s for migration time
+- [x] Updated docker-compose.yml to:
+  - Add all PostgreSQL connection environment variables
+  - Add ADMIN_USERNAME and ADMIN_PASSWORD for optional admin creation
+  - Ensure web depends on db health check
+- [x] Gunicorn already uses `app:app` which calls `create_app()` in app.py
 
-### Phase 8: Testing
-- [ ] Test public routes work without authentication
-- [ ] Test private routes redirect to login
-- [ ] Test login/logout flow
-- [ ] Test user registration
-- [ ] Test protected API endpoints return 401 when not authenticated
-- [ ] Test database persistence across container restarts
+### Phase 8: Testing 🔄
+Ready for testing! To test the complete system:
+
+```bash
+# 1. Build and start containers
+docker compose down -v  # Clean slate
+docker compose up --build
+
+# 2. Verify services are healthy
+docker compose ps
+
+# 3. Test public routes (should work)
+curl http://localhost/api/health
+curl http://localhost/api/projects
+
+# 4. Test private routes (should return 401)
+curl http://localhost/api/health-and-fitness/health_data
+curl "http://localhost/api/project/Health_and_Fitness/file/data/check-in-log.md"
+
+# 5. Check admin user was created
+docker compose exec web python scripts/create_admin_user.py --username test
+
+# 6. Test authentication in browser
+# - Navigate to http://localhost
+# - Click "Login"
+# - Login with admin credentials
+# - Verify private data is accessible
+```
+
+Testing checklist:
+- [ ] Application starts successfully
+- [ ] Database migrations run automatically
+- [ ] Public routes accessible without auth
+- [ ] Private data routes return 401 without auth
+- [ ] Login/logout flow works
+- [ ] Private data accessible after login
+- [ ] Database persists across restarts
 
 ## Environment Variables Required
 

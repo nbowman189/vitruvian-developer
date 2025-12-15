@@ -17,15 +17,9 @@ Models:
 - UserSession: Session management for security
 """
 
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase
-
-class Base(DeclarativeBase):
-    """Base class for all models"""
-    pass
-
-# Initialize SQLAlchemy with custom base
-db = SQLAlchemy(model_class=Base)
+# Import the shared db instance from main __init__.py
+# This must be done before importing models to avoid circular imports
+from .. import db
 
 # Import models after db initialization to avoid circular imports
 from .user import User

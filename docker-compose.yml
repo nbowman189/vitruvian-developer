@@ -34,18 +34,28 @@ services:
       - FLASK_ENV=production
       - SECRET_KEY=${SECRET_KEY:?SECRET_KEY must be set}
 
-      # Database
+      # Database Connection
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB:-primary_assistant}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-primary_assistant}
 
       # Security
-      - SESSION_COOKIE_SECURE=true
+      - SESSION_COOKIE_SECURE=false  # Set to true for production HTTPS
       - WTF_CSRF_ENABLED=true
 
       # Application
       - APP_NAME=Primary Assistant
       - ADMIN_EMAIL=${ADMIN_EMAIL:-nbowman189@gmail.com}
+      - PROJECT_ROOT=/
+
+      # Admin User Creation (optional - only if ADMIN_PASSWORD is set)
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
     volumes:
-      - static_files:/app/static
+      - static_files:/app/website/static
       - user_uploads:/app/uploads
       - logs:/app/logs
     depends_on:
@@ -72,7 +82,7 @@ services:
       - "${HTTP_PORT:-80}:80"
       - "${HTTPS_PORT:-443}:443"
     volumes:
-      - static_files:/app/static:ro
+      - static_files:/app/website/static:ro
       - user_uploads:/app/uploads:ro
       # SSL directory - create with: mkdir -p docker/nginx/ssl
       # - ./docker/nginx/ssl:/etc/nginx/ssl:ro

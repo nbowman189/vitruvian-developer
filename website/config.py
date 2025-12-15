@@ -103,11 +103,14 @@ class BaseConfig:
 
     # Health & Fitness file ordering
     HEALTH_FITNESS_FILE_ORDER = [
-        'fitness-roadmap.md',
-        'Full-Meal-Plan.md',
-        'Shopping-List-and-Estimate.md',
-        'check-in-log.md',
-        'progress-check-in-log.md'
+        'docs/fitness-roadmap.md',
+        'docs/3-week-workout-plan.md',
+        'docs/plant-based-diet-analysis.md',
+        'data/health-metrics-log.md',     # Virtual database page
+        'data/workout-log.md',            # Virtual database page
+        'data/meal-log.md',               # Virtual database page
+        'data/progress-photos.md',        # Virtual database page
+        'data/coaching-sessions.md'       # Virtual database page
     ]
 
     # Featured projects configuration

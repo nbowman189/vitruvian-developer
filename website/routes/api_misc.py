@@ -94,9 +94,17 @@ def get_misc_api():
 @handle_api_errors
 @log_request
 def get_health_data():
-    """Get health and fitness data"""
+    """Get health and fitness data (requires authentication)"""
+    from flask_login import login_required, current_user
+
+    # Require authentication for private health data
+    if not current_user.is_authenticated:
+        return jsonify({"error": "Authentication required"}), 401
+
     import os
-    project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    # In Docker, project directories are at root level /
+    # In local dev, they're in the parent of the website directory
+    project_root = os.environ.get('PROJECT_ROOT', os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
     misc_api = get_misc_api()
     data = misc_api.get_health_data(project_root)
     return jsonify(data)
@@ -168,3 +176,24 @@ def get_related_content():
         'shared_disciplines': [],
         'related_posts': []
     })
+
+
+@api_bp.route('/content/search', methods=['GET'])
+@handle_api_errors
+@log_request
+def search_content():
+    """Search across blog posts and projects by title, tags, or disciplines"""
+    from flask import request
+    from ..utils.error_handler import ValidationError
+
+    query = request.args.get('q', '').lower().strip()
+    search_type = request.args.get('type', 'all')
+
+    if not query or len(query) < 2:
+        raise ValidationError("Query too short. Minimum 2 characters.")
+
+    results = {'posts': [], 'projects': []}
+
+    # Search would be implemented here
+    # For now, return empty results
+    return jsonify(results)

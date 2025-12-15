@@ -98,7 +98,9 @@
     // ==========================================================================
     async function loadCategorizedFiles() {
         try {
-            const response = await fetch(`/api/project/${state.projectName}/categorized-files`);
+            const response = await fetch(`/api/project/${state.projectName}/categorized-files`, {
+                credentials: 'include'
+            });
             if (!response.ok) throw new Error('Failed to load files');
 
             const data = await response.json();
@@ -220,7 +222,9 @@
         `;
 
         try {
-            const response = await fetch(`/api/project/${state.projectName}/file/${filePath}`);
+            const response = await fetch(`/api/project/${state.projectName}/file/${filePath}`, {
+                credentials: 'include'
+            });
             if (!response.ok) throw new Error('Failed to load file');
 
             const data = await response.json();
@@ -274,7 +278,9 @@
         `;
 
         try {
-            const response = await fetch(`/api/project/${state.projectName}`);
+            const response = await fetch(`/api/project/${state.projectName}`, {
+                credentials: 'include'
+            });
             if (!response.ok) throw new Error('Failed to load overview');
 
             const data = await response.json();

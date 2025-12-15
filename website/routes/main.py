@@ -2,7 +2,7 @@
 Main application routes
 """
 
-from flask import render_template, send_from_directory
+from flask import render_template, send_from_directory, current_app
 from . import main_bp
 from ..utils.error_handler import log_request
 import os
@@ -13,6 +13,48 @@ import os
 def index():
     """Render home page"""
     return render_template('index.html')
+
+
+@main_bp.route('/project-case-study/<project_name>')
+@log_request
+def project_case_study(project_name):
+    """Render the professional case study page"""
+    PROJECT_DIRS = current_app.config.get('PROJECT_DIRS', [])
+    if project_name not in PROJECT_DIRS:
+        return "Project not found", 404
+    return render_template('case_study.html', project_title=project_name.replace('_', ' '))
+
+
+@main_bp.route('/the-vitruvian-developer')
+@log_request
+def origin_story():
+    """Render the complete origin story page"""
+    return render_template('origin_story.html')
+
+
+@main_bp.route('/project/<project_name>')
+@main_bp.route('/project/<project_name>/')
+@main_bp.route('/project/<project_name>/<path:file_path>')
+@log_request
+def project_page(project_name, file_path=None):
+    """
+    Render the project documentation page with sidebar navigation.
+    Supports bookmarkable URLs like /project/Health_and_Fitness/fitness-roadmap.md
+    """
+    PROJECT_DIRS = current_app.config.get('PROJECT_DIRS', [])
+    PROJECT_METADATA = current_app.config.get('PROJECT_METADATA', {})
+
+    if project_name not in PROJECT_DIRS:
+        return "Project not found", 404
+
+    # Get project metadata
+    metadata = PROJECT_METADATA.get(project_name, {})
+    display_name = metadata.get('display_name', project_name.replace('_', ' '))
+
+    return render_template('project.html',
+                          project_name=project_name,
+                          project_display_name=display_name,
+                          initial_file=file_path)
 
 
 @main_bp.route('/knowledge-graph')
