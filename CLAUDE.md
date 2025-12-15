@@ -2,15 +2,40 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🚨 CURRENT SESSION STATUS (December 14, 2024)
+
+**STATUS:** Incomplete - Remote deployment blocked by database connection string issue
+
+**NEXT SESSION START HERE:** See `SESSION_NOTES.md` for detailed pickup point and exact fix
+
+**BLOCKING ISSUE:** Database password contains `@` symbol which breaks PostgreSQL connection string parsing
+
+**QUICK FIX:** On remote server, edit `docker-compose.yml` and change:
+- FROM: `postgresql://postgres:Gn05!s12!@rcher@db:5432/primary_assistant`
+- TO: `postgresql://postgres:Gn05!s12!%40rcher@db:5432/primary_assistant` (@ encoded as %40)
+
+**GOOD NEWS:** Docker ContainerConfig error is RESOLVED - docker-compose 1.29.2 works fine
+
+---
+
 ## Project Overview
 
 This is a personal project management system with three main components:
 
-1. **Website** (`/website`): A Flask-based web dashboard
+1. **Website** (`/website`): A Flask-based web dashboard with authentication system
 2. **Scripts** (`/scripts`): Data processing and visualization utilities
 3. **Content Directories**: `Health_and_Fitness` and `AI_Development` folders containing markdown files and project data
 
 Each content directory has a `GEMINI.md` file that provides context-specific information for that area.
+
+### New in This Build:
+- ✅ Complete authentication system (Flask-Login, bcrypt, CSRF protection)
+- ✅ PostgreSQL database with 8+ models (User, Session, Health, Workout, Nutrition, Coaching)
+- ✅ Virtual database-driven pages (5 pages that generate content from database)
+- ✅ Database migrations with Flask-Migrate/Alembic
+- ✅ Admin user creation script
+- ✅ Docker containers building successfully on remote server
+- ⚠️ Remote deployment (95% complete - just needs DATABASE_URL fix)
 
 ## Common Development Commands
 
@@ -40,6 +65,69 @@ python3 app-private.py
 Website runs on `http://localhost:8081` with full access to `/data/` directories.
 
 **Note**: The website uses port 8080 for public and 8081 for private due to macOS's AirTunes service occupying port 5000.
+
+### Docker Deployment (Local or Remote)
+
+#### Local Development with Docker:
+```bash
+cd /Users/nathanbowman/primary-assistant
+docker-compose up -d
+```
+
+#### Remote Server Deployment:
+```bash
+# Use remote override configuration for HTTP access
+docker-compose -f docker-compose.yml -f docker-compose.remote.yml up -d
+```
+
+#### Database Setup:
+```bash
+# Run migrations
+docker-compose exec web flask db upgrade
+
+# Create admin user (username: admin, password: admin123)
+docker-compose exec web python website/scripts/create_admin_user.py
+```
+
+#### Useful Docker Commands:
+```bash
+# View logs
+docker-compose logs -f web
+
+# Restart services
+docker-compose restart web
+
+# Rebuild after code changes
+docker-compose down
+docker-compose up -d --build
+
+# Clean restart (removes volumes/database)
+docker-compose down -v
+docker-compose up -d --build
+```
+
+### Authentication System
+
+The application now has a complete authentication system:
+
+**Login:** `http://localhost:8080/auth/login`
+- Default admin credentials: `admin` / `admin123`
+
+**Features:**
+- Session-based authentication with Flask-Login
+- Password hashing with bcrypt
+- CSRF protection on all forms
+- Protected routes for private data
+- Virtual database pages (visible only when logged in)
+
+**Virtual Database Pages (require authentication):**
+1. Health Metrics Log - `/api/project/Health_and_Fitness/file/data/health-metrics-log.md`
+2. Workout Log - `/api/project/Health_and_Fitness/file/data/workout-log.md`
+3. Meal Log - `/api/project/Health_and_Fitness/file/data/meal-log.md`
+4. Progress Photos - `/api/project/Health_and_Fitness/file/data/progress-photos.md`
+5. Coaching Sessions - `/api/project/Health_and_Fitness/file/data/coaching-sessions.md`
+
+These pages are dynamically generated from the PostgreSQL database and only appear in navigation when logged in.
 
 ### Health Data Processing
 Update the check-in-log.md from HealthKit export:
@@ -80,13 +168,31 @@ Serves ALL project files including `/data/` directories for personal workspace a
 ### Public Portfolio Server (app.py)
 
 The Flask app serves as a dashboard to browse all projects, markdown files, and blog posts:
+
+**Main Routes:**
 - **Route `/`**: Main index page with hero section, portfolio, blog section, and contact
+- **Route `/health-and-fitness/graphs`**: Displays health data visualization with interactive charts
+
+**Authentication Routes:**
+- **Route `/auth/login`**: User login page with CSRF protection
+- **Route `/auth/register`**: User registration page
+- **Route `/auth/logout`**: Logout and end session
+- **Route `/api/auth/status`**: Returns current authentication status (JSON)
+
+**API Routes - Projects:**
 - **Route `/api/projects`**: Returns list of available projects
 - **Route `/api/project/<name>`**: Returns the GEMINI.md content for a project
 - **Route `/api/project/<name>/files`**: Lists all markdown files in a project (with custom ordering for Health_and_Fitness)
+  - **Authentication-aware**: Includes virtual database pages only when user is logged in
 - **Route `/api/project/<name>/file/<path>`**: Returns content of a specific markdown file
-- **Route `/health-and-fitness/graphs`**: Displays health data visualization with interactive charts
+  - **Protected**: Returns 401 for `/data/*` files if not authenticated
+- **Route `/api/project/<name>/categorized-files`**: Returns files organized by category
+  - **Authentication-aware**: Includes virtual pages when logged in
+
+**API Routes - Health Data:**
 - **Route `/api/health-and-fitness/health_data`**: Returns parsed weight/bodyfat data from check-in-log.md
+
+**API Routes - Blog:**
 - **Route `/blog`**: Blog listing page with filtering by tags
 - **Route `/blog/<slug>`**: Individual blog article page with metadata and related articles
 - **Route `/api/blog/posts`**: Returns all blog posts as JSON (sorted by date, newest first)
@@ -234,6 +340,30 @@ This ensures consistent behavior across all pages, including the health graphs p
 - Style markdown with embedded CSS
 - Useful for exporting plans and documentation
 
+### Database Models
+
+The application uses PostgreSQL with the following models (located in `website/models/`):
+
+**Authentication Models:**
+- `User` (`user.py`) - User accounts with bcrypt password hashing
+- `Session` (`session.py`) - Login session tracking
+
+**Health & Fitness Models:**
+- `HealthMetric` (`health.py`) - Weight, body fat %, BMI tracking (field: `recorded_date`)
+- `WorkoutSession` (`workout.py`) - Workout sessions (field: `session_date`)
+- `WorkoutExercise` (`workout.py`) - Individual exercises within sessions
+- `MealLog` (`nutrition.py`) - Daily nutrition tracking (field: `meal_date`, macros: `protein_g`, `carbs_g`, `fat_g`)
+- `CoachingSession` (`coaching.py`) - Coaching notes and feedback (field: `session_date`)
+- `CoachingGoal` (`coaching.py`) - Goal tracking
+- `ProgressPhoto` (`coaching.py`) - Progress photos with metadata (field: `photo_date`)
+
+**Important:** All models use specific date field names (not just `date`). This was a common bug that has been fixed in `file_utils.py`.
+
+**Database Migrations:**
+- Location: `website/migrations/versions/`
+- Initial migration: `b72667ea0290_initial_migration_user_session_health_.py`
+- Run migrations: `docker-compose exec web flask db upgrade`
+
 ### Data Format
 
 **Check-in-log.md table format**:
@@ -356,6 +486,17 @@ primary-assistant/
 - **Database**: See `docs/database/INDEX.md` for complete database documentation
 - **Website UX**: See `docs/website/README.md` for design and UX analysis
 - **Planning**: See `docs/planning/README.md` for strategic plans
+- **Docker**: See `DOCKER_README.md` in root for complete containerization guide
+- **Historical**: See `archive/README.md` for past implementation records
+
+### Documentation Quick Links (Updated December 2024)
+
+- **Session Notes**: See `SESSION_NOTES.md` in root for current status and next session pickup point
+- **Remote Deployment**: See `docs/deployment/REMOTE_DEPLOYMENT.md` for deployment troubleshooting
+- **Verification Guide**: See `docs/website/VERIFICATION_GUIDE.md` for testing authentication
+- **Database**: See `docs/database/INDEX.md` for complete database documentation
+- **Website UX**: See `docs/website/README.md` for design and UX analysis
+- **Planning**: See `docs/planning/README.md` for strategic plans (including `AUTH_INTEGRATION_PLAN.md`)
 - **Docker**: See `DOCKER_README.md` in root for complete containerization guide
 - **Historical**: See `archive/README.md` for past implementation records
 
