@@ -1,0 +1,16 @@
+version: '3.8'
+
+# Override configuration for remote server deployment
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.remote.yml up -d
+
+services:
+  web:
+    environment:
+      # Allow remote access over HTTP (for testing/internal network)
+      # IMPORTANT: For production, use HTTPS with proper SSL certificates
+      - SESSION_COOKIE_SECURE=false
+      - SESSION_COOKIE_SAMESITE=Lax
+      - FLASK_ENV=production
+
+      # Optional: Set server name if needed
+      # - SERVER_NAME=your-server-ip-or-domain:8080

@@ -207,14 +207,14 @@ class ProductionConfig(BaseConfig):
     DEBUG = False
     TESTING = False
 
-    # Production security settings
-    SESSION_COOKIE_SECURE = True  # Require HTTPS
-    REMEMBER_COOKIE_SECURE = True
+    # Production security settings (allow environment override for remote deployments)
+    SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'true').lower() == 'true'
+    REMEMBER_COOKIE_SECURE = os.environ.get('REMEMBER_COOKIE_SECURE', 'true').lower() == 'true'
     PREFERRED_URL_SCHEME = 'https'
 
-    # Stricter session configuration
-    SESSION_COOKIE_SAMESITE = 'Strict'
-    REMEMBER_COOKIE_SAMESITE = 'Strict'
+    # Stricter session configuration (allow environment override)
+    SESSION_COOKIE_SAMESITE = os.environ.get('SESSION_COOKIE_SAMESITE', 'Strict')
+    REMEMBER_COOKIE_SAMESITE = os.environ.get('REMEMBER_COOKIE_SAMESITE', 'Strict')
 
     # Production caching (consider Redis for multi-server setups)
     CACHE_TYPE = os.environ.get('CACHE_TYPE', 'SimpleCache')
