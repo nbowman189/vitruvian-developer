@@ -60,6 +60,9 @@ COPY --chown=appuser:appuser website/app.py /app/app.py
 COPY --chown=appuser:appuser AI_Development/ /AI_Development/
 COPY --chown=appuser:appuser Health_and_Fitness/ /Health_and_Fitness/
 
+# Copy scripts directory for data import and maintenance
+COPY --chown=appuser:appuser scripts/ /app/scripts/
+
 # Copy Docker entrypoint script
 COPY --chown=appuser:appuser docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
