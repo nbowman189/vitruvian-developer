@@ -39,7 +39,8 @@
       "Bash(FLASK_APP=app.py FLASK_ENV=development USE_SQLITE_DEV=true SECRET_KEY=dev-key flask db migrate:*)",
       "Bash(docker system prune:*)",
       "Bash(csrf_token=\"ImNmNzAwYWRmMDg4N2E2ZjMxYzFlMTc4ZjIzMDMwNWMxMjBlY2UwNTEi.aT9XnA.aTsZDEJFnSiM75u2Xb8dm7CcROY\")",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []

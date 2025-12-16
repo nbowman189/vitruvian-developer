@@ -61,7 +61,7 @@ The specific moment came after a significantly negative encounter with a student
 
 I moved back to where I'd gone to school and took a summer job at my former college, calculating the risk carefully but deliberately stepping back onto my true path.
 
-My return to tech was a confirmation. I progressed through three levels—helpdesk to Solutions Engineer to Sr. Data Solutions Engineer—in four years. Clear progression, measurable growth. I was back in my element—managing databases, configuring servers, building backend processes. But this time was different.
+My return to tech was a confirmation. I progressed through three levels—Helpdesk to Solutions Engineer to Sr. Data Solutions Engineer—in four years. Clear progression, measurable growth. I was back in my element—managing databases, configuring servers, building backend processes. But this time was different.
 
 I now had two parallel projects: my career, and my health.
 
