@@ -186,8 +186,12 @@ def main():
     print("====================================")
     print()
 
-    # Default path to check-in-log.md
-    default_path = Path(__file__).parent.parent / "Health_and_Fitness" / "data" / "check-in-log.md"
+    # Default path - check if in Docker container (data at root) or local dev (relative path)
+    docker_path = Path("/Health_and_Fitness/data/check-in-log.md")
+    local_path = Path(__file__).parent.parent / "Health_and_Fitness" / "data" / "check-in-log.md"
+
+    # Use Docker path if it exists, otherwise local path
+    default_path = docker_path if docker_path.exists() else local_path
 
     # Allow custom path as command line argument
     if len(sys.argv) > 1:

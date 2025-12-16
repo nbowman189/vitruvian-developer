@@ -58,6 +58,7 @@ services:
       - static_files:/app/website/static
       - user_uploads:/app/uploads
       - logs:/app/logs
+      - ./Health_and_Fitness/data:/Health_and_Fitness/data:ro
     depends_on:
       db:
         condition: service_healthy
