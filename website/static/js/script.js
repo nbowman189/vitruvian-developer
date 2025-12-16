@@ -481,6 +481,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     graphsLink.role = 'tab';
                     li.appendChild(graphsLink);
                     fileList.appendChild(li);
+
+                    // Add AI Coach link
+                    const aiCoachLi = document.createElement('li');
+                    aiCoachLi.setAttribute('role', 'presentation');
+                    const aiCoachLink = document.createElement('a');
+                    aiCoachLink.href = '/health-and-fitness/ai-coach';
+                    aiCoachLink.textContent = 'AI Coach';
+                    aiCoachLink.role = 'tab';
+                    aiCoachLi.appendChild(aiCoachLink);
+                    fileList.appendChild(aiCoachLi);
                 }
 
                 // Add GEMINI link at end
