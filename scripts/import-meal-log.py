@@ -158,6 +158,7 @@ def import_to_database(meal_entries, skip_duplicates=True):
                     meal_log = MealLog(
                         user_id=user.id,
                         meal_date=entry['meal_date'],
+                        meal_type='Daily Total',  # Aggregated from all meals
                         calories=entry['calories'],
                         notes=entry['notes']
                     )
