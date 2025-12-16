@@ -110,14 +110,29 @@ def import_to_database(metrics, skip_duplicates=True):
     app = create_app()
 
     with app.app_context():
+        # Get the admin user (or first user) to associate metrics with
+        from website.models.user import User
+        user = User.query.filter_by(username='admin').first()
+        if not user:
+            user = User.query.first()
+
+        if not user:
+            print("❌ No users found in database! Please create a user first.")
+            return False
+
+        print(f"📌 Associating all health metrics with user: {user.username} (ID: {user.id})")
+
         imported = 0
         skipped = 0
         errors = 0
 
         for metric_data in metrics:
+            # Add user_id to metric data
+            metric_data['user_id'] = user.id
             try:
-                # Check if metric already exists for this date
+                # Check if metric already exists for this date and user
                 existing = HealthMetric.query.filter_by(
+                    user_id=user.id,
                     recorded_date=metric_data['recorded_date']
                 ).first()
 
