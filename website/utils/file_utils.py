@@ -356,13 +356,15 @@ class ProjectFileManager:
         for session in sessions:
             date = session.session_date.strftime('%Y-%m-%d')
             content += f"\n## {date}\n\n"
-            if session.session_type:
-                content += f"**Type:** {session.session_type}\n\n"
-            if session.notes:
-                content += f"{session.notes}\n\n"
+            if session.discussion_notes:
+                content += f"### Discussion\n\n{session.discussion_notes}\n\n"
+            if session.coach_feedback:
+                content += f"### Coach Feedback\n\n{session.coach_feedback}\n\n"
             if session.action_items:
                 content += "### Action Items\n\n"
-                content += f"{session.action_items}\n\n"
+                for item in session.action_items:
+                    content += f"- {item}\n"
+                content += "\n"
             content += "---\n\n"
 
         return content

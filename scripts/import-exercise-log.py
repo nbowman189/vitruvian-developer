@@ -15,7 +15,7 @@ from collections import defaultdict
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from website import create_app, db
-from website.models.workout import WorkoutSession, WorkoutExercise
+from website.models.workout import WorkoutSession, ExerciseLog, SessionType
 from website.models.user import User
 
 
@@ -100,6 +100,17 @@ def parse_exercise_log(file_path):
         workout_types = [ex['workout_type'] for ex in data['exercises'] if ex['workout_type']]
         primary_workout_type = max(set(workout_types), key=workout_types.count) if workout_types else "Mixed Workout"
 
+        # Map to SessionType enum
+        session_type = SessionType.MIXED  # Default
+        if 'rings' in primary_workout_type.lower() or 'strength' in primary_workout_type.lower():
+            session_type = SessionType.STRENGTH
+        elif 'walk' in primary_workout_type.lower() or 'cardio' in primary_workout_type.lower():
+            session_type = SessionType.CARDIO
+        elif 'tai chi' in primary_workout_type.lower() or 'flexibility' in primary_workout_type.lower():
+            session_type = SessionType.FLEXIBILITY
+        elif 'martial' in primary_workout_type.lower() or 'serbatik' in primary_workout_type.lower():
+            session_type = SessionType.MARTIAL_ARTS
+
         # Estimate duration (rough calculation based on exercise count)
         exercise_count = len(data['exercises'])
         estimated_duration = min(exercise_count * 10, 180)  # ~10 min per exercise, max 3 hours
@@ -114,7 +125,7 @@ def parse_exercise_log(file_path):
 
         workout_sessions.append({
             'session_date': workout_date,
-            'workout_type': primary_workout_type,
+            'session_type': session_type,
             'duration_minutes': estimated_duration,
             'notes': exercise_summary[:1000],  # Limit length
             'exercises': data['exercises'],
@@ -161,7 +172,7 @@ def import_to_database(workout_sessions, skip_duplicates=True):
                         skipped += 1
                         continue
                     else:
-                        existing.workout_type = session_data['workout_type']
+                        existing.session_type = session_data['session_type']
                         existing.duration_minutes = session_data['duration_minutes']
                         existing.notes = session_data['notes']
                         print(f"🔄 Updated {session_data['session_date']}")
@@ -170,9 +181,10 @@ def import_to_database(workout_sessions, skip_duplicates=True):
                     workout = WorkoutSession(
                         user_id=user.id,
                         session_date=session_data['session_date'],
-                        workout_type=session_data['workout_type'],
+                        session_type=session_data['session_type'],
                         duration_minutes=session_data['duration_minutes'],
-                        notes=session_data['notes']
+                        notes=session_data['notes'],
+                        program_phase=session_data['phase']
                     )
                     db.session.add(workout)
                     db.session.flush()  # Get the workout ID
@@ -180,17 +192,14 @@ def import_to_database(workout_sessions, skip_duplicates=True):
                     # Create individual exercise records
                     for ex_data in session_data['exercises'][:20]:  # Limit to 20 exercises per session
                         if ex_data['exercise_name']:
-                            exercise = WorkoutExercise(
+                            exercise = ExerciseLog(
                                 workout_session_id=workout.id,
                                 exercise_name=ex_data['exercise_name'],
-                                sets=None,  # Not parsing sets/reps into numbers
-                                reps=None,
-                                weight=None,
                                 notes=f"{ex_data['sets_reps']} - {ex_data['notes']}" if ex_data['notes'] else ex_data['sets_reps']
                             )
                             db.session.add(exercise)
 
-                    print(f"✅ Imported {session_data['session_date']} - {session_data['workout_type']} ({len(session_data['exercises'])} exercises)")
+                    print(f"✅ Imported {session_data['session_date']} - {session_data['session_type'].value} ({len(session_data['exercises'])} exercises)")
 
                 imported += 1
 

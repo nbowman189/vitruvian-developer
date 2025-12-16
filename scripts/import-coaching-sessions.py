@@ -119,7 +119,11 @@ def import_to_database(sessions, skip_duplicates=True):
             print("❌ No users found in database!")
             return False
 
+        # Use admin user as both client and coach (self-coaching)
+        coach_user = user
+
         print(f"📌 Associating all coaching sessions with user: {user.username} (ID: {user.id})")
+        print(f"📌 Using coach: {coach_user.username} (ID: {coach_user.id})")
 
         imported = 0
         skipped = 0
@@ -139,18 +143,17 @@ def import_to_database(sessions, skip_duplicates=True):
                         skipped += 1
                         continue
                     else:
-                        existing.session_type = session_data['session_type']
-                        existing.notes = session_data['notes']
-                        existing.trainer_notes = session_data['trainer_notes']
+                        existing.discussion_notes = session_data['notes']
+                        existing.coach_feedback = session_data['trainer_notes']
                         print(f"🔄 Updated {session_data['session_date']}")
                 else:
                     # Create coaching session
                     coaching = CoachingSession(
                         user_id=user.id,
+                        coach_id=coach_user.id,
                         session_date=session_data['session_date'],
-                        session_type=session_data['session_type'],
-                        notes=session_data['notes'],
-                        trainer_notes=session_data['trainer_notes']
+                        discussion_notes=session_data['notes'],
+                        coach_feedback=session_data['trainer_notes']
                     )
                     db.session.add(coaching)
                     print(f"✅ Imported {session_data['session_date']} - {session_data['session_type']}")
