@@ -255,9 +255,13 @@ class ProjectFileManager:
             if workout.exercises:
                 content += "### Exercises\n\n"
                 for exercise in workout.exercises:
-                    content += f"- **{exercise.exercise_name}**: {exercise.sets} sets × {exercise.reps} reps"
+                    content += f"- **{exercise.exercise_name}**"
+                    if exercise.sets and exercise.reps:
+                        content += f": {exercise.sets} sets × {exercise.reps} reps"
                     if exercise.weight:
                         content += f" @ {exercise.weight} lbs"
+                    if exercise.notes:
+                        content += f" ({exercise.notes})"
                     content += "\n"
 
         return content

@@ -15,7 +15,7 @@ from collections import defaultdict
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from website import create_app, db
-from website.models.nutrition import MealLog
+from website.models.nutrition import MealLog, MealType
 from website.models.user import User
 
 
@@ -108,7 +108,7 @@ def parse_meal_log(file_path):
         meal_entries.append({
             'meal_date': meal_date,
             'calories': data['calories'],
-            'notes': meal_summary[:500]  # Limit notes length
+            'description': meal_summary[:500]  # Limit description length
         })
 
     return meal_entries
@@ -152,15 +152,15 @@ def import_to_database(meal_entries, skip_duplicates=True):
                         continue
                     else:
                         existing.calories = entry['calories']
-                        existing.notes = entry['notes']
+                        existing.description = entry['description']
                         print(f"🔄 Updated {entry['meal_date']}")
                 else:
                     meal_log = MealLog(
                         user_id=user.id,
                         meal_date=entry['meal_date'],
-                        meal_type='Daily Total',  # Aggregated from all meals
+                        meal_type=MealType.OTHER,  # Aggregated daily total
                         calories=entry['calories'],
-                        notes=entry['notes']
+                        description=entry['description']
                     )
                     db.session.add(meal_log)
                     print(f"✅ Imported {entry['meal_date']} - {entry['calories']} calories")
