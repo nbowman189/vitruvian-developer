@@ -246,20 +246,20 @@ class ProjectFileManager:
 
         for workout in workouts:
             date = workout.session_date.strftime('%Y-%m-%d')
-            content += f"\n## {date} - {workout.workout_type or 'Workout'}\n\n"
+            content += f"\n## {date} - {workout.session_type.value.replace('_', ' ').title()}\n\n"
             if workout.duration_minutes:
                 content += f"**Duration:** {workout.duration_minutes} minutes\n\n"
             if workout.notes:
                 content += f"{workout.notes}\n\n"
 
-            if workout.exercises:
+            if workout.exercise_logs:
                 content += "### Exercises\n\n"
-                for exercise in workout.exercises:
+                for exercise in workout.exercise_logs:
                     content += f"- **{exercise.exercise_name}**"
                     if exercise.sets and exercise.reps:
                         content += f": {exercise.sets} sets × {exercise.reps} reps"
-                    if exercise.weight:
-                        content += f" @ {exercise.weight} lbs"
+                    if exercise.weight_lbs:
+                        content += f" @ {exercise.weight_lbs} lbs"
                     if exercise.notes:
                         content += f" ({exercise.notes})"
                     content += "\n"
