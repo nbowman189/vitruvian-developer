@@ -6,11 +6,14 @@ version: '3.8'
 services:
   web:
     environment:
-      # Allow remote access over HTTP (for testing/internal network)
-      # IMPORTANT: For production, use HTTPS with proper SSL certificates
-      - SESSION_COOKIE_SECURE=false
+      # Production HTTPS configuration
+      - SESSION_COOKIE_SECURE=true
       - SESSION_COOKIE_SAMESITE=Lax
       - FLASK_ENV=production
+      - SERVER_NAME=bowmanhomelabtech.net
 
-      # Optional: Set server name if needed
-      # - SERVER_NAME=your-server-ip-or-domain:8080
+  nginx:
+    ports:
+      # Map standard HTTP/HTTPS ports
+      - "80:80"
+      - "443:443"
