@@ -319,6 +319,7 @@ from . import workout
 from . import coaching
 from . import nutrition
 from . import user
+from . import ai_coach
 
 # Register sub-blueprints
 api_bp.register_blueprint(health.health_api_bp)
@@ -326,3 +327,4 @@ api_bp.register_blueprint(workout.workout_api_bp)
 api_bp.register_blueprint(coaching.coaching_api_bp)
 api_bp.register_blueprint(nutrition.nutrition_api_bp)
 api_bp.register_blueprint(user.user_api_bp)
+api_bp.register_blueprint(ai_coach.ai_coach_api_bp)

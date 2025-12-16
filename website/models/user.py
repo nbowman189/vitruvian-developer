@@ -82,6 +82,7 @@ class User(UserMixin, db.Model):
     progress_photos = relationship('ProgressPhoto', back_populates='user', cascade='all, delete-orphan')
     meal_logs = relationship('MealLog', back_populates='user', cascade='all, delete-orphan')
     sessions = relationship('UserSession', back_populates='user', cascade='all, delete-orphan')
+    conversation_logs = relationship('ConversationLog', back_populates='user', cascade='all, delete-orphan')
 
     def __repr__(self) -> str:
         return f'<User {self.username}>'
