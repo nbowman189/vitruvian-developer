@@ -219,7 +219,7 @@ class ProjectFileManager:
 
         for metric in metrics:
             date = metric.recorded_date.strftime('%Y-%m-%d')
-            weight = f"{metric.weight:.1f}" if metric.weight else "—"
+            weight = f"{metric.weight_lbs:.1f}" if metric.weight_lbs else "—"
             bodyfat = f"{metric.body_fat_percentage:.1f}" if metric.body_fat_percentage else "—"
             bmi = f"{metric.bmi:.1f}" if metric.bmi else "—"
             notes = metric.notes or ""
