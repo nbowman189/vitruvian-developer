@@ -56,7 +56,7 @@ COPY --chown=appuser:appuser website/migrations/ /app/website/migrations/
 # Copy app.py to /app root
 COPY --chown=appuser:appuser website/app.py /app/app.py
 
-# Copy project directories to root level (app.py expects them at parent directory)
+# Copy project directories to root level (PROJECT_ROOT=/ in docker-compose.yml)
 COPY --chown=appuser:appuser AI_Development/ /AI_Development/
 COPY --chown=appuser:appuser Health_and_Fitness/ /Health_and_Fitness/
 
