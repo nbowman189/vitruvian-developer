@@ -13,7 +13,9 @@ services:
       - SERVER_NAME=bowmanhomelabtech.net
 
   nginx:
+    volumes:
+      # Use HTTP-only nginx config (SSL terminated by Cloudflare)
+      - ./docker/nginx/nginx-remote.conf:/etc/nginx/conf.d/nginx.conf:ro
     ports:
-      # Map standard HTTP/HTTPS ports
+      # Map standard HTTP port (Cloudflare handles HTTPS)
       - "80:80"
-      - "443:443"
