@@ -60,8 +60,9 @@ class GeminiService:
         genai.configure(api_key=self.api_key)
 
         # Initialize the model with safety settings
+        # Using gemini-2.5-flash instead of gemini-2.5-pro for higher free tier limits
         self.model = genai.GenerativeModel(
-            model_name='gemini-1.5-pro',
+            model_name='gemini-2.5-flash',
             generation_config={
                 'temperature': 0.7,
                 'top_p': 0.95,
@@ -240,7 +241,7 @@ class GeminiService:
         """
         try:
             genai.configure(api_key=api_key)
-            model = genai.GenerativeModel('gemini-1.5-pro')
+            model = genai.GenerativeModel('gemini-2.5-flash')
             model.generate_content("Test")
             return True
         except Exception as e:
