@@ -342,12 +342,18 @@ def main():
         print(f"📥 Importing data for user: {user.username}")
 
         # Define file paths
-        base_path = Path(__file__).parent.parent / 'Health_and_Fitness' / 'data'
+        # Check if running in Docker (files at root) or locally (files in parent dir)
+        docker_base_path = Path('/Health_and_Fitness/data')
+        local_base_path = Path(__file__).parent.parent / 'Health_and_Fitness' / 'data'
+
+        base_path = docker_base_path if docker_base_path.exists() else local_base_path
 
         check_in_log = base_path / 'check-in-log.md'
         meal_log = base_path / 'meal-log.md'
         exercise_log = base_path / 'exercise-log.md'
         coaching_sessions = base_path / 'Coaching_sessions.md'
+
+        print(f"📂 Looking for data files in: {base_path}")
 
         # Import data
         total_health = parse_check_in_log(check_in_log, user.id) if check_in_log.exists() else 0
