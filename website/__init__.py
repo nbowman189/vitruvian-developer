@@ -103,9 +103,6 @@ def initialize_extensions(app):
     # CSRF Protection
     csrf.init_app(app)
 
-    # Exempt API routes from CSRF (JSON API endpoints don't use CSRF tokens)
-    csrf.exempt('api')
-
     # Rate Limiting
     if app.config.get('RATELIMIT_ENABLED', True):
         limiter.init_app(app)
@@ -138,6 +135,9 @@ def register_blueprints(app):
     app.register_blueprint(health_bp)
     app.register_blueprint(api_bp)
     app.register_blueprint(insights_bp)
+
+    # Note: CSRF exemption is handled at the view level in API routes
+    # using @csrf.exempt decorator where needed (e.g., ai_coach.py)
 
     # Authentication blueprint
     from .auth import auth_bp

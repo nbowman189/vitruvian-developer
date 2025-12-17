@@ -16,7 +16,7 @@ from datetime import datetime, timezone, date
 from flask import Blueprint, request
 from flask_login import current_user
 
-from .. import db
+from .. import db, csrf
 from ..models.conversation import ConversationLog
 from ..models.health import HealthMetric
 from ..models.nutrition import MealLog, MealType
@@ -46,6 +46,7 @@ logger = logging.getLogger(__name__)
 # ====================================================================================
 
 @ai_coach_api_bp.route('/message', methods=['POST'])
+@csrf.exempt
 @require_active_user
 def send_message():
     """
@@ -293,6 +294,7 @@ def get_conversation(conversation_id):
 # ====================================================================================
 
 @ai_coach_api_bp.route('/save-record', methods=['POST'])
+@csrf.exempt
 @require_active_user
 def save_record():
     """
