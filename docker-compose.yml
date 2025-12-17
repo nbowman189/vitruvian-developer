@@ -54,6 +54,9 @@ services:
       # Admin User Creation (optional - only if ADMIN_PASSWORD is set)
       - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+
+      # AI Integration
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     ports:
       - "8001:8000"  # Expose web container for local development
     volumes:
