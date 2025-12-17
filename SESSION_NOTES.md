@@ -1,6 +1,57 @@
-# Session Notes - December 14, 2024
+# Session Notes
 
-## Current Status: INCOMPLETE - Database Connection Issue on Remote Server
+## Latest Session - December 17, 2024: AI Coach CSRF Fix - COMPLETE ✅
+
+### Issue Resolved:
+**Problem:** AI Coach API endpoints were blocked by CSRF protection
+- Frontend showed: "Error: Failed to send message. Please try again."
+- Backend returned: `{"errors":["400 Bad Request: The CSRF token is missing."]}`
+
+### Root Cause:
+- Flask-WTF's CSRFProtect was enforcing CSRF tokens on all POST requests
+- API endpoints (JSON) don't use CSRF tokens - they rely on authentication
+- Blueprint-level exemption (`csrf.exempt(api_bp)`) wasn't working for nested blueprints
+
+### Solution Applied:
+1. Added `@csrf.exempt` decorator directly to POST routes in `website/api/ai_coach.py`
+2. Imported `csrf` from `website` package
+3. Applied decorator to:
+   - `/api/ai-coach/message` (line 49)
+   - `/api/ai-coach/save-record` (line 297)
+4. Removed ineffective blueprint-level exemption from `website/__init__.py`
+
+### Verification:
+```bash
+# CSRF error resolved - now returns proper authentication check
+$ curl -X POST http://localhost:8000/api/ai-coach/message
+{"message":"Authentication required","success":false}
+```
+
+### Files Modified:
+- `website/api/ai_coach.py` - Added CSRF exemption decorators
+- `website/__init__.py` - Removed ineffective blueprint exemption
+
+### Git Commit:
+**Commit:** `261c030` - "Fix CSRF protection blocking AI Coach API endpoints"
+**Status:** Committed and pushed to remote repository
+
+### Deployment Status:
+- ✅ Local testing: CSRF error resolved
+- ✅ All 5 routes registered successfully
+- ✅ GEMINI_API_KEY configured (39 characters)
+- ⏳ Ready for remote deployment testing
+
+### Next Steps:
+1. User should pull latest changes on remote server
+2. Run deployment script: `./deploy-ai-coach.sh`
+3. Purge Cloudflare cache
+4. Test AI Coach functionality end-to-end
+
+---
+
+## Previous Session - December 14, 2024: Database Connection Issue - RESOLVED
+
+## Current Status: Database Connection Issue on Remote Server
 
 ### ✅ Completed Across Sessions:
 
