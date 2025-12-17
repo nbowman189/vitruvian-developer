@@ -77,20 +77,41 @@ async function loadSessions() {
             return;
         }
 
-        let html = '<div class="list-group">';
-        sessions.forEach(session => {
+        let html = '';
+        sessions.forEach((session, index) => {
+            const discussionPreview = session.discussion_notes ?
+                session.discussion_notes.substring(0, 200) + '...' :
+                'No discussion notes';
+
             html += `
-                <div class="list-group-item">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h6 class="mb-1">${DateUtils.formatDateDisplay(session.session_date)}</h6>
-                        <small>${session.duration_minutes ? session.duration_minutes + ' mins' : ''}</small>
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <i class="bi bi-calendar3"></i> ${DateUtils.formatDateDisplay(session.session_date)}
+                                ${session.coach_feedback ? ' - ' + session.coach_feedback : ''}
+                            </h6>
+                            ${session.duration_minutes ? `<span class="badge bg-primary">${session.duration_minutes} mins</span>` : ''}
+                        </div>
                     </div>
-                    <p class="mb-1">${session.notes || 'No notes'}</p>
-                    ${session.coach_feedback ? `<small class="text-muted"><strong>Coach:</strong> ${session.coach_feedback}</small>` : ''}
+                    <div class="card-body">
+                        <div class="session-notes-preview" id="session-preview-${session.id}">
+                            <p class="text-muted">${discussionPreview}</p>
+                            ${session.discussion_notes && session.discussion_notes.length > 200 ?
+                                `<button class="btn btn-sm btn-outline-primary" onclick="toggleSessionNotes(${session.id})">
+                                    <i class="bi bi-chevron-down"></i> Show Full Notes
+                                </button>` : ''}
+                        </div>
+                        <div class="session-notes-full" id="session-full-${session.id}" style="display: none;">
+                            <div class="markdown-content" style="white-space: pre-wrap;">${session.discussion_notes || 'No notes'}</div>
+                            <button class="btn btn-sm btn-outline-secondary mt-2" onclick="toggleSessionNotes(${session.id})">
+                                <i class="bi bi-chevron-up"></i> Show Less
+                            </button>
+                        </div>
+                    </div>
                 </div>
             `;
         });
-        html += '</div>';
 
         container.innerHTML = html;
     } catch (error) {
@@ -138,6 +159,20 @@ async function loadGoals() {
         document.getElementById('goals-list-container').innerHTML = `
             <div class="alert alert-danger">Failed to load goals</div>
         `;
+    }
+}
+
+// Toggle session notes visibility
+function toggleSessionNotes(sessionId) {
+    const preview = document.getElementById(`session-preview-${sessionId}`);
+    const full = document.getElementById(`session-full-${sessionId}`);
+
+    if (preview.style.display === 'none') {
+        preview.style.display = 'block';
+        full.style.display = 'none';
+    } else {
+        preview.style.display = 'none';
+        full.style.display = 'block';
     }
 }
 </script>

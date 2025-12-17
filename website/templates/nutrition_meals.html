@@ -159,21 +159,28 @@ async function loadMeals() {
                             <th>Protein (g)</th>
                             <th>Carbs (g)</th>
                             <th>Fat (g)</th>
-                            <th>Notes</th>
+                            <th style="max-width: 300px;">Description</th>
                         </tr>
                     </thead>
                     <tbody>
         `;
 
         meals.forEach(meal => {
+            // Handle nested nutrition object
+            const calories = meal.nutrition?.calories || '-';
+            const protein = meal.nutrition?.protein_g || '-';
+            const carbs = meal.nutrition?.carbs_g || '-';
+            const fat = meal.nutrition?.fat_g || '-';
+            const description = meal.meal_details?.description || meal.notes || '-';
+
             tableHTML += `
                 <tr>
                     <td>${DateUtils.formatDateDisplay(meal.meal_date)}</td>
-                    <td>${meal.total_calories || '-'}</td>
-                    <td>${meal.protein_g || '-'}</td>
-                    <td>${meal.carbs_g || '-'}</td>
-                    <td>${meal.fat_g || '-'}</td>
-                    <td>${meal.notes || '-'}</td>
+                    <td>${calories}</td>
+                    <td>${protein}</td>
+                    <td>${carbs}</td>
+                    <td>${fat}</td>
+                    <td class="text-truncate" style="max-width: 300px;" title="${description}">${description}</td>
                 </tr>
             `;
         });
