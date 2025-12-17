@@ -31,9 +31,14 @@ def parse_check_in_log(file_path, user_id):
         lines = f.readlines()
 
     count = 0
-    for line in lines[2:]:  # Skip header rows
+    skipped = 0
+    for line in lines[1:]:  # Skip just the first header line
         line = line.strip()
-        if not line or line.startswith('|') and line.count('|') < 3:
+        if not line or line.count('|') < 3:
+            continue
+
+        # Skip the separator line (| :--- | :--- |)
+        if ':---' in line:
             continue
 
         parts = [p.strip() for p in line.split('|')]
@@ -48,12 +53,18 @@ def parse_check_in_log(file_path, user_id):
 
             # Skip if not a valid date
             if not re.match(r'\d{4}-\d{2}-\d{2}', date_str):
+                skipped += 1
                 continue
 
             # Parse values
             recorded_date = datetime.strptime(date_str, '%Y-%m-%d').date()
             weight_lbs = float(weight_str) if weight_str and weight_str.lower() not in ['none', 'n/a', ''] else None
             body_fat = float(bodyfat_str) if bodyfat_str and bodyfat_str.lower() not in ['none', 'n/a', ''] else None
+
+            # Skip if no weight data
+            if not weight_lbs:
+                skipped += 1
+                continue
 
             # Check if already exists
             existing = HealthMetric.query.filter_by(
@@ -77,10 +88,11 @@ def parse_check_in_log(file_path, user_id):
 
         except (ValueError, IndexError) as e:
             print(f"  ⚠️  Skipping line: {line[:50]}... ({e})")
+            skipped += 1
             continue
 
     db.session.commit()
-    print(f"  ✅ Imported {count} health metrics")
+    print(f"  ✅ Imported {count} health metrics (skipped {skipped} invalid/duplicate entries)")
     return count
 
 
@@ -212,14 +224,14 @@ def parse_exercise_log(file_path, user_id):
                 elif 'tai chi' in workout_lower or 'mobility' in workout_lower:
                     session_type = SessionType.FLEXIBILITY
                 elif 'martial' in workout_lower or 'serbatik' in workout_lower:
-                    session_type = SessionType.SPORTS
+                    session_type = SessionType.MARTIAL_ARTS
                 else:
                     session_type = SessionType.STRENGTH
 
                 workout_sessions[session_key] = {
                     'session_date': session_date,
                     'session_type': session_type,
-                    'name': workout_name,
+                    'workout_name': workout_name,
                     'notes': notes,
                     'exercises': []
                 }
@@ -239,21 +251,26 @@ def parse_exercise_log(file_path, user_id):
     # Create workout sessions in database
     count = 0
     for session_data in workout_sessions.values():
-        # Check if already exists
+        # Check if already exists (by date and type)
         existing = WorkoutSession.query.filter_by(
             user_id=user_id,
             session_date=session_data['session_date'],
-            name=session_data['name']
+            session_type=session_data['session_type']
         ).first()
 
         if existing:
             continue
 
+        # Combine workout name and notes
+        combined_notes = f"{session_data['workout_name']}"
+        if session_data['notes']:
+            combined_notes += f" - {session_data['notes']}"
+
         workout = WorkoutSession(
             user_id=user_id,
             session_date=session_data['session_date'],
             session_type=session_data['session_type'],
-            notes=session_data['notes']
+            notes=combined_notes
         )
         db.session.add(workout)
         db.session.flush()  # Get workout ID
