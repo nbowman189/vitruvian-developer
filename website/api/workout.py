@@ -608,7 +608,7 @@ def get_recent_workout():
 
     return success_response(
         data={
-            'name': workout.name or workout.session_type.value.replace('_', ' ').title(),
+            'name': workout.notes or workout.session_type.value.replace('_', ' ').title(),
             'duration': workout.duration_minutes,
             'date': workout.session_date.isoformat() if workout.session_date else None
         },

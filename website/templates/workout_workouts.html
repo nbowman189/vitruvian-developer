@@ -18,21 +18,17 @@
         <p class="text-muted">View and track your workout sessions</p>
     </section>
 
-    <!-- Coming Soon Notice -->
-    <div class="alert alert-info">
-        <i class="bi bi-info-circle"></i> Full workout management page coming soon!
-        For now, view your recent workout on the <a href="/dashboard">dashboard</a>.
-    </div>
-
-    <!-- Recent Workout Card -->
+    <!-- Recent Workouts List -->
     <div class="card">
         <div class="card-header">
-            <h5 class="card-title mb-0">Recent Workout</h5>
+            <h5 class="card-title mb-0">Recent Workouts (Last 30 Days)</h5>
         </div>
-        <div class="card-body" id="recent-workout-content">
-            <div class="text-center py-4">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
+        <div class="card-body">
+            <div id="workouts-list-container">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -44,33 +40,63 @@
 <script src="/static/js/common.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async function() {
-    try {
-        const response = await API.get('/api/workouts/recent');
-        const workout = response.data;
+    await loadWorkouts();
+});
 
-        const content = document.getElementById('recent-workout-content');
-        content.innerHTML = `
-            <div class="row">
-                <div class="col-md-4">
-                    <h6>Workout</h6>
-                    <p>${workout.name || 'N/A'}</p>
-                </div>
-                <div class="col-md-4">
-                    <h6>Date</h6>
-                    <p>${workout.date ? DateUtils.formatDateDisplay(workout.date) : 'N/A'}</p>
-                </div>
-                <div class="col-md-4">
-                    <h6>Duration</h6>
-                    <p>${workout.duration ? workout.duration + ' mins' : 'N/A'}</p>
-                </div>
+async function loadWorkouts() {
+    try {
+        const response = await API.get('/api/workouts?per_page=30&sort=desc');
+        const workouts = response.data;
+
+        const container = document.getElementById('workouts-list-container');
+
+        if (!workouts || workouts.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center">No workouts found</p>';
+            return;
+        }
+
+        let tableHTML = `
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Duration</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        workouts.forEach(workout => {
+            const sessionType = workout.session_type ? workout.session_type.replace('_', ' ').toUpperCase() : 'N/A';
+            const duration = workout.duration_minutes ? workout.duration_minutes + ' mins' : '-';
+            const notes = workout.notes || '-';
+
+            tableHTML += `
+                <tr>
+                    <td>${DateUtils.formatDateDisplay(workout.session_date)}</td>
+                    <td><span class="badge bg-primary">${sessionType}</span></td>
+                    <td>${duration}</td>
+                    <td class="text-truncate" style="max-width: 400px;" title="${notes}">${notes}</td>
+                </tr>
+            `;
+        });
+
+        tableHTML += `
+                    </tbody>
+                </table>
             </div>
         `;
+
+        container.innerHTML = tableHTML;
     } catch (error) {
-        console.error('Error loading workout:', error);
-        document.getElementById('recent-workout-content').innerHTML = `
+        console.error('Error loading workouts:', error);
+        document.getElementById('workouts-list-container').innerHTML = `
             <div class="alert alert-danger">Failed to load workout data</div>
         `;
     }
-});
+}
 </script>
 {% endblock %}
