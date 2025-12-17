@@ -52,13 +52,14 @@ echo ""
 
 # Verify routes are registered
 echo "Checking AI Coach routes..."
-ROUTE_COUNT=$(docker-compose exec web python -c "from website import create_app; app = create_app(); routes = [str(r) for r in app.url_map.iter_rules() if 'ai-coach' in str(r)]; print(len(routes))" 2>/dev/null | tr -d '\r')
+ROUTE_OUTPUT=$(docker-compose exec web python -c "from website import create_app; app = create_app(); routes = [str(r) for r in app.url_map.iter_rules() if 'ai-coach' in str(r)]; print(len(routes))" 2>&1)
+ROUTE_COUNT=$(echo "$ROUTE_OUTPUT" | tail -1 | tr -d '\r')
 
-if [ "$ROUTE_COUNT" -ge 5 ]; then
+if [ "$ROUTE_COUNT" = "5" ]; then
     echo "✓ All AI Coach routes registered ($ROUTE_COUNT routes)"
-    docker-compose exec web python -c "from website import create_app; app = create_app(); routes = [str(r) for r in app.url_map.iter_rules() if 'ai-coach' in str(r)]; [print(f'  - {r}') for r in routes]" 2>/dev/null
+    docker-compose exec web python -c "from website import create_app; app = create_app(); routes = [str(r) for r in app.url_map.iter_rules() if 'ai-coach' in str(r)]; [print(f'  - {r}') for r in routes]" 2>&1 | grep -E "^\s+-\s+/"
 else
-    echo "✗ AI Coach routes not properly registered (found $ROUTE_COUNT, expected 5)"
+    echo "✗ AI Coach routes not properly registered (found '$ROUTE_COUNT', expected 5)"
     exit 1
 fi
 echo ""
