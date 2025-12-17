@@ -42,7 +42,9 @@
       "Bash(find:*)",
       "Bash(echo:*)",
       "Bash(flask db revision:*)",
-      "Bash(USE_SQLITE_DEV=true SECRET_KEY=dev-key FLASK_APP=app.py flask db:*)"
+      "Bash(USE_SQLITE_DEV=true SECRET_KEY=dev-key FLASK_APP=app.py flask db:*)",
+      "WebFetch(domain:vitruvian.bowmanhomelabtech.net)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

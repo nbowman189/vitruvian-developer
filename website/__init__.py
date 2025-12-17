@@ -103,6 +103,9 @@ def initialize_extensions(app):
     # CSRF Protection
     csrf.init_app(app)
 
+    # Exempt API routes from CSRF (JSON API endpoints don't use CSRF tokens)
+    csrf.exempt('api')
+
     # Rate Limiting
     if app.config.get('RATELIMIT_ENABLED', True):
         limiter.init_app(app)

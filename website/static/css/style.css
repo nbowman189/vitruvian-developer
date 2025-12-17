@@ -1004,7 +1004,28 @@ a:focus {
 .synergy-card p {
     color: var(--text-light);
     line-height: 1.7;
-    margin-bottom: 0;
+    margin-bottom: 1rem;
+}
+
+.synergy-card .card-cta {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.6rem 1.2rem;
+    background: var(--gradient-accent);
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
+}
+
+.synergy-card .card-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+    text-decoration: none;
+    color: white;
 }
 
 .synergy-conclusion {
