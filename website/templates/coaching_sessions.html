@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Coaching Sessions - Vitruvian Tracker{% endblock %}
+
+{% block content %}
+<!-- Dashboard Navbar -->
+{% include 'components/navbar_auth.html' %}
+
+<!-- Flash Messages -->
+<div class="container mt-3">
+    {% include 'components/flash_messages.html' %}
+</div>
+
+<!-- Coaching Sessions Content -->
+<div class="dashboard-container">
+    <section class="page-header">
+        <h1><i class="bi bi-clipboard-data"></i> Coaching Log</h1>
+        <p class="text-muted">Historical coaching sessions and feedback</p>
+    </section>
+
+    <!-- Coming Soon Notice -->
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> Full coaching log page coming soon!
+        For now, view your next session on the <a href="/dashboard">dashboard</a>.
+        For AI-powered coaching, visit the <a href="/ai-coach">AI Coach</a>.
+    </div>
+
+    <!-- Next Session Card -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Next Coaching Session</h5>
+        </div>
+        <div class="card-body" id="next-session-content">
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/common.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        const response = await API.get('/api/coaching/next-session');
+        const data = response.data;
+
+        const content = document.getElementById('next-session-content');
+        content.innerHTML = `
+            <div class="row">
+                <div class="col-md-4">
+                    <h6>Next Session</h6>
+                    <p>${data.date ? DateUtils.formatDateDisplay(data.date) : 'Not scheduled'}</p>
+                </div>
+                <div class="col-md-4">
+                    <h6>Countdown</h6>
+                    <p>${data.countdown || '--'}</p>
+                </div>
+                <div class="col-md-4">
+                    <h6>Active Goals</h6>
+                    <p>${data.active_goals || 0} goals</p>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading coaching session:', error);
+        document.getElementById('next-session-content').innerHTML = `
+            <div class="alert alert-danger">Failed to load coaching session data</div>
+        `;
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Health Metrics - Vitruvian Tracker{% endblock %}
+
+{% block content %}
+<!-- Dashboard Navbar -->
+{% include 'components/navbar_auth.html' %}
+
+<!-- Flash Messages -->
+<div class="container mt-3">
+    {% include 'components/flash_messages.html' %}
+</div>
+
+<!-- Health Metrics Content -->
+<div class="dashboard-container">
+    <section class="page-header">
+        <h1><i class="bi bi-heart-pulse"></i> Health Metrics</h1>
+        <p class="text-muted">Track your weight, body composition, and wellness metrics</p>
+    </section>
+
+    <!-- Coming Soon Notice -->
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> Full health metrics management page coming soon!
+        For now, view your latest metrics on the <a href="/dashboard">dashboard</a>.
+    </div>
+
+    <!-- Latest Metric Card -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Latest Health Metric</h5>
+        </div>
+        <div class="card-body" id="latest-metric-content">
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/common.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        const response = await API.get('/api/health/metrics/latest');
+        const metric = response.data;
+
+        const content = document.getElementById('latest-metric-content');
+        content.innerHTML = `
+            <div class="row">
+                <div class="col-md-4">
+                    <h6>Date</h6>
+                    <p>${DateUtils.formatDateDisplay(metric.recorded_date)}</p>
+                </div>
+                <div class="col-md-4">
+                    <h6>Weight</h6>
+                    <p>${metric.weight_lbs ? metric.weight_lbs + ' lbs' : 'N/A'}</p>
+                </div>
+                <div class="col-md-4">
+                    <h6>Body Fat %</h6>
+                    <p>${metric.body_fat_percentage ? metric.body_fat_percentage + '%' : 'N/A'}</p>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading health metrics:', error);
+        document.getElementById('latest-metric-content').innerHTML = `
+            <div class="alert alert-danger">Failed to load health metrics</div>
+        `;
+    }
+});
+</script>
+{% endblock %}

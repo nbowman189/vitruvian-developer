@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Nutrition - Vitruvian Tracker{% endblock %}
+
+{% block content %}
+<!-- Dashboard Navbar -->
+{% include 'components/navbar_auth.html' %}
+
+<!-- Flash Messages -->
+<div class="container mt-3">
+    {% include 'components/flash_messages.html' %}
+</div>
+
+<!-- Nutrition Content -->
+<div class="dashboard-container">
+    <section class="page-header">
+        <h1><i class="bi bi-egg-fried"></i> Nutrition Log</h1>
+        <p class="text-muted">Track your meals and macros</p>
+    </section>
+
+    <!-- Coming Soon Notice -->
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> Full nutrition management page coming soon!
+        For now, view your nutrition streak on the <a href="/dashboard">dashboard</a>.
+    </div>
+
+    <!-- Nutrition Streak Card -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Current Streak</h5>
+        </div>
+        <div class="card-body" id="nutrition-streak-content">
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/common.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        const response = await API.get('/api/nutrition/streak');
+        const data = response.data;
+
+        const content = document.getElementById('nutrition-streak-content');
+        content.innerHTML = `
+            <div class="row">
+                <div class="col-md-4">
+                    <h6>Streak</h6>
+                    <p class="h3">${data.streak || 0} days</p>
+                </div>
+                <div class="col-md-4">
+                    <h6>Today's Calories</h6>
+                    <p>${data.calories_today ? data.calories_today + ' cal' : 'Not logged'}</p>
+                </div>
+                <div class="col-md-4">
+                    <h6>Today's Protein</h6>
+                    <p>${data.protein_today ? data.protein_today + 'g' : 'Not logged'}</p>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading nutrition data:', error);
+        document.getElementById('nutrition-streak-content').innerHTML = `
+            <div class="alert alert-danger">Failed to load nutrition data</div>
+        `;
+    }
+});
+</script>
+{% endblock %}

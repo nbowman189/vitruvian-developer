@@ -86,6 +86,71 @@ def dashboard():
     return render_template('dashboard.html')
 
 
+@main_bp.route('/health/metrics')
+@log_request
+def health_metrics():
+    """Render health metrics page"""
+    from flask import abort
+    from flask_login import current_user
+
+    if not current_user.is_authenticated:
+        abort(401)
+
+    return render_template('health_metrics.html')
+
+
+@main_bp.route('/workout/workouts')
+@log_request
+def workout_workouts():
+    """Render workouts page"""
+    from flask import abort
+    from flask_login import current_user
+
+    if not current_user.is_authenticated:
+        abort(401)
+
+    return render_template('workout_workouts.html')
+
+
+@main_bp.route('/coaching/sessions')
+@log_request
+def coaching_sessions():
+    """Render coaching sessions page"""
+    from flask import abort
+    from flask_login import current_user
+
+    if not current_user.is_authenticated:
+        abort(401)
+
+    return render_template('coaching_sessions.html')
+
+
+@main_bp.route('/nutrition/meals')
+@log_request
+def nutrition_meals():
+    """Render nutrition meals page"""
+    from flask import abort
+    from flask_login import current_user
+
+    if not current_user.is_authenticated:
+        abort(401)
+
+    return render_template('nutrition_meals.html')
+
+
+@main_bp.route('/ai-coach')
+@log_request
+def ai_coach():
+    """Render AI coach page"""
+    from flask import abort
+    from flask_login import current_user
+
+    if not current_user.is_authenticated:
+        abort(401)
+
+    return render_template('ai_coach.html')
+
+
 @main_bp.route('/static/<path:filename>')
 def static_files(filename):
     """Serve static files"""
