@@ -15,8 +15,6 @@ import logging
 from datetime import datetime, timezone, date
 from flask import Blueprint, request
 from flask_login import current_user
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 
 from .. import db
 from ..models.conversation import ConversationLog
@@ -42,12 +40,6 @@ ai_coach_api_bp = Blueprint('ai_coach_api', __name__, url_prefix='/ai-coach')
 # Configure logger
 logger = logging.getLogger(__name__)
 
-# Rate limiter
-limiter = Limiter(
-    key_func=get_remote_address,
-    storage_uri="memory://"
-)
-
 
 # ====================================================================================
 # POST /api/ai-coach/message - Send message to AI coach
@@ -55,7 +47,6 @@ limiter = Limiter(
 
 @ai_coach_api_bp.route('/message', methods=['POST'])
 @require_active_user
-@limiter.limit("20 per minute")
 def send_message():
     """
     Send a message to the AI coach and get response.
@@ -303,7 +294,6 @@ def get_conversation(conversation_id):
 
 @ai_coach_api_bp.route('/save-record', methods=['POST'])
 @require_active_user
-@limiter.limit("10 per minute")
 def save_record():
     """
     Save an AI-suggested record to the database.
