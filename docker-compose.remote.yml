@@ -6,8 +6,8 @@ version: '3.8'
 services:
   web:
     environment:
-      # Production HTTPS configuration
-      - SESSION_COOKIE_SECURE=true
+      # Production configuration for Cloudflare tunnel (SSL terminated at Cloudflare edge)
+      - SESSION_COOKIE_SECURE=false
       - SESSION_COOKIE_SAMESITE=Lax
       - FLASK_ENV=production
       - SERVER_NAME=bowmanhomelabtech.net
