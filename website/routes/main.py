@@ -71,6 +71,21 @@ def insights():
     return render_template('insights.html')
 
 
+@main_bp.route('/dashboard')
+@log_request
+def dashboard():
+    """Render user dashboard page"""
+    from flask_login import login_required
+    from flask import abort
+    from flask_login import current_user
+
+    # Require authentication
+    if not current_user.is_authenticated:
+        abort(401)
+
+    return render_template('dashboard.html')
+
+
 @main_bp.route('/static/<path:filename>')
 def static_files(filename):
     """Serve static files"""

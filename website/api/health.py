@@ -453,3 +453,52 @@ def get_metrics_summary():
         data=summary,
         message=f'Summary statistics for {days} days'
     )
+
+
+@health_api_bp.route('/metrics/trend', methods=['GET'])
+@require_active_user
+def get_metrics_trend():
+    """
+    Get health metrics trend data for charting.
+
+    Query Parameters:
+        - days (int): Number of days to include (default: 7)
+
+    Returns:
+        200: Arrays of dates and weights for charting
+    """
+    try:
+        days = int(request.args.get('days', 7))
+        days = max(1, min(90, days))  # Limit to 1-90 days
+    except (ValueError, TypeError):
+        days = 7
+
+    # Calculate date range
+    end_date = datetime.now().date()
+    start_date = end_date - timedelta(days=days)
+
+    # Get metrics in date range
+    metrics = HealthMetric.query.filter(
+        and_(
+            HealthMetric.user_id == current_user.id,
+            HealthMetric.recorded_date >= start_date,
+            HealthMetric.recorded_date <= end_date
+        )
+    ).order_by(HealthMetric.recorded_date.asc()).all()
+
+    # Prepare data for charting
+    dates = []
+    weights = []
+
+    for metric in metrics:
+        if metric.weight_lbs is not None:
+            dates.append(metric.recorded_date.isoformat())
+            weights.append(metric.weight_lbs)
+
+    return success_response(
+        data={
+            'dates': dates,
+            'weights': weights
+        },
+        message=f'Weight trend data for {days} days'
+    )

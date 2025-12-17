@@ -509,3 +509,134 @@ def get_weekly_summary():
     }
 
     return success_response(data=summary, message=f'Weekly summary from {start_date} to {end_date}')
+
+
+# ====================
+# Dashboard Endpoints
+# ====================
+
+@nutrition_api_bp.route('/streak', methods=['GET'])
+@require_active_user
+def get_nutrition_streak():
+    """
+    Get current nutrition logging streak and today's nutrition data.
+
+    Returns:
+        200: Streak count and today's nutrition data
+    """
+    from datetime import datetime, timedelta
+
+    today = datetime.now().date()
+
+    # Calculate logging streak (consecutive days with at least one meal logged)
+    streak = 0
+    check_date = today
+
+    while True:
+        # Check if there are any meals logged on this date
+        meals_count = MealLog.query.filter_by(
+            user_id=current_user.id,
+            meal_date=check_date
+        ).count()
+
+        if meals_count > 0:
+            streak += 1
+            check_date -= timedelta(days=1)
+        else:
+            break
+
+        # Safety limit to prevent infinite loop
+        if streak > 365:
+            break
+
+    # Get today's nutrition data
+    today_meals = MealLog.query.filter_by(
+        user_id=current_user.id,
+        meal_date=today
+    ).all()
+
+    calories_today = sum(m.calories for m in today_meals if m.calories) or 0
+    protein_today = sum(m.protein_g for m in today_meals if m.protein_g) or 0
+
+    return success_response(
+        data={
+            'streak': streak,
+            'calories_today': calories_today,
+            'protein_today': round(protein_today, 1)
+        },
+        message='Nutrition streak retrieved successfully'
+    )
+
+
+@nutrition_api_bp.route('/adherence-trend', methods=['GET'])
+@require_active_user
+def get_adherence_trend():
+    """
+    Get nutrition adherence trend data for charting.
+
+    Query Parameters:
+        - days (int): Number of days to include (default: 7)
+
+    Returns:
+        200: Arrays of dates, calories, and protein for charting
+    """
+    from datetime import datetime, timedelta
+
+    try:
+        days = int(request.args.get('days', 7))
+        days = max(1, min(90, days))  # Limit to 1-90 days
+    except (ValueError, TypeError):
+        days = 7
+
+    # Calculate date range
+    end_date = datetime.now().date()
+    start_date = end_date - timedelta(days=days)
+
+    # Get all dates in range
+    dates_list = []
+    current_date = start_date
+    while current_date <= end_date:
+        dates_list.append(current_date)
+        current_date += timedelta(days=1)
+
+    # Get meals in date range
+    meals = MealLog.query.filter(
+        and_(
+            MealLog.user_id == current_user.id,
+            MealLog.meal_date >= start_date,
+            MealLog.meal_date <= end_date
+        )
+    ).all()
+
+    # Create dictionaries of date -> totals
+    calories_by_date = {}
+    protein_by_date = {}
+
+    for meal in meals:
+        date_key = meal.meal_date
+
+        if date_key in calories_by_date:
+            calories_by_date[date_key] += meal.calories or 0
+            protein_by_date[date_key] += meal.protein_g or 0
+        else:
+            calories_by_date[date_key] = meal.calories or 0
+            protein_by_date[date_key] = meal.protein_g or 0
+
+    # Prepare data for charting (include all dates, 0 for days without meals)
+    dates = []
+    calories = []
+    protein = []
+
+    for date in dates_list:
+        dates.append(date.isoformat())
+        calories.append(calories_by_date.get(date, 0))
+        protein.append(round(protein_by_date.get(date, 0), 1))
+
+    return success_response(
+        data={
+            'dates': dates,
+            'calories': calories,
+            'protein': protein
+        },
+        message=f'Nutrition adherence trend data for {days} days'
+    )

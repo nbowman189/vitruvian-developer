@@ -33,10 +33,17 @@ async function loadDashboardData() {
  */
 async function loadLatestWeight() {
     try {
-        const data = await API.get('/api/health/metrics/latest');
-        document.getElementById('latest-weight').textContent = data.weight || '--';
-        document.getElementById('weight-change').textContent = data.change || '--';
-        document.getElementById('weight-date').textContent = data.date ? DateUtils.formatDateDisplay(data.date) : '--';
+        const response = await API.get('/api/health/metrics/latest');
+        const metric = response.data;
+
+        // Extract weight and calculate change
+        const weight = metric.weight_lbs || null;
+        document.getElementById('latest-weight').textContent = weight ? weight : '--';
+
+        // Calculate change (placeholder - could enhance with previous metric)
+        document.getElementById('weight-change').textContent = '--';
+
+        document.getElementById('weight-date').textContent = metric.recorded_date ? DateUtils.formatDateDisplay(metric.recorded_date) : '--';
     } catch (error) {
         console.error('Error loading latest weight:', error);
     }
@@ -47,7 +54,8 @@ async function loadLatestWeight() {
  */
 async function loadRecentWorkout() {
     try {
-        const data = await API.get('/api/workout/recent');
+        const response = await API.get('/api/workout/recent');
+        const data = response.data;
         document.getElementById('recent-workout-name').textContent = data.name || 'No recent workout';
         document.getElementById('workout-duration').textContent = data.duration ? `${data.duration} mins` : '--';
         document.getElementById('workout-date').textContent = data.date ? DateUtils.formatDateDisplay(data.date) : '--';
@@ -61,7 +69,8 @@ async function loadRecentWorkout() {
  */
 async function loadNextSession() {
     try {
-        const data = await API.get('/api/coaching/next-session');
+        const response = await API.get('/api/coaching/next-session');
+        const data = response.data;
         document.getElementById('next-session-date').textContent = data.date ? DateUtils.formatDateDisplay(data.date) : 'Not scheduled';
         document.getElementById('session-countdown').textContent = data.countdown || '--';
         document.getElementById('active-goals-count').textContent = `${data.active_goals || 0} active goals`;
@@ -75,7 +84,8 @@ async function loadNextSession() {
  */
 async function loadNutritionStreak() {
     try {
-        const data = await API.get('/api/nutrition/streak');
+        const response = await API.get('/api/nutrition/streak');
+        const data = response.data;
         document.getElementById('nutrition-streak').textContent = data.streak || '0';
         document.getElementById('calories-today').textContent = data.calories_today ? `${data.calories_today} cal` : '--';
         document.getElementById('protein-today').textContent = data.protein_today ? `${data.protein_today}g protein` : '--';
@@ -98,7 +108,8 @@ function initializeCharts() {
  */
 async function createWeightTrendChart() {
     try {
-        const data = await API.get('/api/health/metrics/trend?days=7');
+        const response = await API.get('/api/health/metrics/trend?days=7');
+        const data = response.data;
 
         const ctx = document.getElementById('weightTrendChart');
         if (!ctx) return;
@@ -138,7 +149,8 @@ async function createWeightTrendChart() {
  */
 async function createWorkoutVolumeChart() {
     try {
-        const data = await API.get('/api/workout/volume-trend?days=7');
+        const response = await API.get('/api/workout/volume-trend?days=7');
+        const data = response.data;
 
         const ctx = document.getElementById('workoutVolumeChart');
         if (!ctx) return;
@@ -171,7 +183,8 @@ async function createWorkoutVolumeChart() {
  */
 async function createNutritionAdherenceChart() {
     try {
-        const data = await API.get('/api/nutrition/adherence-trend?days=7');
+        const response = await API.get('/api/nutrition/adherence-trend?days=7');
+        const data = response.data;
 
         const ctx = document.getElementById('nutritionAdherenceChart');
         if (!ctx) return;
@@ -246,7 +259,8 @@ async function initializeActivityFeed() {
     UIUtils.showLoading(feedContainer);
 
     try {
-        const activities = await API.get('/api/activity/recent?limit=5');
+        const response = await API.get('/api/activity/recent?limit=5');
+        const activities = response.data;
         displayActivities(activities);
         initializeActivityFilters();
     } catch (error) {

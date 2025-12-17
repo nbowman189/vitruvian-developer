@@ -605,3 +605,64 @@ def upload_progress_photo():
         db.session.rollback()
         logger.error(f'Error uploading progress photo: {e}', exc_info=True)
         return error_response('Failed to upload progress photo', errors=[str(e)], status_code=500)
+
+
+# ====================
+# Dashboard Endpoints
+# ====================
+
+@coaching_api_bp.route('/next-session', methods=['GET'])
+@require_active_user
+def get_next_session():
+    """
+    Get next scheduled coaching session and active goals count.
+
+    Returns:
+        200: Next session date and goals data
+    """
+    from datetime import datetime, timedelta
+
+    today = datetime.now().date()
+
+    # Get next scheduled session (future sessions only)
+    next_session = CoachingSession.query.filter(
+        and_(
+            CoachingSession.user_id == current_user.id,
+            CoachingSession.session_date >= today
+        )
+    ).order_by(CoachingSession.session_date.asc()).first()
+
+    # Get active goals count
+    active_goals = UserGoal.query.filter_by(
+        user_id=current_user.id,
+        status=GoalStatus.ACTIVE
+    ).count()
+
+    # Calculate countdown if there's a next session
+    countdown = None
+    session_date = None
+
+    if next_session:
+        session_date = next_session.session_date.isoformat()
+        days_until = (next_session.session_date - today).days
+
+        if days_until == 0:
+            countdown = 'Today'
+        elif days_until == 1:
+            countdown = 'Tomorrow'
+        elif days_until < 7:
+            countdown = f'{days_until} days'
+        elif days_until < 14:
+            countdown = '1 week'
+        else:
+            weeks = days_until // 7
+            countdown = f'{weeks} weeks'
+
+    return success_response(
+        data={
+            'date': session_date,
+            'countdown': countdown,
+            'active_goals': active_goals
+        },
+        message='Next session data retrieved successfully'
+    )

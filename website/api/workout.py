@@ -576,3 +576,114 @@ def create_exercise_definition():
         db.session.rollback()
         logger.error(f'Error creating exercise definition: {e}', exc_info=True)
         return error_response('Failed to create exercise definition', errors=[str(e)], status_code=500)
+
+
+# ====================
+# Dashboard Endpoints
+# ====================
+
+@workout_api_bp.route('/recent', methods=['GET'])
+@require_active_user
+def get_recent_workout():
+    """
+    Get the most recent workout session for the authenticated user.
+
+    Returns:
+        200: Most recent workout data
+        404: No workouts found
+    """
+    workout = WorkoutSession.query.filter_by(
+        user_id=current_user.id
+    ).order_by(WorkoutSession.session_date.desc()).first()
+
+    if not workout:
+        return success_response(
+            data={
+                'name': 'No recent workout',
+                'duration': None,
+                'date': None
+            },
+            message='No workouts found'
+        )
+
+    return success_response(
+        data={
+            'name': workout.name or workout.session_type.value.replace('_', ' ').title(),
+            'duration': workout.duration_minutes,
+            'date': workout.session_date.isoformat() if workout.session_date else None
+        },
+        message='Recent workout retrieved successfully'
+    )
+
+
+@workout_api_bp.route('/volume-trend', methods=['GET'])
+@require_active_user
+def get_volume_trend():
+    """
+    Get workout volume trend data for charting.
+
+    Query Parameters:
+        - days (int): Number of days to include (default: 7)
+
+    Returns:
+        200: Arrays of dates and volumes for charting
+    """
+    from datetime import datetime, timedelta
+
+    try:
+        days = int(request.args.get('days', 7))
+        days = max(1, min(90, days))  # Limit to 1-90 days
+    except (ValueError, TypeError):
+        days = 7
+
+    # Calculate date range
+    end_date = datetime.now().date()
+    start_date = end_date - timedelta(days=days)
+
+    # Get all dates in range
+    dates_list = []
+    current_date = start_date
+    while current_date <= end_date:
+        dates_list.append(current_date)
+        current_date += timedelta(days=1)
+
+    # Get workouts in date range
+    workouts = WorkoutSession.query.filter(
+        and_(
+            WorkoutSession.user_id == current_user.id,
+            WorkoutSession.session_date >= start_date,
+            WorkoutSession.session_date <= end_date
+        )
+    ).all()
+
+    # Create a dictionary of date -> total volume
+    volume_by_date = {}
+    for workout in workouts:
+        date_key = workout.session_date
+
+        # Calculate total volume for this workout
+        total_volume = 0
+        for exercise in workout.exercises:
+            if exercise.weight_lbs and exercise.reps and exercise.sets:
+                total_volume += exercise.weight_lbs * exercise.reps * exercise.sets
+
+        if date_key in volume_by_date:
+            volume_by_date[date_key] += total_volume
+        else:
+            volume_by_date[date_key] = total_volume
+
+    # Prepare data for charting (include all dates, 0 for days without workouts)
+    dates = []
+    volumes = []
+
+    for date in dates_list:
+        dates.append(date.isoformat())
+        volumes.append(volume_by_date.get(date, 0))
+
+    return success_response(
+        data={
+            'dates': dates,
+            'volumes': volumes
+        },
+        message=f'Workout volume trend data for {days} days'
+    )
