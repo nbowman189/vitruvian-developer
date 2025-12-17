@@ -61,7 +61,9 @@ class AICoachChat {
      */
     async loadConversations() {
         try {
-            const response = await fetch('/api/ai-coach/conversations?per_page=50');
+            const response = await fetch('/api/ai-coach/conversations?per_page=50', {
+                credentials: 'include'
+            });
             const data = await response.json();
 
             if (!data.success) {
@@ -119,7 +121,9 @@ class AICoachChat {
         try {
             this.showLoading(true);
 
-            const response = await fetch(`/api/ai-coach/conversations/${conversationId}`);
+            const response = await fetch(`/api/ai-coach/conversations/${conversationId}`, {
+                credentials: 'include'
+            });
             const data = await response.json();
 
             if (!data.success) {
@@ -218,6 +222,7 @@ class AICoachChat {
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                credentials: 'include',
                 body: JSON.stringify(requestBody)
             });
 
@@ -659,6 +664,7 @@ class AICoachChat {
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                credentials: 'include',
                 body: JSON.stringify({
                     conversation_id: this.currentConversationId,
                     function_name: functionName,
