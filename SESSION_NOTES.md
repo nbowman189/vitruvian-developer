@@ -12,13 +12,25 @@
 - API endpoints (JSON) don't use CSRF tokens - they rely on authentication
 - Blueprint-level exemption (`csrf.exempt(api_bp)`) wasn't working for nested blueprints
 
-### Solution Applied:
+### Solutions Applied:
+
+**Fix #1 - CSRF Protection Exemption:**
 1. Added `@csrf.exempt` decorator directly to POST routes in `website/api/ai_coach.py`
 2. Imported `csrf` from `website` package
 3. Applied decorator to:
    - `/api/ai-coach/message` (line 49)
    - `/api/ai-coach/save-record` (line 297)
 4. Removed ineffective blueprint-level exemption from `website/__init__.py`
+
+**Fix #2 - Authentication Credentials:**
+1. Added `credentials: 'include'` to all 4 fetch calls in `website/static/js/ai-coach.js`
+2. Fixed GET requests:
+   - `/api/ai-coach/conversations` (line 64-66)
+   - `/api/ai-coach/conversations/<id>` (line 124-126)
+3. Fixed POST requests:
+   - `/api/ai-coach/message` (line 220-227)
+   - `/api/ai-coach/save-record` (line 662-673)
+4. Without credentials: 'include', authentication cookies weren't being sent
 
 ### Verification:
 ```bash
@@ -28,12 +40,15 @@ $ curl -X POST http://localhost:8000/api/ai-coach/message
 ```
 
 ### Files Modified:
-- `website/api/ai_coach.py` - Added CSRF exemption decorators
-- `website/__init__.py` - Removed ineffective blueprint exemption
+- `website/api/ai_coach.py` - Added CSRF exemption decorators (Fix #1)
+- `website/__init__.py` - Removed ineffective blueprint exemption (Fix #1)
+- `website/static/js/ai-coach.js` - Added credentials to all fetch calls (Fix #2)
 
-### Git Commit:
-**Commit:** `261c030` - "Fix CSRF protection blocking AI Coach API endpoints"
-**Status:** Committed and pushed to remote repository
+### Git Commits:
+**Commit 1:** `261c030` - "Fix CSRF protection blocking AI Coach API endpoints"
+**Commit 2:** `4e4463b` - "Update session notes: CSRF fix for AI Coach API complete"
+**Commit 3:** `1755362` - "Fix authentication: Add credentials to AI Coach fetch calls"
+**Status:** All commits pushed to remote repository
 
 ### Deployment Status:
 - ✅ Local testing: CSRF error resolved
