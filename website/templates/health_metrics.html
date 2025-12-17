@@ -18,21 +18,27 @@
         <p class="text-muted">Track your weight, body composition, and wellness metrics</p>
     </section>
 
-    <!-- Coming Soon Notice -->
-    <div class="alert alert-info">
-        <i class="bi bi-info-circle"></i> Full health metrics management page coming soon!
-        For now, view your latest metrics on the <a href="/dashboard">dashboard</a>.
+    <!-- Weight Trend Chart -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">30-Day Weight Trend</h5>
+        </div>
+        <div class="card-body">
+            <canvas id="weightTrendChart" height="80"></canvas>
+        </div>
     </div>
 
-    <!-- Latest Metric Card -->
+    <!-- Recent Metrics Table -->
     <div class="card">
         <div class="card-header">
-            <h5 class="card-title mb-0">Latest Health Metric</h5>
+            <h5 class="card-title mb-0">Recent Metrics (Last 30 Days)</h5>
         </div>
-        <div class="card-body" id="latest-metric-content">
-            <div class="text-center py-4">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
+        <div class="card-body">
+            <div id="metrics-table-container">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -41,36 +47,101 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="/static/js/common.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async function() {
-    try {
-        const response = await API.get('/api/health/metrics/latest');
-        const metric = response.data;
+    await loadWeightChart();
+    await loadMetricsTable();
+});
 
-        const content = document.getElementById('latest-metric-content');
-        content.innerHTML = `
-            <div class="row">
-                <div class="col-md-4">
-                    <h6>Date</h6>
-                    <p>${DateUtils.formatDateDisplay(metric.recorded_date)}</p>
-                </div>
-                <div class="col-md-4">
-                    <h6>Weight</h6>
-                    <p>${metric.weight_lbs ? metric.weight_lbs + ' lbs' : 'N/A'}</p>
-                </div>
-                <div class="col-md-4">
-                    <h6>Body Fat %</h6>
-                    <p>${metric.body_fat_percentage ? metric.body_fat_percentage + '%' : 'N/A'}</p>
-                </div>
+async function loadWeightChart() {
+    try {
+        const response = await API.get('/api/health/metrics/trend?days=30');
+        const data = response.data;
+
+        const ctx = document.getElementById('weightTrendChart');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.dates,
+                datasets: [{
+                    label: 'Weight (lbs)',
+                    data: data.weights,
+                    borderColor: '#1a237e',
+                    backgroundColor: 'rgba(26, 35, 126, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true }
+                },
+                scales: {
+                    y: { beginAtZero: false }
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error loading weight chart:', error);
+    }
+}
+
+async function loadMetricsTable() {
+    try {
+        const response = await API.get('/api/health/metrics?per_page=30&sort=desc');
+        const metrics = response.data;
+
+        const container = document.getElementById('metrics-table-container');
+
+        if (!metrics || metrics.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center">No metrics found</p>';
+            return;
+        }
+
+        let tableHTML = `
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Weight (lbs)</th>
+                            <th>Body Fat %</th>
+                            <th>BMI</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        metrics.forEach(metric => {
+            tableHTML += `
+                <tr>
+                    <td>${DateUtils.formatDateDisplay(metric.recorded_date)}</td>
+                    <td>${metric.weight_lbs ? metric.weight_lbs : '-'}</td>
+                    <td>${metric.body_fat_percentage ? metric.body_fat_percentage + '%' : '-'}</td>
+                    <td>${metric.bmi ? metric.bmi.toFixed(1) : '-'}</td>
+                    <td>${metric.notes || '-'}</td>
+                </tr>
+            `;
+        });
+
+        tableHTML += `
+                    </tbody>
+                </table>
             </div>
         `;
+
+        container.innerHTML = tableHTML;
     } catch (error) {
-        console.error('Error loading health metrics:', error);
-        document.getElementById('latest-metric-content').innerHTML = `
-            <div class="alert alert-danger">Failed to load health metrics</div>
+        console.error('Error loading metrics table:', error);
+        document.getElementById('metrics-table-container').innerHTML = `
+            <div class="alert alert-danger">Failed to load metrics</div>
         `;
     }
-});
+}
 </script>
 {% endblock %}

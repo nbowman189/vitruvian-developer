@@ -16,24 +16,40 @@
     <section class="page-header">
         <h1><i class="bi bi-clipboard-data"></i> Coaching Log</h1>
         <p class="text-muted">Historical coaching sessions and feedback</p>
+        <div class="mt-3">
+            <a href="/ai-coach" class="btn btn-primary">
+                <i class="bi bi-robot"></i> Go to AI Coach
+            </a>
+        </div>
     </section>
 
-    <!-- Coming Soon Notice -->
-    <div class="alert alert-info">
-        <i class="bi bi-info-circle"></i> Full coaching log page coming soon!
-        For now, view your next session on the <a href="/dashboard">dashboard</a>.
-        For AI-powered coaching, visit the <a href="/ai-coach">AI Coach</a>.
-    </div>
-
-    <!-- Next Session Card -->
+    <!-- Coaching Sessions List -->
     <div class="card">
         <div class="card-header">
-            <h5 class="card-title mb-0">Next Coaching Session</h5>
+            <h5 class="card-title mb-0">Coaching Sessions</h5>
         </div>
-        <div class="card-body" id="next-session-content">
-            <div class="text-center py-4">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
+        <div class="card-body">
+            <div id="sessions-list-container">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Goals -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Active Goals</h5>
+        </div>
+        <div class="card-body">
+            <div id="goals-list-container">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -45,33 +61,84 @@
 <script src="/static/js/common.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async function() {
-    try {
-        const response = await API.get('/api/coaching/next-session');
-        const data = response.data;
+    await loadSessions();
+    await loadGoals();
+});
 
-        const content = document.getElementById('next-session-content');
-        content.innerHTML = `
-            <div class="row">
-                <div class="col-md-4">
-                    <h6>Next Session</h6>
-                    <p>${data.date ? DateUtils.formatDateDisplay(data.date) : 'Not scheduled'}</p>
+async function loadSessions() {
+    try {
+        const response = await API.get('/api/coaching/sessions?per_page=20&sort=desc');
+        const sessions = response.data;
+
+        const container = document.getElementById('sessions-list-container');
+
+        if (!sessions || sessions.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center">No coaching sessions found</p>';
+            return;
+        }
+
+        let html = '<div class="list-group">';
+        sessions.forEach(session => {
+            html += `
+                <div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">${DateUtils.formatDateDisplay(session.session_date)}</h6>
+                        <small>${session.duration_minutes ? session.duration_minutes + ' mins' : ''}</small>
+                    </div>
+                    <p class="mb-1">${session.notes || 'No notes'}</p>
+                    ${session.coach_feedback ? `<small class="text-muted"><strong>Coach:</strong> ${session.coach_feedback}</small>` : ''}
                 </div>
-                <div class="col-md-4">
-                    <h6>Countdown</h6>
-                    <p>${data.countdown || '--'}</p>
-                </div>
-                <div class="col-md-4">
-                    <h6>Active Goals</h6>
-                    <p>${data.active_goals || 0} goals</p>
-                </div>
-            </div>
-        `;
+            `;
+        });
+        html += '</div>';
+
+        container.innerHTML = html;
     } catch (error) {
-        console.error('Error loading coaching session:', error);
-        document.getElementById('next-session-content').innerHTML = `
-            <div class="alert alert-danger">Failed to load coaching session data</div>
+        console.error('Error loading sessions:', error);
+        document.getElementById('sessions-list-container').innerHTML = `
+            <div class="alert alert-danger">Failed to load sessions</div>
         `;
     }
-});
+}
+
+async function loadGoals() {
+    try {
+        const response = await API.get('/api/coaching/goals');
+        const goals = response.data;
+
+        const container = document.getElementById('goals-list-container');
+
+        if (!goals || goals.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center">No active goals</p>';
+            return;
+        }
+
+        let html = '<div class="list-group">';
+        goals.forEach(goal => {
+            const isCompleted = goal.is_completed;
+            const badge = isCompleted ?
+                '<span class="badge bg-success">Completed</span>' :
+                '<span class="badge bg-primary">Active</span>';
+
+            html += `
+                <div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">${goal.goal_text}</h6>
+                        ${badge}
+                    </div>
+                    ${goal.target_date ? `<small>Target: ${DateUtils.formatDateDisplay(goal.target_date)}</small>` : ''}
+                </div>
+            `;
+        });
+        html += '</div>';
+
+        container.innerHTML = html;
+    } catch (error) {
+        console.error('Error loading goals:', error);
+        document.getElementById('goals-list-container').innerHTML = `
+            <div class="alert alert-danger">Failed to load goals</div>
+        `;
+    }
+}
 </script>
 {% endblock %}

@@ -18,14 +18,8 @@
         <p class="text-muted">Track your meals and macros</p>
     </section>
 
-    <!-- Coming Soon Notice -->
-    <div class="alert alert-info">
-        <i class="bi bi-info-circle"></i> Full nutrition management page coming soon!
-        For now, view your nutrition streak on the <a href="/dashboard">dashboard</a>.
-    </div>
-
     <!-- Nutrition Streak Card -->
-    <div class="card">
+    <div class="card mb-4">
         <div class="card-header">
             <h5 class="card-title mb-0">Current Streak</h5>
         </div>
@@ -37,6 +31,36 @@
             </div>
         </div>
     </div>
+
+    <!-- Weekly Summary -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Weekly Summary</h5>
+        </div>
+        <div class="card-body" id="weekly-summary-content">
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Meals -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Recent Meals (Last 14 Days)</h5>
+        </div>
+        <div class="card-body">
+            <div id="meals-list-container">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
@@ -44,6 +68,12 @@
 <script src="/static/js/common.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async function() {
+    await loadStreak();
+    await loadWeeklySummary();
+    await loadMeals();
+});
+
+async function loadStreak() {
     try {
         const response = await API.get('/api/nutrition/streak');
         const data = response.data;
@@ -66,11 +96,101 @@ document.addEventListener('DOMContentLoaded', async function() {
             </div>
         `;
     } catch (error) {
-        console.error('Error loading nutrition data:', error);
+        console.error('Error loading nutrition streak:', error);
         document.getElementById('nutrition-streak-content').innerHTML = `
-            <div class="alert alert-danger">Failed to load nutrition data</div>
+            <div class="alert alert-danger">Failed to load nutrition streak</div>
         `;
     }
-});
+}
+
+async function loadWeeklySummary() {
+    try {
+        const response = await API.get('/api/nutrition/weekly-summary');
+        const data = response.data;
+
+        const content = document.getElementById('weekly-summary-content');
+        content.innerHTML = `
+            <div class="row">
+                <div class="col-md-3">
+                    <h6>Avg Calories</h6>
+                    <p>${data.avg_calories ? Math.round(data.avg_calories) + ' cal/day' : 'N/A'}</p>
+                </div>
+                <div class="col-md-3">
+                    <h6>Avg Protein</h6>
+                    <p>${data.avg_protein ? Math.round(data.avg_protein) + 'g/day' : 'N/A'}</p>
+                </div>
+                <div class="col-md-3">
+                    <h6>Avg Carbs</h6>
+                    <p>${data.avg_carbs ? Math.round(data.avg_carbs) + 'g/day' : 'N/A'}</p>
+                </div>
+                <div class="col-md-3">
+                    <h6>Avg Fat</h6>
+                    <p>${data.avg_fat ? Math.round(data.avg_fat) + 'g/day' : 'N/A'}</p>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading weekly summary:', error);
+        document.getElementById('weekly-summary-content').innerHTML = `
+            <div class="alert alert-danger">Failed to load weekly summary</div>
+        `;
+    }
+}
+
+async function loadMeals() {
+    try {
+        const response = await API.get('/api/nutrition/meals?per_page=30&sort=desc');
+        const meals = response.data;
+
+        const container = document.getElementById('meals-list-container');
+
+        if (!meals || meals.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center">No meals logged</p>';
+            return;
+        }
+
+        let tableHTML = `
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Calories</th>
+                            <th>Protein (g)</th>
+                            <th>Carbs (g)</th>
+                            <th>Fat (g)</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        meals.forEach(meal => {
+            tableHTML += `
+                <tr>
+                    <td>${DateUtils.formatDateDisplay(meal.meal_date)}</td>
+                    <td>${meal.total_calories || '-'}</td>
+                    <td>${meal.protein_g || '-'}</td>
+                    <td>${meal.carbs_g || '-'}</td>
+                    <td>${meal.fat_g || '-'}</td>
+                    <td>${meal.notes || '-'}</td>
+                </tr>
+            `;
+        });
+
+        tableHTML += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        container.innerHTML = tableHTML;
+    } catch (error) {
+        console.error('Error loading meals:', error);
+        document.getElementById('meals-list-container').innerHTML = `
+            <div class="alert alert-danger">Failed to load meals</div>
+        `;
+    }
+}
 </script>
 {% endblock %}

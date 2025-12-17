@@ -54,7 +54,7 @@ async function loadLatestWeight() {
  */
 async function loadRecentWorkout() {
     try {
-        const response = await API.get('/api/workout/recent');
+        const response = await API.get('/api/workouts/recent');
         const data = response.data;
         document.getElementById('recent-workout-name').textContent = data.name || 'No recent workout';
         document.getElementById('workout-duration').textContent = data.duration ? `${data.duration} mins` : '--';
@@ -149,7 +149,7 @@ async function createWeightTrendChart() {
  */
 async function createWorkoutVolumeChart() {
     try {
-        const response = await API.get('/api/workout/volume-trend?days=7');
+        const response = await API.get('/api/workouts/volume-trend?days=7');
         const data = response.data;
 
         const ctx = document.getElementById('workoutVolumeChart');

@@ -45,7 +45,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', async function() {
     try {
-        const response = await API.get('/api/workout/recent');
+        const response = await API.get('/api/workouts/recent');
         const workout = response.data;
 
         const content = document.getElementById('recent-workout-content');

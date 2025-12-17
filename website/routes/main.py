@@ -148,7 +148,7 @@ def ai_coach():
     if not current_user.is_authenticated:
         abort(401)
 
-    return render_template('ai_coach.html')
+    return render_template('health/ai_coach.html')
 
 
 @main_bp.route('/static/<path:filename>')
