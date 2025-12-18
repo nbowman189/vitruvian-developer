@@ -107,7 +107,7 @@ def get_recent_activity():
     ).order_by(CoachingSession.session_date.desc()).limit(limit).all()
 
     for session in coaching:
-        description = session.focus_areas or "Coaching session completed"
+        description = session.coach_feedback or "Coaching session completed"
         if len(description) > 100:
             description = description[:97] + "..."
 
