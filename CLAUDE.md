@@ -6,15 +6,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **For latest session notes and status, see:** `SESSION_NOTES.md` in project root
 
-**Previous Session Completion (December 18, 2024):**
-- ✅ Dashboard fully functional with all features working
-- ✅ Database rebuild script created and tested
-- ✅ Data import scripts fixed and validated
-- ✅ Local development environment stable
+**Current Session (December 18, 2024 - Evening):**
+- ✅ Fixed blog functionality: JavaScript now handles paginated API responses
+- ✅ Updated blog.js, blog-article.js, saved-articles.js to extract `data.items`
+- ✅ Added blog.js script to homepage for blog posts display
+- ✅ Cleaned up CLAUDE.md documentation (829→591 lines, removed obsolete content)
+- ✅ Committed and ready to push: commit hash `79f80d0`
 
-**Known Deployment Issues:**
-1. **Remote Server:** May need Cloudflare cache purge after JavaScript updates
-2. **Data Import:** Use `docker cp` to update import scripts in running containers before re-importing
+**Deployment Notes:**
+- Use `docker cp` to copy updated files to running containers (Docker caching issue)
+- Fix file permissions: `chown appuser:appuser` and `chmod 644`
+- **Critical:** Purge Cloudflare cache after deploying JavaScript changes
+
+**Known Issues:**
+1. **Docker Build Cache:** Static files not always copied during rebuild - use `docker cp` as workaround
+2. **Cloudflare Cache:** Must purge or enable Development Mode after JavaScript updates
 
 ---
 
@@ -99,6 +105,30 @@ docker-compose up -d --build
 # Clean restart (removes volumes/database)
 docker-compose down -v
 docker-compose up -d --build
+```
+
+#### Deploying Static File Updates to Remote Server:
+
+Due to Docker build caching issues with static files, use this workflow:
+
+```bash
+# 1. Pull latest code
+git pull origin main
+
+# 2. Copy updated files directly to running container
+docker cp website/static/js/blog.js primary-assistant-web:/app/website/static/js/blog.js
+docker cp website/templates/index.html primary-assistant-web:/app/website/templates/index.html
+
+# 3. Fix file permissions
+docker-compose -f docker-compose.yml -f docker-compose.remote.yml exec -T -u root web \
+  sh -c "chown -R appuser:appuser /app/website/static/ /app/website/templates/ && \
+         chmod -R 644 /app/website/static/js/*.js && \
+         chmod 644 /app/website/templates/*.html"
+
+# 4. Restart web container
+docker-compose -f docker-compose.yml -f docker-compose.remote.yml restart web
+
+# 5. CRITICAL: Purge Cloudflare cache or enable Development Mode for 3 hours
 ```
 
 ### Authentication System
