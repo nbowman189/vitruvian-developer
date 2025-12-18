@@ -2,28 +2,51 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## 🚨 CURRENT SESSION STATUS (December 17, 2024)
+## 🚨 CURRENT SESSION STATUS (December 18, 2024)
 
-**STATUS:** Dashboard implementation complete locally, remote deployment needs debugging
+**STATUS:** Dashboard working locally, remote deployment has caching issues preventing JavaScript updates
 
-**NEXT SESSION START HERE:** Remote server shows containers as healthy but host reports error state. Need to diagnose actual issue.
+**NEXT SESSION START HERE:** Remote server needs Cloudflare cache purge and final meal data import
 
 **COMPLETED THIS SESSION:**
-- ✅ Implemented complete dashboard with 8 new API endpoints
-- ✅ Created activity feed API module
-- ✅ Fixed all frontend JavaScript for proper response parsing
-- ✅ Added automated deployment script with health checks
-- ✅ Tested successfully in local Docker environment (port 8001)
-- ✅ Pushed all changes to GitHub
+- ✅ Created comprehensive database rebuild script (`scripts/rebuild_database.sh`)
+- ✅ Fixed database rebuild to use `-v` flag for proper volume removal
+- ✅ Fixed `import_markdown_data.py`: Changed `workout_id` → `workout_session_id`
+- ✅ Fixed `import_markdown_data.py`: MealLog now sets individual fields instead of non-existent dict properties
+- ✅ Updated nginx config to disable caching for JS/CSS files (development)
+- ✅ Identified root cause: Cloudflare caching old JavaScript files
+- ✅ Local dashboard fully functional with all features working
+- ✅ Fixed date timezone bug in DateUtils.formatDateDisplay()
 
-**BLOCKING ISSUE:** Remote deployment shows containers healthy but application in error state
+**BLOCKING ISSUES:**
+1. **Cloudflare Cache:** Remote server serves cached old JavaScript files (dashboard.js has wrong API endpoints)
+2. **Meal Import:** Container has old import script, needs manual copy before re-import
 
-**NEXT STEPS FOR DEBUGGING:**
-1. Check nginx logs: `docker-compose logs nginx | tail -50`
-2. Test direct web access: `curl http://localhost:8001/api/health`
-3. Check actual browser error (502, timeout, etc.)
-4. Verify nginx configuration is correct
-5. Check if SSL certificates are causing issues
+**NEXT SESSION STEPS:**
+1. **Purge Cloudflare cache** for vitruvian.bowmanhomelabtech.net (or enable Development Mode for 3 hours)
+2. **Copy updated import script to container:**
+   ```bash
+   docker cp /home/nathan/vitruvian-developer/scripts/import_markdown_data.py primary-assistant-web:/app/scripts/import_markdown_data.py
+   ```
+3. **Delete and re-import meals:**
+   ```bash
+   # Delete bad meals
+   docker-compose -f docker-compose.yml -f docker-compose.remote.yml exec web python -c "
+   from website.app import create_app
+   from website.models.nutrition import MealLog
+   from website.models import db
+   app = create_app()
+   with app.app_context():
+       MealLog.query.delete()
+       db.session.commit()
+   "
+
+   # Re-import with fixed script
+   docker-compose -f docker-compose.yml -f docker-compose.remote.yml exec web python /app/scripts/import_markdown_data.py
+   ```
+4. **Hard refresh browser** (Ctrl+Shift+R) after Cloudflare cache is purged
+5. **Verify dashboard works:** All API endpoints should respond correctly
+6. **Verify nutrition page:** Should show calories and food descriptions, not just feedback notes
 
 ---
 
