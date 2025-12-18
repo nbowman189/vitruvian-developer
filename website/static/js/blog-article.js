@@ -26,10 +26,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Load all posts first (for navigation and related articles)
     function loadAllPosts() {
-        fetch('/api/blog/posts')
+        fetch('/api/blog/posts?per_page=50')
             .then(response => response.json())
-            .then(posts => {
-                allPosts = posts;
+            .then(data => {
+                // Handle paginated response - extract items array
+                allPosts = data.items || data || [];
                 loadArticle();
             })
             .catch(error => {

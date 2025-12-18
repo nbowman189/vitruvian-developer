@@ -32,9 +32,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load all blog posts and bookmarks
     function loadBookmarkedArticles() {
         Promise.all([
-            fetch('/api/blog/posts').then(r => r.json()),
+            fetch('/api/blog/posts?per_page=50').then(r => r.json()),
             Promise.resolve(JSON.parse(localStorage.getItem('bookmarks') || '{}'))
-        ]).then(([posts, bookmarks]) => {
+        ]).then(([data, bookmarks]) => {
+            // Handle paginated response - extract items array
+            const posts = data.items || data || [];
             // Filter to only bookmarked posts
             allPosts = posts.filter(post => bookmarks[post.slug] === true);
 

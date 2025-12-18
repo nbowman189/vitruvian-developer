@@ -2,51 +2,19 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## 🚨 CURRENT SESSION STATUS (December 18, 2024)
+## 🚨 CURRENT SESSION STATUS
 
-**STATUS:** Dashboard working locally, remote deployment has caching issues preventing JavaScript updates
+**For latest session notes and status, see:** `SESSION_NOTES.md` in project root
 
-**NEXT SESSION START HERE:** Remote server needs Cloudflare cache purge and final meal data import
+**Previous Session Completion (December 18, 2024):**
+- ✅ Dashboard fully functional with all features working
+- ✅ Database rebuild script created and tested
+- ✅ Data import scripts fixed and validated
+- ✅ Local development environment stable
 
-**COMPLETED THIS SESSION:**
-- ✅ Created comprehensive database rebuild script (`scripts/rebuild_database.sh`)
-- ✅ Fixed database rebuild to use `-v` flag for proper volume removal
-- ✅ Fixed `import_markdown_data.py`: Changed `workout_id` → `workout_session_id`
-- ✅ Fixed `import_markdown_data.py`: MealLog now sets individual fields instead of non-existent dict properties
-- ✅ Updated nginx config to disable caching for JS/CSS files (development)
-- ✅ Identified root cause: Cloudflare caching old JavaScript files
-- ✅ Local dashboard fully functional with all features working
-- ✅ Fixed date timezone bug in DateUtils.formatDateDisplay()
-
-**BLOCKING ISSUES:**
-1. **Cloudflare Cache:** Remote server serves cached old JavaScript files (dashboard.js has wrong API endpoints)
-2. **Meal Import:** Container has old import script, needs manual copy before re-import
-
-**NEXT SESSION STEPS:**
-1. **Purge Cloudflare cache** for vitruvian.bowmanhomelabtech.net (or enable Development Mode for 3 hours)
-2. **Copy updated import script to container:**
-   ```bash
-   docker cp /home/nathan/vitruvian-developer/scripts/import_markdown_data.py primary-assistant-web:/app/scripts/import_markdown_data.py
-   ```
-3. **Delete and re-import meals:**
-   ```bash
-   # Delete bad meals
-   docker-compose -f docker-compose.yml -f docker-compose.remote.yml exec web python -c "
-   from website.app import create_app
-   from website.models.nutrition import MealLog
-   from website.models import db
-   app = create_app()
-   with app.app_context():
-       MealLog.query.delete()
-       db.session.commit()
-   "
-
-   # Re-import with fixed script
-   docker-compose -f docker-compose.yml -f docker-compose.remote.yml exec web python /app/scripts/import_markdown_data.py
-   ```
-4. **Hard refresh browser** (Ctrl+Shift+R) after Cloudflare cache is purged
-5. **Verify dashboard works:** All API endpoints should respond correctly
-6. **Verify nutrition page:** Should show calories and food descriptions, not just feedback notes
+**Known Deployment Issues:**
+1. **Remote Server:** May need Cloudflare cache purge after JavaScript updates
+2. **Data Import:** Use `docker cp` to update import scripts in running containers before re-importing
 
 ---
 
@@ -80,30 +48,14 @@ Each content directory has a `GEMINI.md` file that provides context-specific inf
 
 ### Running the Website
 
-#### Both Public and Private Servers (Recommended)
-```bash
-cd /Users/nathanbowman/primary-assistant/website
-./start-servers.sh
-```
-This runs both servers simultaneously:
-- **Public Portfolio** (port 8080): `http://localhost:8080`
-- **Private Workspace** (port 8081): `http://localhost:8081`
-
-#### Public Portfolio Server Only
+#### Local Development (Non-Docker)
 ```bash
 cd /Users/nathanbowman/primary-assistant/website
 python3 app.py
 ```
-Website runs on `http://localhost:8080`
+Runs the Flask development server on `http://localhost:8080`
 
-#### Private Workspace Server Only
-```bash
-cd /Users/nathanbowman/primary-assistant/website
-python3 app-private.py
-```
-Website runs on `http://localhost:8081` with full access to `/data/` directories.
-
-**Note**: The website uses port 8080 for public and 8081 for private due to macOS's AirTunes service occupying port 5000.
+**Note**: Port 8080 is used instead of default 5000 due to macOS AirTunes service conflict.
 
 ### Docker Deployment (Local or Remote)
 
@@ -112,10 +64,14 @@ Website runs on `http://localhost:8081` with full access to `/data/` directories
 cd /Users/nathanbowman/primary-assistant
 docker-compose up -d
 ```
+Services will be available at:
+- **Web Application**: `http://localhost:8001` (Docker port mapping: 8001→8000)
+- **PostgreSQL**: localhost:5432
+- **Nginx**: localhost:80
 
 #### Remote Server Deployment:
 ```bash
-# Use remote override configuration for HTTP access
+# Use remote override configuration for HTTP-only nginx (Cloudflare handles SSL)
 docker-compose -f docker-compose.yml -f docker-compose.remote.yml up -d
 ```
 
@@ -188,55 +144,54 @@ python scripts/graph_server.py
 
 ## Architecture
 
-### Website Servers
+### Website Application
 
-The website consists of two separate Flask servers for different purposes:
+**File**: `website/app.py`
 
-#### Public Portfolio Server
-**File**: `website/app.py` (Port 8080)
+The Flask application uses the **app factory pattern** with `create_app()` for modular, testable architecture.
 
-Serves curated public content from `/docs/` directories only. Safe to share with the world.
+**Structure:**
+- `/website/__init__.py` - App factory with configuration
+- `/website/routes/` - Blueprint modules for web pages (main, blog, health)
+- `/website/api/` - Modular API endpoints (health, nutrition, workout, coaching, activity, ai_coach)
+- `/website/auth/` - Complete authentication system (routes, forms, decorators)
+- `/website/services/` - External services (Gemini AI integration)
+- `/website/models/` - SQLAlchemy database models
+- `/website/utils/` - Utility functions and helpers
 
-#### Private Workspace Server
-**File**: `website/app-private.py` (Port 8081)
-
-Serves ALL project files including `/data/` directories for personal workspace access. Local-only (localhost) for security - no authentication needed. Use this to access working documents, coaching notes, and personal metrics.
-
-**Key Difference**: Private server includes `allow_data_access=True` parameter in `ProjectFileManager` utility, enabling full access to all markdown files.
-
-### Public Portfolio Server (app.py)
+### Main Application Routes (app.py)
 
 The Flask app serves as a dashboard to browse all projects, markdown files, and blog posts:
 
-**Main Routes:**
-- **Route `/`**: Main index page with hero section, portfolio, blog section, and contact
-- **Route `/health-and-fitness/graphs`**: Displays health data visualization with interactive charts
+**Web Routes (Blueprints in `/website/routes/`):**
+- `main.py` - Homepage, dashboard, project pages
+- `blog.py` - Blog listing and individual articles
+- `health.py` - Health & fitness specific pages, graphs visualization
 
-**Authentication Routes:**
-- **Route `/auth/login`**: User login page with CSRF protection
-- **Route `/auth/register`**: User registration page
-- **Route `/auth/logout`**: Logout and end session
-- **Route `/api/auth/status`**: Returns current authentication status (JSON)
+**Authentication Routes (`/website/auth/routes.py`):**
+- `/auth/login` - User login with CSRF protection
+- `/auth/register` - New user registration
+- `/auth/logout` - Session logout
+- `/api/auth/status` - Current authentication status (JSON)
+
+**API Endpoints (Modular structure in `/website/api/`):**
+- `health.py` - Health metrics CRUD operations
+- `nutrition.py` - Meal log and nutrition tracking
+- `workout.py` - Workout sessions and exercise logging
+- `coaching.py` - Coaching sessions and goal management
+- `activity.py` - Activity feed aggregation across all data types
+- `ai_coach.py` - AI coaching conversation endpoints (Gemini integration)
 
 **API Routes - Projects:**
-- **Route `/api/projects`**: Returns list of available projects
-- **Route `/api/project/<name>`**: Returns the GEMINI.md content for a project
-- **Route `/api/project/<name>/files`**: Lists all markdown files in a project (with custom ordering for Health_and_Fitness)
-  - **Authentication-aware**: Includes virtual database pages only when user is logged in
-- **Route `/api/project/<name>/file/<path>`**: Returns content of a specific markdown file
-  - **Protected**: Returns 401 for `/data/*` files if not authenticated
-- **Route `/api/project/<name>/categorized-files`**: Returns files organized by category
-  - **Authentication-aware**: Includes virtual pages when logged in
-
-**API Routes - Health Data:**
-- **Route `/api/health-and-fitness/health_data`**: Returns parsed weight/bodyfat data from check-in-log.md
+- `/api/projects` - List of available projects
+- `/api/project/<name>` - Project GEMINI.md content
+- `/api/project/<name>/files` - Project markdown files (authentication-aware)
+- `/api/project/<name>/file/<path>` - Specific file content (protected)
 
 **API Routes - Blog:**
-- **Route `/blog`**: Blog listing page with filtering by tags
-- **Route `/blog/<slug>`**: Individual blog article page with metadata and related articles
-- **Route `/api/blog/posts`**: Returns all blog posts as JSON (sorted by date, newest first)
-- **Route `/api/blog/posts/latest?limit=N`**: Returns latest N blog posts (default: 5)
-- **Route `/api/blog/post/<slug>`**: Returns specific blog post with HTML-rendered content
+- `/api/blog/posts` - All blog posts (sorted newest first)
+- `/api/blog/posts/latest?limit=N` - Latest N posts
+- `/api/blog/post/<slug>` - Specific blog post with HTML content
 
 #### Custom File Ordering
 The `HEALTH_FITNESS_FILE_ORDER` list at the top of `app.py` defines the desired file order for the Health_and_Fitness project:
@@ -252,108 +207,79 @@ The app auto-reloads templates and parses the check-in-log.md table format (pipe
 
 ### Website Frontend
 
-#### Templates
-- **`base.html`**: Base template with fixed navbar and common structure
-- **`index.html`**: Main landing page with hero section, portfolio showcase, blog section, and contact area
-- **`graphs.html`**: Health & Fitness graphs page with side-by-side chart display
-- **`blog_list.html`**: Blog archive page with all posts, tag filtering, and search capability
-- **`blog_article.html`**: Individual blog article page with metadata, related articles, and navigation
+#### Templates (28 total in `/website/templates/`)
+**Core Pages:**
+- `base.html` - Base template with navbar and common structure
+- `index.html` - Main landing page with hero, portfolio, blog, contact
+- `dashboard.html` - Main dashboard with stats, charts, activity feed
+- `project.html` - Project display page
 
-#### Static Files
-- **`css/style.css`**: Modern, responsive design with:
-  - CSS variables for consistent theming (primary colors, accent colors, typography)
-  - Professional navbar with animated hover effects
-  - Project navigation bar displaying file links as horizontal tabs
-  - Hero section with background image, gradient overlay, compelling headline, and CTA
-  - Featured portfolio section with project cards
-  - Blog section styling (cards, grid, filtering, tags)
-  - Blog article styling (typography, images with text wrapping)
-  - Image float properties for desktop layout (.blog-image-left, .blog-image-right)
-  - Responsive mobile breakpoints that convert floats to block display
-  - Responsive flexbox layout
-  - Markdown content styling (headings, code blocks, tables, blockquotes)
-  - Print-friendly styles (hides navbar, project nav bar, sidebar, and print button)
-  - Custom scrollbar styling
+**Feature Pages:**
+- `health_metrics.html` - Health tracking page
+- `nutrition_meals.html` - Nutrition and meal logging
+- `workout_workouts.html` - Workout session tracking
+- `coaching_sessions.html` - Coaching session management
+- `graphs.html` - Health & Fitness graphs (Chart.js visualizations)
 
-- **`js/utils.js`**: Shared utility functions
-  - `filenameToTitle()`: Converts filename to title case (e.g., "check-in-log.md" → "Check In Log")
-  - `projectToTitle()`: Converts project name to title case (e.g., "Health_and_Fitness" → "Health And Fitness")
-  - Used by both script.js and graphs.js to ensure consistent formatting
+**Blog:**
+- `blog_list.html` - Blog archive with filtering
+- `blog_article.html` - Individual blog post view
 
-- **`js/script.js`**: Main application logic
-  - Project and file navigation
-  - Custom title mappings for specific files (e.g., "check-in-log.md" displays as "Metrics Log")
-  - Navigation bar population with file links in custom order
-  - Active link highlighting
-  - SessionStorage bridge for inter-page navigation
-  - GEMINI.md loading and navigation
-  - Print functionality
-  - Duplicate prevention for GEMINI links
-  - Blog post loading for homepage
+**Admin & Auth:**
+- `/auth/` subdirectory - Login, register, profile templates
+- `/admin/` subdirectories - Management interfaces for all data types
 
-- **`js/blog.js`**: Blog listing and homepage blog functionality
-  - Fetches all blog posts from API
-  - Creates blog cards with metadata, excerpt, tags
-  - Implements tag-based filtering
-  - Displays latest N posts on homepage
-  - Formats dates and reading times
-  - Active filter highlighting
-  - Navigation to individual article pages
+#### JavaScript Files (21 total in `/website/static/js/`)
+**Core:**
+- `utils.js` - Shared utility functions (title formatting, date utils)
+- `common.js` - Common functionality across pages
+- `script.js` - Main application logic, navigation, project display
 
-- **`js/blog-article.js`**: Individual blog article page logic
-  - Loads article by slug from URL
-  - Renders article metadata (date, author, reading time, tags)
-  - Displays HTML-rendered content
-  - Finds and displays related articles by tag matching
-  - Creates previous/next article navigation
-  - Smooth scrolling and page transitions
+**Page-Specific:**
+- `dashboard.js` - Dashboard with Chart.js visualizations, stats cards
+- `health.js` - Health metrics page functionality
+- `nutrition.js` - Nutrition tracking interface
+- `workout.js` - Workout logging interface
+- `coaching.js` - Coaching session management
+- `graphs.js` - Health graphs page (Chart.js)
+- `project.js` - Project page functionality
 
-- **`js/graphs.js`**: Graph page specific logic
-  - Navigation bar population with file links
-  - Custom title mappings consistent with script.js
-  - Chart.js visualization for weight and body fat trends
-  - SessionStorage-based navigation to main page
-  - Responsive chart rendering
-  - GEMINI.md navigation from graphs page
+**Blog:**
+- `blog.js` - Blog listing and homepage integration
+- `blog-article.js` - Individual article page
+
+**Advanced Features:**
+- `ai-coach.js` - AI coaching conversation interface (Gemini)
+- `insights.js` - Data insights and analytics
+- `recommendation-engine.js` - Personalized recommendations
+- `recommendation-widget.js` - Recommendation UI components
+- `analytics-service.js` - Analytics tracking
+- `knowledge-graph.js` - Knowledge graph visualization
+- `saved-articles.js` - Saved content management
+- `design-system.js` - Design system utilities
+
+#### CSS (in `/website/static/css/`)
+- `style.css` - Complete responsive design system with CSS variables, component styling, mobile breakpoints
 
 ### Navigation System
 
-The website features a consistent navigation system across all pages:
+The website features a modern navigation system:
 
-1. **Top Navbar**: Fixed navbar with project selection links
-2. **Project Navigation Bar**: Displays when a project is selected, includes:
-   - Project name on the left
-   - Horizontal list of file links in specified order
-   - File links display in proper title case with custom display names
-   - Active link is highlighted with color and underline
-   - "Back to Project" link on the right
-3. **Content Area**: Main display area for project overview or selected file
+**Main Navigation:**
+- Fixed navbar with authentication status
+- Dashboard link for logged-in users
+- Project and blog navigation
 
-#### Health_and_Fitness Navigation Order
-The Health_and_Fitness project has a custom file order (defined in `app.py`):
-1. Fitness Roadmap
-2. Full Meal Plan
-3. Shopping List And Estimate
-4. Metrics Log (displays as custom name, file: `check-in-log.md`)
-5. Exercise Progress Log (displays as custom name, file: `progress-check-in-log.md`)
-6. Graphs (special link to graphs page)
-7. GEMINI (project overview)
+**Dashboard (authenticated users):**
+- Quick stat cards (health, workout, nutrition, coaching)
+- Interactive Chart.js visualizations
+- Activity feed aggregating all user data
+- Quick action buttons for data entry
 
-#### Custom File Display Names
-The following files have custom display names in the navigation bar:
-- `check-in-log.md` → "Metrics Log"
-- `progress-check-in-log.md` → "Exercise Progress Log"
-
-These mappings are defined in both `script.js` and `graphs.js` using the `customTitles` object and `getFileDisplayTitle()` function.
-
-#### SessionStorage Bridge for Graph Page Navigation
-When navigating from the graphs page to files:
-1. `graphs.js` stores the project and file names in `sessionStorage`
-2. User is redirected to the main page (`/`)
-3. `script.js` checks for stored values and automatically loads the project/file
-4. SessionStorage values are cleared after loading
-
-This ensures consistent behavior across all pages, including the health graphs page.
+**Project Pages:**
+- Dynamic project display with markdown rendering
+- Custom file ordering for Health & Fitness project
+- Responsive layout with mobile support
 
 ### Scripts
 
@@ -381,22 +307,26 @@ This ensures consistent behavior across all pages, including the health graphs p
 
 ### Database Models
 
-The application uses PostgreSQL with the following models (located in `website/models/`):
+The application uses PostgreSQL with 12 models across 7 files (located in `website/models/`):
 
 **Authentication Models:**
 - `User` (`user.py`) - User accounts with bcrypt password hashing
-- `Session` (`session.py`) - Login session tracking
+- `UserSession` (`session.py`) - Login session tracking with expiry
 
 **Health & Fitness Models:**
 - `HealthMetric` (`health.py`) - Weight, body fat %, BMI tracking (field: `recorded_date`)
 - `WorkoutSession` (`workout.py`) - Workout sessions (field: `session_date`)
-- `WorkoutExercise` (`workout.py`) - Individual exercises within sessions
+- `ExerciseLog` (`workout.py`) - Individual exercises within workout sessions
+- `ExerciseDefinition` (`workout.py`) - Exercise reference data and metadata
 - `MealLog` (`nutrition.py`) - Daily nutrition tracking (field: `meal_date`, macros: `protein_g`, `carbs_g`, `fat_g`)
 - `CoachingSession` (`coaching.py`) - Coaching notes and feedback (field: `session_date`)
-- `CoachingGoal` (`coaching.py`) - Goal tracking
+- `UserGoal` (`coaching.py`) - Goal tracking and progress
 - `ProgressPhoto` (`coaching.py`) - Progress photos with metadata (field: `photo_date`)
 
-**Important:** All models use specific date field names (not just `date`). This was a common bug that has been fixed in `file_utils.py`.
+**AI Integration Models:**
+- `ConversationLog` (`conversation.py`) - AI coaching conversation history (Gemini integration)
+
+**Important:** All models use specific date field names (`recorded_date`, `session_date`, `meal_date`, `photo_date`) not generic `date` field.
 
 **Database Migrations:**
 - Location: `website/migrations/versions/`
@@ -543,45 +473,59 @@ primary-assistant/
 
 ```
 website/
-├── app.py                          # PUBLIC server - curated portfolio (port 8080)
-├── app-private.py                  # PRIVATE server - all files including /data (port 8081)
-├── start-servers.sh                # Startup script to run both servers
-├── PRIVATE_SERVER_SETUP.md         # Documentation for authentication upgrades
-├── README-SERVERS.md               # Quick reference guide for both servers
-├── blog/                           # Blog posts directory
-│   ├── the-vitruvian-project-week-1.md
-│   ├── getting-started-with-ai.md
-│   ├── discipline-in-code-and-fitness.md
-│   └── building-scalable-systems.md
-├── templates/
-│   ├── base.html                   # Base template with navbar
-│   ├── index.html                  # Homepage with hero, portfolio, blog, contact
-│   ├── blog_list.html              # Blog archive page
-│   ├── blog_article.html           # Individual article page
-│   └── graphs.html                 # Health & Fitness graphs page
-├── static/
+├── __init__.py                     # App factory with create_app()
+├── app.py                          # Main application entry point
+├── config.py                       # Configuration management
+├── routes/                         # Blueprint modules for web pages
+│   ├── main.py                     # Homepage, dashboard, projects
+│   ├── blog.py                     # Blog pages
+│   └── health.py                   # Health & fitness pages
+├── api/                            # Modular API endpoints
+│   ├── health.py                   # Health metrics API
+│   ├── nutrition.py                # Nutrition tracking API
+│   ├── workout.py                  # Workout logging API
+│   ├── coaching.py                 # Coaching sessions API
+│   ├── activity.py                 # Activity feed API
+│   └── ai_coach.py                 # AI coaching API (Gemini)
+├── auth/                           # Authentication system
+│   ├── routes.py                   # Auth routes (login, register, logout)
+│   ├── forms.py                    # WTForms with CSRF protection
+│   └── decorators.py               # Custom auth decorators
+├── models/                         # SQLAlchemy models (12 models)
+│   ├── user.py                     # User authentication
+│   ├── session.py                  # User sessions
+│   ├── health.py                   # HealthMetric
+│   ├── workout.py                  # WorkoutSession, ExerciseLog, ExerciseDefinition
+│   ├── nutrition.py                # MealLog
+│   ├── coaching.py                 # CoachingSession, UserGoal, ProgressPhoto
+│   └── conversation.py             # ConversationLog (AI chat)
+├── services/                       # External service integrations
+│   └── gemini_service.py           # Google Gemini AI integration
+├── utils/                          # Utility functions
+│   ├── file_utils.py               # File management utilities
+│   └── (other helpers)
+├── templates/                      # Jinja2 templates (28 files)
+│   ├── base.html                   # Base template
+│   ├── index.html                  # Landing page
+│   ├── dashboard.html              # Main dashboard
+│   ├── auth/                       # Authentication templates
+│   ├── admin/                      # Admin management interfaces
+│   └── (feature-specific templates)
+├── static/                         # Static assets
 │   ├── css/
-│   │   └── style.css               # Complete styling including blog
-│   ├── js/
-│   │   ├── utils.js                # Shared utility functions
-│   │   ├── script.js               # Main app logic
-│   │   ├── blog.js                 # Blog listing and homepage
-│   │   ├── blog-article.js         # Individual article page
-│   │   └── graphs.js               # Graphs page logic
+│   │   └── style.css               # Main stylesheet
+│   ├── js/                         # JavaScript (21 files)
+│   │   ├── dashboard.js            # Dashboard functionality
+│   │   ├── ai-coach.js             # AI coaching interface
+│   │   └── (other page scripts)
 │   └── images/
-│       ├── hero-section.jpg                  # Background image for hero section
+│       ├── hero-section.jpg
 │       ├── profile/
-│       │   └── me.jpg
 │       ├── blog/
-│       │   ├── vitruvian-journey.jpg
-│       │   ├── vitruvian-gears.jpg
-│       │   ├── vitruvian-martial-arts.jpg
-│       │   └── vitruvian-coding.jpg
 │       └── projects/
-│           └── (project screenshots)
-├── utils/
-│   ├── file_utils.py               # File management utilities (updated with allow_data_access flag)
-│   └── (other utilities)
+├── blog/                           # Blog post markdown files
+│   └── (blog posts with YAML frontmatter)
+├── migrations/                     # Flask-Migrate database migrations
 └── requirements.txt                # Python dependencies
 ```
 
@@ -615,270 +559,33 @@ pip install -r scripts/requirements.txt
 - All markdown files are discovered dynamically from `AI_Development` and `Health_and_Fitness` directories
 - The health data routes expect a table-format markdown file with pipe separators
 
-### Navigation & Cross-Page Behavior
-- SessionStorage is used to bridge navigation between the graphs page and main page
-- When clicking navigation links from the graphs page, data is stored in sessionStorage before redirect
-- The main page automatically detects and loads this data on page load
-- This approach avoids URL query parameters and ensures clean, consistent navigation
-- All markdown file names are automatically converted to proper title case (e.g., "fitness-roadmap.md" → "Fitness Roadmap")
+## Development Notes
 
-### File Structure
-- The sidebar has been removed; all navigation now happens through the horizontal project navigation bar
-- File links appear as tabs in the project navigation bar, sorted by custom order from the API
-- The "Graphs" link only appears for the Health_and_Fitness project
-- Duplicate utility functions extracted to `js/utils.js` for DRY principle
+### Authentication & Security
+- Session-based authentication with Flask-Login
+- bcrypt password hashing (12 rounds)
+- CSRF protection enabled on all forms
+- 24-hour session expiry for security
+- Database-backed session management
 
-### Recent Updates (Current Session - November 17, 2024)
+### Data Import & Management
+- Data import scripts in `/scripts/` for markdown data migration
+- Database rebuild script: `scripts/rebuild_database.sh`
+- Backup script: `scripts/backup-database.sh`
+- Use `docker cp` to update scripts in running containers
 
-#### Portfolio & Blog System Implementation
-- Revamped homepage with hero section, portfolio showcase, and blog integration
-- Implemented complete blog system with Flask backend and frontend
-- Created 4 blog post markdown files with YAML front matter metadata
-- Added blog-specific CSS styling including responsive image float properties
-- Created blog listing page with tag-based filtering functionality
-- Created individual blog article pages with metadata display and related articles
+### Deployment Considerations
+- **Local Development**: Use `python3 app.py` on port 8080
+- **Docker Deployment**: Use `docker-compose up -d` with nginx on port 80/443
+- **Remote Deployment**: Include `-f docker-compose.remote.yml` for Cloudflare SSL termination
+- **Cache Management**: Purge Cloudflare cache after JavaScript updates
 
-#### Blog Routes Added to Flask (app.py)
-- `/blog` - Blog listing page
-- `/blog/<slug>` - Individual article pages
-- `/api/blog/posts` - Returns all blog posts (sorted newest first)
-- `/api/blog/posts/latest?limit=N` - Returns latest N posts
-- `/api/blog/post/<slug>` - Returns specific post with HTML content
-- Added `parse_blog_post()` helper function for YAML front matter parsing
-- Added `get_all_blog_posts()` function for retrieving and sorting blog posts
+## Historical Documentation
 
-#### New Template Files
-- `blog_list.html` - Full blog archive with filtering
-- `blog_article.html` - Individual article view with related articles and navigation
+For detailed implementation history, design decisions, and phase-by-phase development notes, see:
+- `/archive/` - Historical implementation records and session notes
+- `/docs/planning/` - Strategic planning documents and architectural decisions
 
-#### New JavaScript Files
-- `blog.js` - Blog listing and homepage blog functionality
-- `blog-article.js` - Individual article page logic
-
-#### Featured Projects Data Structure
-- Added `FEATURED_PROJECTS` list with 3 featured projects
-- Added `CONTACT_INFO` dictionary with email, LinkedIn, and GitHub links
-- Projects include links to demo and GitHub
-
-#### Image Infrastructure
-- Created `/static/images/` directory structure with subdirectories:
-  - `profile/` - Profile photos
-  - `blog/` - Blog post images
-  - `projects/` - Project screenshots
-- Moved profile image to `static/images/profile/me.jpg`
-- Added 4 Vitruvian Project images to `static/images/blog/`:
-  - `vitruvian-journey.jpg` (2.1M)
-  - `vitruvian-gears.jpg` (612K)
-  - `vitruvian-martial-arts.jpg` (1.6M)
-  - `vitruvian-coding.jpg` (1.2M)
-
-#### Blog Post: The Vitruvian Project - Week 1
-- Successfully integrated existing markdown blog post from blog_post_1 folder
-- Added all 4 images with proper alignment and text wrapping
-- Implemented magazine-style layout with alternating left/right image placement
-- Images use CSS float properties on desktop, convert to block display on mobile
-- HTML img tags with inline styles for width and margins
-- Proper alt text for accessibility
-
-#### CSS Enhancements
-- Added hero section styling with background image and gradient overlay
-- Added portfolio grid with featured project cards
-- Added blog card styling with gradient headers and hover effects
-- Added blog article typography and image styling
-- Added `.blog-image` base class with rounded corners and shadows
-- Added `.blog-image-left` and `.blog-image-right` float classes
-- Added responsive mobile breakpoints for images
-- Added hover effects (1.02x scale, enhanced shadow)
-- Added float clearing for h2 and blockquote elements
-
-#### Hero Section Background Image
-- Located and moved `hero section photo.jpg` from website root to `/static/images/hero-section.jpg`
-- Updated `.hero` CSS class with background image implementation
-- Added semi-transparent gradient overlay (0.75 opacity) for text readability
-- Used `center/cover` sizing for responsive, full-width background
-- Gradient overlay uses primary (rgba(26, 35, 126, 0.75)) and secondary (rgba(66, 44, 77, 0.75)) colors
-- Maintains visual hierarchy while showcasing the background photo
-- Image size: 3.4M, served at `/static/images/hero-section.jpg`
-
-#### Port Configuration Update
-- Changed Flask port from 5000 to 8080
-- Reason: macOS AirTunes service occupies port 5000
-- Updated in `app.py` line 283
-
-#### Phase 1: Design Foundation - The Vitruvian Developer
-**Visual Identity System:**
-- Redesigned color palette with discipline-specific colors:
-  - Code (Deep Navy Blue #1a237e)
-  - AI (Purple #7c3aed)
-  - Fitness (Warm Orange #ff8a3d)
-  - Meta/Philosophy (Cyan #06b6d4)
-- Created synergy gradient combining all three main disciplines
-- Established consistent shadow system (sm, md, lg, xl)
-
-**Typography System:**
-- Enhanced heading hierarchy (H1-H4 with improved font sizing and spacing)
-- Refined link styling with smooth transitions
-- Improved body text readability and hierarchy
-
-**Component Library:**
-- Created discipline tag system (`tag-code`, `tag-ai`, `tag-fitness`, `tag-meta`)
-- Added card accent classes for discipline-based borders
-- Implemented highlight classes for inline discipline references
-- Created synergy badge component showing multi-discipline work
-- Added section divider with synergy gradient
-
-**JavaScript Design System:**
-- Created `design-system.js` with DesignSystem object
-- Implemented utility methods for creating discipline tags and styling
-- Added synergy gradient generation
-- Content categorization by discipline functionality
-- Color mapping system for programmatic styling
-
-**Design Documentation:**
-- Created comprehensive `DESIGN_SYSTEM.md` documenting:
-  - Complete color palette and usage guidelines
-  - Component specifications and usage patterns
-  - Brand voice and design principles
-  - CSS variable reference
-  - Implementation checklist
-
-#### Phase 2: Hero & Homepage Redesign
-**Enhanced Hero Section:**
-- Updated gradient overlay to use synergy colors (Navy → Purple → Orange)
-- Added parallax background-attachment for depth
-- Implemented flexbox centering for better layout
-- Increased min-height to 85vh for immersive experience
-- Added ::before pseudo-element with radial gradients for accent lighting
-- Created hero-badge component with glassmorphic styling
-
-**Hero Content Improvements:**
-- Added "The Vitruvian Developer" badge
-- Updated headline to 4rem with improved letter-spacing
-- Changed subtitle to "Code • AI • Discipline"
-- Rewrote description to emphasize synergy theme
-- Updated CTA buttons to link to synergy section and blog
-- Added text-shadow for better readability over background
-
-**Button System Enhancements:**
-- Primary button uses gradient-accent with hover states
-- Secondary button uses gradient-primary with hover states
-- Added transform: translateY(-2px) for lift effect on hover
-- Enhanced box-shadow with discipline-specific colors
-- Improved visual hierarchy and CTAs
-
-**Synergy Section (NEW):**
-- Created full synergy section after hero, before about
-- Three-card grid showcasing Code, AI, and Fitness disciplines
-- Each card has discipline-colored top border
-- Hover effects with lift animation
-- Icons (💻 🧠 💪) for visual recognition
-- Synergy conclusion section with highlight classes
-- Background gradient subtle to main content
-
-**Section Styling Updates:**
-- Increased padding to 5rem for better breathing room
-- Added h2::after underline with accent color
-- Synergy section has special background and gradient text for h2
-- Improved section-subtitle styling and line-height
-- Better visual separation between sections
-
-**Mobile Responsive Design:**
-- Hero section adjusts padding and min-height on mobile
-- Hero badge sizing optimized for small screens
-- Heading sizes scale appropriately (4rem → 2.2rem)
-- Synergy grid converts to single column
-- Button layout adjusts to vertical stacking on mobile
-- Section padding reduced for mobile (2.5rem)
-
-**Homepage Structure Update:**
-- Hero → Synergy → About → Portfolio → Blog → Contact
-- Synergy section elevated to featured content position
-- Emphasizes "The Vitruvian Developer" theme from start
-- Better narrative flow connecting disciplines
-
-#### Phase 3: Navigation & UI/UX Overhaul (Current Session)
-**Navigation Architecture Refactoring:**
-- Removed the fixed top navbar ("My Journey" branding and project links)
-- Eliminated persistent navigation bar at page top
-- Simplified page layout for cleaner appearance
-
-**All Projects Section Enhancement:**
-- Updated "All Projects" section on homepage to display clickable project cards
-- Created `loadAllProjects()` function in `script.js` to dynamically load and display projects
-- Implemented responsive project grid with `projects-grid` class (auto-fill columns, 250px minimum width)
-- Added `project-card` styling with hover effects and animations
-- Cards display project title and "Explore Project" button linking to project content
-- Grid uses flexbox with 2rem gap for spacing
-
-**Project Page Controls:**
-- Added "Home" button to project view header
-- Home button returns to homepage and hides all project-related UI elements
-- Button group uses flexbox layout with gap spacing
-- Both Home and Print buttons styled with compact sizing and white-space: nowrap
-- Implemented proper state management for button visibility
-- Fixed bug where project navigation bar persisted after clicking Home
-
-**Button & Control Styling:**
-- Created `.button-group` class with flexbox layout
-- Styled buttons with constrained padding and proper sizing
-- Added hover effects with transform and shadow transitions
-- Print button positioned in header alongside Home button
-
-**Color Scheme Exploration:**
-- Tested multiple color palette variations while maintaining original theme
-- Experimented with: Teal, Deep Forest Green, and other complementary colors
-- Ultimately reverted to original color scheme:
-  - Primary: Deep Navy Blue (#1a237e)
-  - Secondary: Slate Blue (#6a5acd)
-  - Accent: Amber (#ffb347)
-- Researched color complement options including burgundy, forest green, plum, copper, and olive
-- Confirmed original palette provides best aesthetic and brand consistency
-
-**Technical Improvements:**
-- Enhanced state management for show/hide of major UI elements (homepage, project-view, nav-bar, buttons)
-- Improved CSS organization with modular component classes
-- Better event handler management with proper cleanup
-- Fixed intermittent UI state issues through proper element selection and condition checks
-
-#### Phase 4: Private Workspace Server Implementation (Current Session - November 21, 2024)
-
-**New Server Architecture:**
-- Created separate `app-private.py` running on port 8081 for local-only private workspace access
-- Maintains `app.py` (port 8080) for public portfolio showcase
-- Both servers can run simultaneously without conflicts
-- Private server includes full access to `/data/` directories with working files
-
-**File Access Separation:**
-- **Public Server (app.py)**: Only serves `/docs/` directories (curated portfolio content)
-- **Private Server (app-private.py)**: Serves both `/docs/` AND `/data/` directories (all project files)
-- Implements secure file access control without requiring authentication on localhost
-
-**Updated File Utilities:**
-- Modified `utils/file_utils.py` to add `allow_data_access` parameter to `ProjectFileManager` class
-- Public server instantiates with `allow_data_access=False` (default)
-- Private server instantiates with `allow_data_access=True` to enable data directory scanning
-- Maintains security through path validation and stays within project boundaries
-
-**Startup & Documentation:**
-- Created `start-servers.sh` shell script for convenient dual-server startup
-- Created `README-SERVERS.md` quick reference guide for using both servers
-- Created `PRIVATE_SERVER_SETUP.md` comprehensive documentation with upgrade paths:
-  - Option 1: Simple local-only (current implementation)
-  - Option 2: Basic authentication with password protection
-  - Option 3: Session-based login interface
-  - Option 4: Production-ready OAuth/JWT
-- All upgrade options are non-breaking and documented for future implementation
-
-**Use Cases:**
-- **Public Server**: Share portfolio with others, impress employers, present curated work
-- **Private Server**: Access personal health metrics, coaching notes, exercise logs, all working documents
-- Both servers use same templates/static files for consistent experience
-- Can develop/test on private server before publishing to public portfolio
-
-#### Previous Session Work
-- Created `js/utils.js` with shared utility functions (`filenameToTitle`, `projectToTitle`)
-- Fixed print functionality to hide the project navigation bar in print media query
-- Implemented custom file ordering for Health_and_Fitness project in `app.py`
-- Added custom display names for specific files (Metrics Log, Exercise Progress Log)
-- Added GEMINI link to project navigation with duplicate prevention
-- Created `loadGemini()` function in script.js to handle GEMINI.md navigation
+**Previous Major Milestones:**
+- November 2024: Portfolio & blog system implementation with Vitruvian Developer branding
+- December 2024: Authentication system, database models, dashboard with Chart.js visualizations, AI coaching integration

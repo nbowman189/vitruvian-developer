@@ -14,10 +14,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Load blog posts and bookmarks
     function loadBlogPosts() {
-        fetch('/api/blog/posts')
+        fetch('/api/blog/posts?per_page=50')  // Request more posts to get all
             .then(response => response.json())
-            .then(posts => {
-                allPosts = posts;
+            .then(data => {
+                // Handle paginated response - extract items array
+                allPosts = data.items || data || [];
                 bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '{}');
 
                 // Load latest posts on homepage
