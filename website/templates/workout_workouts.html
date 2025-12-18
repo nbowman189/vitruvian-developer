@@ -40,13 +40,19 @@
 <script src="/static/js/common.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async function() {
+    console.log('[DEBUG] DOMContentLoaded fired');
+    console.log('[DEBUG] API object:', API);
     await loadWorkouts();
 });
 
 async function loadWorkouts() {
+    console.log('[DEBUG] loadWorkouts() called');
     try {
+        console.log('[DEBUG] About to call API.get(/api/workouts)');
         const response = await API.get('/api/workouts?per_page=30&sort=desc');
+        console.log('[DEBUG] API response:', response);
         const workouts = response.data;
+        console.log('[DEBUG] Workouts data:', workouts);
 
         const container = document.getElementById('workouts-list-container');
 
