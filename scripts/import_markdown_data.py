@@ -278,7 +278,7 @@ def parse_exercise_log(file_path, user_id):
         # Add exercises
         for ex_data in session_data['exercises']:
             exercise = ExerciseLog(
-                workout_id=workout.id,
+                workout_session_id=workout.id,
                 exercise_name=ex_data['name'],
                 notes=ex_data['notes']
             )
