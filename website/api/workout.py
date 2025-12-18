@@ -663,7 +663,7 @@ def get_volume_trend():
 
         # Calculate total volume for this workout
         total_volume = 0
-        for exercise in workout.exercises:
+        for exercise in workout.exercise_logs:
             if exercise.weight_lbs and exercise.reps and exercise.sets:
                 total_volume += exercise.weight_lbs * exercise.reps * exercise.sets
 

@@ -86,7 +86,7 @@ def get_recent_activity():
     ).order_by(WorkoutSession.session_date.desc()).limit(limit).all()
 
     for workout in workouts:
-        name = workout.name or workout.session_type.value.replace('_', ' ').title()
+        name = workout.notes or workout.session_type.value.replace('_', ' ').title()
         duration = f"{workout.duration_minutes} min" if workout.duration_minutes else ""
         exercises = f"{workout.total_exercises} exercises" if workout.total_exercises else ""
         description_parts = [p for p in [duration, exercises] if p]
