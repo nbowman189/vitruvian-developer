@@ -148,25 +148,11 @@ def parse_meal_log(file_path, user_id):
             meal = MealLog(
                 user_id=user_id,
                 meal_date=meal_date,
-                meal_type=meal_type
+                meal_type=meal_type,
+                calories=calories,
+                description=food_desc,
+                notes=notes if notes else None
             )
-
-            # Set nutrition data
-            meal.nutrition = {
-                'calories': calories,
-                'protein_g': None,
-                'carbs_g': None,
-                'fat_g': None
-            }
-
-            # Set meal details
-            meal.meal_details = {
-                'description': food_desc,
-                'foods': None,
-                'recipe_name': None
-            }
-
-            meal.notes = notes if notes else None
 
             db.session.add(meal)
             count += 1
