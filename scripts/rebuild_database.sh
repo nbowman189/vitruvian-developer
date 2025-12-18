@@ -25,19 +25,19 @@ echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${BLUE}🔄 Database Rebuild Script (${ENVIRONMENT})${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
-# Step 1: Stop all containers
-echo -e "\n${YELLOW}1️⃣  Stopping containers...${NC}"
-docker-compose $COMPOSE_FILES down
-echo -e "${GREEN}✓ Containers stopped${NC}"
+# Step 1: Stop all containers and remove volumes
+echo -e "\n${YELLOW}1️⃣  Stopping containers and removing volumes...${NC}"
+docker-compose $COMPOSE_FILES down -v
+echo -e "${GREEN}✓ Containers stopped and volumes removed${NC}"
 
-# Step 2: Remove database volume
-echo -e "\n${YELLOW}2️⃣  Removing database volume...${NC}"
-docker volume rm primary-assistant_postgres_data 2>/dev/null || echo -e "${YELLOW}⚠ Volume may not exist${NC}"
-echo -e "${GREEN}✓ Database volume removed${NC}"
+# Step 2: Rebuild containers (no cache to ensure fresh build)
+echo -e "\n${YELLOW}2️⃣  Rebuilding containers from scratch (this may take 2-3 minutes)...${NC}"
+docker-compose $COMPOSE_FILES build --no-cache web
+echo -e "${GREEN}✓ Containers rebuilt${NC}"
 
-# Step 3: Rebuild and start containers
-echo -e "\n${YELLOW}3️⃣  Rebuilding containers (this may take 1-2 minutes)...${NC}"
-docker-compose $COMPOSE_FILES up -d --build
+# Step 3: Start containers
+echo -e "\n${YELLOW}3️⃣  Starting containers...${NC}"
+docker-compose $COMPOSE_FILES up -d
 echo -e "${GREEN}✓ Containers started${NC}"
 
 # Step 4: Wait for database to be healthy
