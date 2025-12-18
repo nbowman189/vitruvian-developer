@@ -138,6 +138,14 @@ const DateUtils = {
      * @returns {string} Formatted date
      */
     formatDateDisplay(date) {
+        if (typeof date === 'string') {
+            // Parse YYYY-MM-DD format directly to avoid timezone issues
+            const parts = date.split('T')[0].split('-');
+            if (parts.length === 3) {
+                const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+            }
+        }
         const d = typeof date === 'string' ? new Date(date) : date;
         return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     },
