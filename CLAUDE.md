@@ -36,13 +36,23 @@ Each content directory has a `GEMINI.md` file that provides context-specific inf
 
 ### New in This Build:
 - ✅ Complete authentication system (Flask-Login, bcrypt, CSRF protection)
-- ✅ PostgreSQL database with 8+ models (User, Session, Health, Workout, Nutrition, Coaching)
-- ✅ RESTful API layer with 30+ endpoints across 6 modules
-- ✅ **Dashboard with real-time data visualization** (NEW - December 17, 2024)
+- ✅ PostgreSQL database with 14 models (User, Session, Health, Workout, Nutrition, Coaching, Behavior)
+- ✅ RESTful API layer with 43+ endpoints across 7 modules
+- ✅ **Dashboard with real-time data visualization** (December 17, 2024)
   - 4 quick stat cards (weight, workout, coaching, nutrition)
   - 3 Chart.js interactive charts (trends and adherence)
   - Activity feed aggregating all user data
   - Quick action buttons
+- ✅ **Dynamic Behavior Tracker System** (NEW - January 2, 2026)
+  - Database-backed habit tracking with flexible behavior definitions
+  - Daily completion checklist with binary Yes/No marking
+  - Streak calculation and compliance analysis
+  - Chart.js visualization showing 30-day completion trends
+  - Full AI integration for creating behaviors and logging completion
+- ✅ **AI Coach Historical Data Access** (NEW - January 2, 2026)
+  - AI can READ 6 types of historical data (health, workout, nutrition, goals, coaching, progress)
+  - Data-driven coaching based on actual user metrics and trends
+  - Automatic query execution with context injection
 - ✅ Virtual database-driven pages (5 pages that generate content from database)
 - ✅ Database migrations with Flask-Migrate/Alembic
 - ✅ Admin user creation script
@@ -209,8 +219,9 @@ The Flask app serves as a dashboard to browse all projects, markdown files, and 
 - `nutrition.py` - Meal log and nutrition tracking
 - `workout.py` - Workout sessions and exercise logging
 - `coaching.py` - Coaching sessions and goal management
+- `behavior.py` - Behavior tracking CRUD, analytics, and compliance (13 endpoints)
 - `activity.py` - Activity feed aggregation across all data types
-- `ai_coach.py` - AI coaching conversation endpoints (Gemini integration)
+- `ai_coach.py` - AI coaching conversation endpoints with function calling (Gemini integration)
 
 **API Routes - Projects:**
 - `/api/projects` - List of available projects
@@ -302,7 +313,8 @@ The website features a modern navigation system:
 
 **Dashboard (authenticated users):**
 - Quick stat cards (health, workout, nutrition, coaching)
-- Interactive Chart.js visualizations
+- Interactive Chart.js visualizations (weight trend, workout volume, nutrition adherence, behavior completion)
+- Daily behavior tracker checklist with streak tracking and compliance stats
 - Activity feed aggregating all user data
 - Quick action buttons for data entry
 
@@ -337,7 +349,7 @@ The website features a modern navigation system:
 
 ### Database Models
 
-The application uses PostgreSQL with 12 models across 7 files (located in `website/models/`):
+The application uses PostgreSQL with 14 models across 8 files (located in `website/models/`):
 
 **Authentication Models:**
 - `User` (`user.py`) - User accounts with bcrypt password hashing
@@ -353,10 +365,14 @@ The application uses PostgreSQL with 12 models across 7 files (located in `websi
 - `UserGoal` (`coaching.py`) - Goal tracking and progress
 - `ProgressPhoto` (`coaching.py`) - Progress photos with metadata (field: `photo_date`)
 
+**Behavior Tracking Models:**
+- `BehaviorDefinition` (`behavior.py`) - User-defined behavior categories for tracking (field: `name`, `category`, `target_frequency`)
+- `BehaviorLog` (`behavior.py`) - Daily behavior completion tracking (field: `tracked_date`, `completed`)
+
 **AI Integration Models:**
 - `ConversationLog` (`conversation.py`) - AI coaching conversation history (Gemini integration)
 
-**Important:** All models use specific date field names (`recorded_date`, `session_date`, `meal_date`, `photo_date`) not generic `date` field.
+**Important:** All models use specific date field names (`recorded_date`, `session_date`, `meal_date`, `photo_date`, `tracked_date`) not generic `date` field.
 
 **Database Migrations:**
 - Location: `website/migrations/versions/`
@@ -610,6 +626,117 @@ pip install -r scripts/requirements.txt
 - **Remote Deployment**: Include `-f docker-compose.remote.yml` for Cloudflare SSL termination
 - **Cache Management**: Purge Cloudflare cache after JavaScript updates
 
+## Feature Documentation
+
+### Behavior Tracker System
+
+The behavior tracker provides database-backed habit tracking with full dashboard and AI integration.
+
+**Database Models** (`website/models/behavior.py`):
+- `BehaviorDefinition` - User-defined behavior categories
+  - Fields: `name`, `description`, `category` (enum), `icon` (Bootstrap class), `color` (hex), `display_order`, `target_frequency` (1-7 days/week), `is_active`
+  - Soft delete pattern preserves historical data
+  - Unique constraint on (user_id, name)
+- `BehaviorLog` - Daily completion tracking
+  - Fields: `tracked_date`, `completed` (boolean), `notes`
+  - Unique constraint on (user_id, behavior_definition_id, tracked_date)
+
+**API Endpoints** (`website/api/behavior.py` - 13 endpoints):
+
+*Behavior Definition Management:*
+- `GET /api/behavior/definitions` - List user's behavior definitions
+- `POST /api/behavior/definitions` - Create new behavior definition
+- `GET /api/behavior/definitions/<id>` - Get specific definition
+- `PUT /api/behavior/definitions/<id>` - Update definition
+- `DELETE /api/behavior/definitions/<id>` - Soft delete (set is_active=false)
+- `PUT /api/behavior/definitions/reorder` - Bulk update display_order
+
+*Behavior Logging:*
+- `GET /api/behavior/logs` - Query logs with filters (start_date, end_date, behavior_id)
+- `POST /api/behavior/logs` - Create/update behavior log for a date
+- `GET /api/behavior/logs/today` - Get today's behavior checklist
+- `POST /api/behavior/logs/bulk` - Bulk update multiple behaviors for a date
+
+*Analytics:*
+- `GET /api/behavior/stats` - Summary statistics (completion rates, streaks, trends)
+- `GET /api/behavior/trends` - Trend data for Chart.js (time series per behavior)
+- `GET /api/behavior/compliance` - Plan compliance analysis (actual vs. target frequency)
+
+**Dashboard Integration**:
+- Daily behavior checklist with checkboxes (dashboard.html:161-210)
+- 3 stat cards showing weekly completion rate, best streak, and current streak
+- Chart.js multi-line chart showing 30-day completion trends per behavior
+- Real-time updates when behaviors are marked complete/incomplete
+- Manage behaviors button for future CRUD interface
+
+**JavaScript** (`website/static/js/dashboard.js`):
+- `initializeBehaviorTracker()` - Main initialization
+- `loadTodaysBehaviors()` - Fetch and render today's checklist
+- `toggleBehavior()` - Mark behavior complete/incomplete with API call
+- `loadBehaviorStats()` - Fetch and display summary statistics
+- `createBehaviorTrendChart()` - Chart.js visualization of completion trends
+
+**CSS** (`website/static/css/style.css`):
+- `.dashboard-behaviors` - Section layout
+- `.behavior-checklist` - Card container with loading/empty/error states
+- `.behavior-item` - Individual checkbox rows with hover effects
+- `.behavior-checkbox` - Styled checkboxes with strikethrough on completion
+- `.behavior-stat-card` - Grid layout for stat cards (responsive)
+
+### AI Coach Function Calling
+
+The AI coach uses Gemini's function calling to both READ and WRITE data.
+
+**Function Schemas** (`website/utils/ai_coach_tools.py`):
+
+*WRITE Functions (suggest records to create):*
+1. `create_health_metric` - Log weight, body fat, measurements, wellness
+2. `create_meal_log` - Track nutrition and macros
+3. `create_workout` - Record workout sessions with exercises
+4. `create_coaching_session` - Save coaching discussion and action items
+5. `create_behavior_definition` - Create new trackable behavior
+6. `log_behavior` - Mark behavior as completed for a date
+
+*READ Functions (query historical data):*
+1. `get_recent_health_metrics` - Query weight, body fat, trends (7-90 days)
+2. `get_workout_history` - Review recent workout sessions (7-30 days)
+3. `get_nutrition_summary` - Query meals, macros, adherence (7-30 days)
+4. `get_user_goals` - View active/completed goals and progress
+5. `get_coaching_history` - Review previous coaching sessions (up to 20)
+6. `get_progress_summary` - Comprehensive overview across all data types (30-90 days)
+7. `get_behavior_tracking` - Query behavior completion history and streaks (7-30 days)
+8. `get_behavior_plan_compliance` - Analyze adherence to target frequencies (week/month)
+
+**AI Handlers** (`website/api/ai_coach.py`):
+
+*WRITE Handlers (save AI-suggested records):*
+- `_save_health_metric()` - Validates date, creates HealthMetric
+- `_save_meal_log()` - Validates date and meal_type enum, creates MealLog
+- `_save_workout()` - Validates date and session_type, creates WorkoutSession with ExerciseLogs
+- `_save_coaching_session()` - Creates CoachingSession with self-referential coach_id
+- `_save_behavior_definition()` - Validates category, checks duplicates, creates BehaviorDefinition
+- `_save_behavior_log()` - Finds behavior by name, creates/updates BehaviorLog
+
+*READ Handlers (execute data queries):*
+- `_query_health_metrics()` - Queries HealthMetric, calculates trends, returns AI summary
+- `_query_workout_history()` - Queries WorkoutSession, aggregates types and duration
+- `_query_nutrition_summary()` - Queries MealLog, calculates daily averages
+- `_query_user_goals()` - Queries UserGoal, groups by type
+- `_query_coaching_history()` - Queries CoachingSession, returns recent sessions
+- `_query_progress_summary()` - Aggregates all data types using other handlers
+- `_query_behavior_tracking()` - Queries BehaviorLog, calculates streaks and completion rates
+- `_query_behavior_compliance()` - Analyzes actual vs. target frequency, provides status and recommendations
+
+**Automatic READ Execution**:
+When AI calls a READ function (name starts with 'get_'), the `/message` endpoint:
+1. Detects the READ function call
+2. Executes the corresponding query handler immediately
+3. Injects results as system message into conversation context
+4. Gets AI's final data-informed response
+5. Returns response to user with embedded context
+
+This enables the AI to provide data-driven coaching based on actual user metrics instead of operating on conversation memory alone.
+
 ## Historical Documentation
 
 For detailed implementation history, design decisions, and phase-by-phase development notes, see:
@@ -619,3 +746,4 @@ For detailed implementation history, design decisions, and phase-by-phase develo
 **Previous Major Milestones:**
 - November 2024: Portfolio & blog system implementation with Vitruvian Developer branding
 - December 2024: Authentication system, database models, dashboard with Chart.js visualizations, AI coaching integration
+- January 2026: Dynamic behavior tracker system with database models, 13 REST endpoints, dashboard integration, and full AI function calling support (6 WRITE + 8 READ functions)

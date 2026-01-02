@@ -46,7 +46,9 @@
       "WebFetch(domain:vitruvian.bowmanhomelabtech.net)",
       "Bash(git push:*)",
       "Bash(docker cp:*)",
-      "Bash(/Users/nathanbowman/primary-assistant/scripts/populate_sample_data.sh:*)"
+      "Bash(/Users/nathanbowman/primary-assistant/scripts/populate_sample_data.sh:*)",
+      "Bash(docker rmi:*)",
+      "Bash(git check-ignore:*)"
     ],
     "deny": [],
     "ask": []

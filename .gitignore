@@ -76,6 +76,10 @@ htmlcov/
 *.crt
 secrets/
 
+# Migration scripts with credentials (DO NOT COMMIT)
+scripts/migrate_and_import_behaviors.sh
+scripts/migrate_and_import_behaviors.bat
+
 # Backup files
 *.bak
 *.backup

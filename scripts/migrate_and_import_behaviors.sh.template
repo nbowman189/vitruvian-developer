@@ -1,0 +1,114 @@
+#!/bin/bash
+
+# Behavior Tracker Migration and Import Script - TEMPLATE
+# This script connects to the remote server, runs migrations, transfers the behavior tracker file,
+# and imports historical data into the new database structure.
+#
+# SETUP INSTRUCTIONS:
+# 1. Copy this file to: migrate_and_import_behaviors.sh
+# 2. Edit the Configuration section below with your credentials
+# 3. Make executable: chmod +x migrate_and_import_behaviors.sh
+# 4. Run: ./migrate_and_import_behaviors.sh
+
+set -e  # Exit on error
+
+# Color codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Configuration - EDIT THESE VALUES
+REMOTE_USER="your-username"
+REMOTE_HOST="your-remote-host"
+REMOTE_PASSWORD="your-password"
+LOCAL_BEHAVIOR_FILE="/Users/nathanbowman/primary-assistant/Health_and_Fitness/data/behavior-tracker.md"
+REMOTE_TEMP_DIR="/tmp"
+REMOTE_APP_DIR="/home/your-username/primary-assistant"
+
+echo -e "${GREEN}==================================================${NC}"
+echo -e "${GREEN}Behavior Tracker Migration and Import${NC}"
+echo -e "${GREEN}==================================================${NC}"
+echo ""
+
+# Function to execute remote commands with password
+remote_exec() {
+    sshpass -p "$REMOTE_PASSWORD" ssh -o StrictHostKeyChecking=no "${REMOTE_USER}@${REMOTE_HOST}" "$1"
+}
+
+# Function to copy files to remote
+remote_copy() {
+    sshpass -p "$REMOTE_PASSWORD" scp -o StrictHostKeyChecking=no "$1" "${REMOTE_USER}@${REMOTE_HOST}:$2"
+}
+
+# Check if sshpass is installed
+if ! command -v sshpass &> /dev/null; then
+    echo -e "${RED}Error: sshpass is not installed.${NC}"
+    echo "Install it with: brew install hudochenkov/sshpass/sshpass"
+    exit 1
+fi
+
+# Step 1: Pull latest code from git
+echo -e "${YELLOW}[1/7] Pulling latest code from git repository...${NC}"
+GIT_PULL_CMD="cd ${REMOTE_APP_DIR} && git pull origin main"
+echo "Command: $GIT_PULL_CMD"
+remote_exec "$GIT_PULL_CMD"
+echo -e "${GREEN}✓ Code synced from repository${NC}"
+echo ""
+
+# Step 2: Copy import script to remote
+echo -e "${YELLOW}[2/7] Copying import script to remote server...${NC}"
+IMPORT_SCRIPT="/Users/nathanbowman/primary-assistant/scripts/import_behavior_data.py"
+remote_copy "$IMPORT_SCRIPT" "${REMOTE_TEMP_DIR}/import_behavior_data.py"
+echo -e "${GREEN}✓ Import script copied${NC}"
+echo ""
+
+# Step 2: Copy behavior tracker file to remote
+echo -e "${YELLOW}[2/6] Copying behavior-tracker.md to remote server...${NC}"
+if [ ! -f "$LOCAL_BEHAVIOR_FILE" ]; then
+    echo -e "${RED}Error: Local behavior tracker file not found at $LOCAL_BEHAVIOR_FILE${NC}"
+    exit 1
+fi
+remote_copy "$LOCAL_BEHAVIOR_FILE" "${REMOTE_TEMP_DIR}/behavior-tracker.md"
+echo -e "${GREEN}✓ Behavior tracker file copied${NC}"
+echo ""
+
+# Step 3: Run database migration
+echo -e "${YELLOW}[3/6] Running database migration...${NC}"
+MIGRATION_CMD="cd ${REMOTE_APP_DIR} && docker-compose -f docker-compose.yml -f docker-compose.remote.yml exec -T web flask db migrate -m 'Add behavior tracking system'"
+echo "Command: $MIGRATION_CMD"
+remote_exec "$MIGRATION_CMD" || echo -e "${YELLOW}Note: Migration may already exist${NC}"
+echo ""
+
+# Step 4: Apply database migration
+echo -e "${YELLOW}[4/6] Applying database migration...${NC}"
+UPGRADE_CMD="cd ${REMOTE_APP_DIR} && docker-compose -f docker-compose.yml -f docker-compose.remote.yml exec -T web flask db upgrade"
+echo "Command: $UPGRADE_CMD"
+remote_exec "$UPGRADE_CMD"
+echo -e "${GREEN}✓ Database migration applied${NC}"
+echo ""
+
+# Step 5: Import behavior data
+echo -e "${YELLOW}[5/6] Importing behavior tracker data...${NC}"
+IMPORT_CMD="cd ${REMOTE_APP_DIR} && docker cp ${REMOTE_TEMP_DIR}/import_behavior_data.py primary-assistant-web:/tmp/ && docker cp ${REMOTE_TEMP_DIR}/behavior-tracker.md primary-assistant-web:/tmp/ && docker-compose -f docker-compose.yml -f docker-compose.remote.yml exec -T web python /tmp/import_behavior_data.py /tmp/behavior-tracker.md"
+echo "Command: $IMPORT_CMD"
+remote_exec "$IMPORT_CMD"
+echo -e "${GREEN}✓ Behavior data imported${NC}"
+echo ""
+
+# Step 6: Cleanup temporary files
+echo -e "${YELLOW}[6/6] Cleaning up temporary files...${NC}"
+CLEANUP_CMD="rm -f ${REMOTE_TEMP_DIR}/import_behavior_data.py ${REMOTE_TEMP_DIR}/behavior-tracker.md && cd ${REMOTE_APP_DIR} && docker-compose -f docker-compose.yml -f docker-compose.remote.yml exec -T web rm -f /tmp/import_behavior_data.py /tmp/behavior-tracker.md"
+remote_exec "$CLEANUP_CMD" || echo -e "${YELLOW}Note: Cleanup warnings are normal${NC}"
+echo -e "${GREEN}✓ Cleanup complete${NC}"
+echo ""
+
+echo -e "${GREEN}==================================================${NC}"
+echo -e "${GREEN}Migration and Import Complete!${NC}"
+echo -e "${GREEN}==================================================${NC}"
+echo ""
+echo "Next steps:"
+echo "1. Visit https://vitruvian.bowmanhomelabtech.net/dashboard"
+echo "2. Check the Daily Behaviors section"
+echo "3. Verify imported behaviors and historical data"
+echo ""

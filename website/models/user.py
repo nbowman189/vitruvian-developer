@@ -83,6 +83,8 @@ class User(UserMixin, db.Model):
     meal_logs = relationship('MealLog', back_populates='user', cascade='all, delete-orphan')
     sessions = relationship('UserSession', back_populates='user', cascade='all, delete-orphan')
     conversation_logs = relationship('ConversationLog', back_populates='user', cascade='all, delete-orphan')
+    behavior_definitions = relationship('BehaviorDefinition', back_populates='user', cascade='all, delete-orphan')
+    behavior_logs = relationship('BehaviorLog', back_populates='user', cascade='all, delete-orphan')
 
     def __repr__(self) -> str:
         return f'<User {self.username}>'

@@ -6,6 +6,7 @@
 document.addEventListener('DOMContentLoaded', async function() {
     await loadDashboardData();
     initializeCharts();
+    initializeBehaviorTracker();
     initializeQuickActions();
     initializeActivityFeed();
 });
@@ -343,4 +344,298 @@ function filterActivities(filter) {
             item.style.display = 'none';
         }
     });
+}
+
+// ====================================================================================
+// Behavior Tracker Functions
+// ====================================================================================
+
+/**
+ * Initialize behavior tracker section
+ */
+async function initializeBehaviorTracker() {
+    try {
+        await Promise.all([
+            loadTodaysBehaviors(),
+            loadBehaviorStats()
+        ]);
+
+        createBehaviorTrendChart(30); // Default 30 days
+        initializeBehaviorFilters();
+        initializeManageBehaviorsButton();
+    } catch (error) {
+        console.error('Error initializing behavior tracker:', error);
+    }
+}
+
+/**
+ * Load today's behavior checklist
+ */
+async function loadTodaysBehaviors() {
+    const container = document.getElementById('behavior-checklist');
+
+    try {
+        const response = await API.get('/api/behavior/logs/today');
+        const behaviors = response.data;
+
+        if (!behaviors || behaviors.length === 0) {
+            container.innerHTML = `
+                <div class="behavior-empty-state">
+                    <i class="bi bi-inbox" style="font-size: 3rem; color: var(--text-muted);"></i>
+                    <p>No behaviors configured yet.</p>
+                    <button class="btn-primary" id="setup-behaviors-btn">
+                        <i class="bi bi-plus-circle"></i> Set up your first behavior
+                    </button>
+                </div>
+            `;
+
+            // Wire up setup button
+            document.getElementById('setup-behaviors-btn')?.addEventListener('click', () => {
+                // TODO: Open behavior management modal or page
+                alert('Behavior management UI coming soon! For now, behaviors can be created via the AI Coach.');
+            });
+
+            return;
+        }
+
+        // Render checklist
+        container.innerHTML = behaviors.map(behavior => `
+            <div class="behavior-item">
+                <label class="behavior-checkbox">
+                    <input
+                        type="checkbox"
+                        data-behavior-id="${behavior.behavior_id}"
+                        ${behavior.completed ? 'checked' : ''}
+                        onchange="toggleBehavior(${behavior.behavior_id}, this.checked)"
+                    >
+                    <span class="behavior-icon" style="color: ${behavior.color || '#1a237e'}">
+                        <i class="bi ${behavior.icon || 'bi-check-circle'}"></i>
+                    </span>
+                    <span class="behavior-name">${behavior.name}</span>
+                </label>
+                ${behavior.target_frequency ? `
+                    <span class="behavior-target">${behavior.target_frequency}x/week</span>
+                ` : ''}
+            </div>
+        `).join('');
+
+    } catch (error) {
+        console.error('Error loading today\'s behaviors:', error);
+        container.innerHTML = `
+            <div class="behavior-error-state">
+                <i class="bi bi-exclamation-triangle" style="color: var(--danger);"></i>
+                <p>Failed to load behaviors. Please try again.</p>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Toggle behavior completion
+ * @param {number} behaviorId - Behavior definition ID
+ * @param {boolean} completed - Whether behavior was completed
+ */
+async function toggleBehavior(behaviorId, completed) {
+    try {
+        const today = new Date().toISOString().split('T')[0];
+
+        await API.post('/api/behavior/logs', {
+            behavior_definition_id: behaviorId,
+            tracked_date: today,
+            completed: completed
+        });
+
+        // Refresh stats after update
+        await loadBehaviorStats();
+
+        // Show toast notification
+        const message = completed ? 'Behavior marked complete!' : 'Behavior unmarked';
+        UIUtils.showToast(message, 'success');
+
+    } catch (error) {
+        console.error('Error toggling behavior:', error);
+        UIUtils.showToast('Failed to update behavior', 'error');
+
+        // Revert checkbox on error
+        const checkbox = document.querySelector(`input[data-behavior-id="${behaviorId}"]`);
+        if (checkbox) {
+            checkbox.checked = !completed;
+        }
+    }
+}
+
+/**
+ * Load behavior statistics
+ */
+async function loadBehaviorStats() {
+    try {
+        const response = await API.get('/api/behavior/stats?days=30');
+        const stats = response.data;
+
+        // Update stat cards
+        document.getElementById('behavior-week-completion').textContent =
+            stats.week_completion_rate ? `${Math.round(stats.week_completion_rate)}%` : '--';
+
+        document.getElementById('behavior-best-streak').textContent =
+            stats.best_streak || '0';
+
+        document.getElementById('behavior-current-streak').textContent =
+            stats.current_streak || '0';
+
+    } catch (error) {
+        console.error('Error loading behavior stats:', error);
+        // Leave placeholders in place on error
+    }
+}
+
+/**
+ * Create behavior trend chart
+ * @param {number} days - Number of days to show (30 or 90)
+ */
+async function createBehaviorTrendChart(days = 30) {
+    const canvas = document.getElementById('behaviorTrendChart');
+    if (!canvas) return;
+
+    try {
+        const response = await API.get(`/api/behavior/trends?days=${days}`);
+        const data = response.data;
+
+        if (!data.behaviors || data.behaviors.length === 0) {
+            // No behaviors to chart
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = '16px Arial';
+            ctx.fillStyle = '#999';
+            ctx.textAlign = 'center';
+            ctx.fillText('No behavior data to display', canvas.width / 2, canvas.height / 2);
+            return;
+        }
+
+        // Destroy existing chart if it exists
+        if (window.behaviorChart) {
+            window.behaviorChart.destroy();
+        }
+
+        // Color palette for behaviors
+        const CHART_COLORS = [
+            '#1a237e', '#6a5acd', '#ffb347', '#06b6d4',
+            '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'
+        ];
+
+        // Create datasets
+        const datasets = data.behaviors.map((behavior, index) => ({
+            label: behavior.name,
+            data: behavior.values,
+            borderColor: behavior.color || CHART_COLORS[index % CHART_COLORS.length],
+            backgroundColor: `${behavior.color || CHART_COLORS[index % CHART_COLORS.length]}20`,
+            tension: 0.4,
+            borderWidth: 2
+        }));
+
+        // Create chart
+        const ctx = canvas.getContext('2d');
+        window.behaviorChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.dates,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 15,
+                            font: {
+                                size: 11
+                            }
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.dataset.label || '';
+                                const value = context.parsed.y;
+                                return `${label}: ${value > 0 ? '✓ Completed' : '✗ Missed'}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            stepSize: 50,
+                            callback: function(value) {
+                                return value === 100 ? '✓' : value === 0 ? '✗' : '';
+                            }
+                        },
+                        grid: {
+                            display: false
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45,
+                            font: {
+                                size: 10
+                            },
+                            callback: function(value, index) {
+                                // Show every 7th date label to avoid crowding
+                                if (days === 90) {
+                                    return index % 14 === 0 ? this.getLabelForValue(value) : '';
+                                } else {
+                                    return index % 7 === 0 ? this.getLabelForValue(value) : '';
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Error creating behavior trend chart:', error);
+    }
+}
+
+/**
+ * Initialize behavior chart filter buttons
+ */
+function initializeBehaviorFilters() {
+    const filterButtons = document.querySelectorAll('.dashboard-behaviors .chart-filters .filter-btn');
+
+    filterButtons.forEach(btn => {
+        btn.addEventListener('click', async () => {
+            // Update active state
+            filterButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Reload chart with new period
+            const period = parseInt(btn.dataset.period);
+            await createBehaviorTrendChart(period);
+        });
+    });
+}
+
+/**
+ * Initialize manage behaviors button
+ */
+function initializeManageBehaviorsButton() {
+    const manageBtn = document.getElementById('manage-behaviors-btn');
+
+    if (manageBtn) {
+        manageBtn.addEventListener('click', () => {
+            // TODO: Open behavior management modal or navigate to management page
+            alert('Behavior management UI coming soon! For now, behaviors can be created and managed via the AI Coach.');
+        });
+    }
 }

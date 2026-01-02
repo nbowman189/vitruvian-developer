@@ -1,0 +1,100 @@
+@echo off
+REM Behavior Tracker Migration and Import Script (Windows) - TEMPLATE
+REM This script connects to the remote server, runs migrations, transfers the behavior tracker file,
+REM and imports historical data into the new database structure.
+REM
+REM SETUP INSTRUCTIONS:
+REM 1. Copy this file to: migrate_and_import_behaviors.bat
+REM 2. Edit the Configuration section below with your credentials
+REM 3. Run: migrate_and_import_behaviors.bat
+
+setlocal EnableDelayedExpansion
+
+REM Configuration - EDIT THESE VALUES
+set REMOTE_USER=your-username
+set REMOTE_HOST=your-remote-host
+set REMOTE_PASSWORD=your-password
+set LOCAL_BEHAVIOR_FILE=C:\Users\%USERNAME%\primary-assistant\Health_and_Fitness\data\behavior-tracker.md
+set REMOTE_TEMP_DIR=/tmp
+set REMOTE_APP_DIR=/home/your-username/primary-assistant
+
+echo ==================================================
+echo Behavior Tracker Migration and Import
+echo ==================================================
+echo.
+
+REM Check if PuTTY/plink is installed
+where plink >nul 2>nul
+if %errorlevel% neq 0 (
+    echo Error: plink ^(PuTTY^) is not installed or not in PATH.
+    echo Please install PuTTY from: https://www.putty.org/
+    pause
+    exit /b 1
+)
+
+REM Check if pscp is installed
+where pscp >nul 2>nul
+if %errorlevel% neq 0 (
+    echo Error: pscp ^(PuTTY^) is not installed or not in PATH.
+    echo Please install PuTTY from: https://www.putty.org/
+    pause
+    exit /b 1
+)
+
+REM Step 1: Copy import script to remote
+echo [1/6] Copying import script to remote server...
+set IMPORT_SCRIPT=C:\Users\%USERNAME%\primary-assistant\scripts\import_behavior_data.py
+echo y | pscp -pw "%REMOTE_PASSWORD%" "%IMPORT_SCRIPT%" %REMOTE_USER%@%REMOTE_HOST%:%REMOTE_TEMP_DIR%/import_behavior_data.py
+echo   [OK] Import script copied
+echo.
+
+REM Step 2: Copy behavior tracker file to remote
+echo [2/6] Copying behavior-tracker.md to remote server...
+if not exist "%LOCAL_BEHAVIOR_FILE%" (
+    echo Error: Local behavior tracker file not found at %LOCAL_BEHAVIOR_FILE%
+    pause
+    exit /b 1
+)
+echo y | pscp -pw "%REMOTE_PASSWORD%" "%LOCAL_BEHAVIOR_FILE%" %REMOTE_USER%@%REMOTE_HOST%:%REMOTE_TEMP_DIR%/behavior-tracker.md
+echo   [OK] Behavior tracker file copied
+echo.
+
+REM Step 3: Run database migration
+echo [3/6] Running database migration...
+set MIGRATION_CMD=cd %REMOTE_APP_DIR% ^&^& docker-compose -f docker-compose.yml -f docker-compose.remote.yml exec -T web flask db migrate -m "Add behavior tracking system"
+echo y | plink -pw "%REMOTE_PASSWORD%" %REMOTE_USER%@%REMOTE_HOST% "%MIGRATION_CMD%"
+echo   Note: Migration warnings are normal if migration already exists
+echo.
+
+REM Step 4: Apply database migration
+echo [4/6] Applying database migration...
+set UPGRADE_CMD=cd %REMOTE_APP_DIR% ^&^& docker-compose -f docker-compose.yml -f docker-compose.remote.yml exec -T web flask db upgrade
+echo y | plink -pw "%REMOTE_PASSWORD%" %REMOTE_USER%@%REMOTE_HOST% "%UPGRADE_CMD%"
+echo   [OK] Database migration applied
+echo.
+
+REM Step 5: Import behavior data
+echo [5/6] Importing behavior tracker data...
+set IMPORT_CMD=cd %REMOTE_APP_DIR% ^&^& docker cp %REMOTE_TEMP_DIR%/import_behavior_data.py primary-assistant-web:/tmp/ ^&^& docker cp %REMOTE_TEMP_DIR%/behavior-tracker.md primary-assistant-web:/tmp/ ^&^& docker-compose -f docker-compose.yml -f docker-compose.remote.yml exec -T web python /tmp/import_behavior_data.py /tmp/behavior-tracker.md
+echo y | plink -pw "%REMOTE_PASSWORD%" %REMOTE_USER%@%REMOTE_HOST% "%IMPORT_CMD%"
+echo   [OK] Behavior data imported
+echo.
+
+REM Step 6: Cleanup temporary files
+echo [6/6] Cleaning up temporary files...
+set CLEANUP_CMD=rm -f %REMOTE_TEMP_DIR%/import_behavior_data.py %REMOTE_TEMP_DIR%/behavior-tracker.md ^&^& cd %REMOTE_APP_DIR% ^&^& docker-compose -f docker-compose.yml -f docker-compose.remote.yml exec -T web rm -f /tmp/import_behavior_data.py /tmp/behavior-tracker.md
+echo y | plink -pw "%REMOTE_PASSWORD%" %REMOTE_USER%@%REMOTE_HOST% "%CLEANUP_CMD%"
+echo   [OK] Cleanup complete
+echo.
+
+echo ==================================================
+echo Migration and Import Complete!
+echo ==================================================
+echo.
+echo Next steps:
+echo 1. Visit https://vitruvian.bowmanhomelabtech.net/dashboard
+echo 2. Check the Daily Behaviors section
+echo 3. Verify imported behaviors and historical data
+echo.
+
+pause

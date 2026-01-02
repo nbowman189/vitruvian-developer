@@ -157,6 +157,58 @@
         </div>
     </section>
 
+    <!-- Behavior Tracker Section -->
+    <section class="dashboard-behaviors">
+        <div class="behavior-header">
+            <h2 class="section-title">Daily Behaviors</h2>
+            <button class="btn-manage-behaviors" id="manage-behaviors-btn">
+                <i class="bi bi-gear"></i> Manage Behaviors
+            </button>
+        </div>
+
+        <!-- Today's Checklist -->
+        <div class="behavior-checklist" id="behavior-checklist">
+            <div class="behavior-loading">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading behaviors...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Behavior Stats Cards -->
+        <div class="behavior-stats-grid">
+            <div class="behavior-stat-card">
+                <h4>This Week</h4>
+                <div class="stat-value" id="behavior-week-completion">--</div>
+                <div class="stat-label">Completion Rate</div>
+            </div>
+            <div class="behavior-stat-card">
+                <h4>Best Streak</h4>
+                <div class="stat-value" id="behavior-best-streak">--</div>
+                <div class="stat-label">Days</div>
+            </div>
+            <div class="behavior-stat-card">
+                <h4>Current Streak</h4>
+                <div class="stat-value" id="behavior-current-streak">--</div>
+                <div class="stat-label">Days</div>
+            </div>
+        </div>
+
+        <!-- Behavior Trend Chart -->
+        <div class="chart-card chart-card-full">
+            <div class="chart-header">
+                <h3 class="chart-title">Behavior Completion Trends (30 Days)</h3>
+                <div class="chart-filters">
+                    <button class="filter-btn active" data-period="30">30 Days</button>
+                    <button class="filter-btn" data-period="90">90 Days</button>
+                </div>
+            </div>
+            <div class="chart-body">
+                <canvas id="behaviorTrendChart"></canvas>
+            </div>
+        </div>
+    </section>
+
     <!-- Recent Activity Feed -->
     <section class="dashboard-activity">
         <div class="activity-header">

@@ -240,6 +240,297 @@ def create_coaching_session_schema() -> Dict[str, Any]:
     }
 
 
+def get_recent_health_metrics_schema() -> Dict[str, Any]:
+    """
+    Function schema for querying recent health metrics.
+
+    Allows AI to READ historical health data including weight, body fat,
+    measurements, and wellness indicators.
+    """
+    return {
+        'name': 'get_recent_health_metrics',
+        'description': 'Query recent health metrics including weight, body fat percentage, measurements, and wellness indicators. Use this when you need to reference the user\'s progress, trends, or current stats.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'days': {
+                    'type': 'integer',
+                    'description': 'Number of days to look back (default: 7, max: 90)',
+                    'default': 7
+                },
+                'include_trends': {
+                    'type': 'boolean',
+                    'description': 'Whether to include trend calculations (weight change, averages)',
+                    'default': True
+                }
+            }
+        }
+    }
+
+
+def get_workout_history_schema() -> Dict[str, Any]:
+    """
+    Function schema for querying recent workout sessions.
+
+    Allows AI to READ workout history including session details and exercises.
+    """
+    return {
+        'name': 'get_workout_history',
+        'description': 'Query recent workout sessions including type, duration, exercises, and performance. Use this when discussing training progress, consistency, or planning future workouts.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'days': {
+                    'type': 'integer',
+                    'description': 'Number of days to look back (default: 7, max: 30)',
+                    'default': 7
+                },
+                'session_type': {
+                    'type': 'string',
+                    'enum': ['STRENGTH', 'CARDIO', 'FLEXIBILITY', 'MARTIAL_ARTS', 'SPORTS', 'RECOVERY', 'MIXED'],
+                    'description': 'Optional filter by session type'
+                },
+                'include_exercises': {
+                    'type': 'boolean',
+                    'description': 'Whether to include exercise details (sets, reps, weight)',
+                    'default': False
+                }
+            }
+        }
+    }
+
+
+def get_nutrition_summary_schema() -> Dict[str, Any]:
+    """
+    Function schema for querying nutrition data and adherence.
+
+    Allows AI to READ meal logs, macros, and adherence patterns.
+    """
+    return {
+        'name': 'get_nutrition_summary',
+        'description': 'Query nutrition data including meals, macros, calories, and adherence to plan. Use this when discussing diet, meal planning, or nutritional progress.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'days': {
+                    'type': 'integer',
+                    'description': 'Number of days to look back (default: 7, max: 30)',
+                    'default': 7
+                },
+                'summary_type': {
+                    'type': 'string',
+                    'enum': ['daily', 'weekly'],
+                    'description': 'Summarize data by day or week (default: weekly)',
+                    'default': 'weekly'
+                }
+            }
+        }
+    }
+
+
+def get_user_goals_schema() -> Dict[str, Any]:
+    """
+    Function schema for querying user goals and progress.
+
+    Allows AI to READ active goals, targets, and progress tracking.
+    """
+    return {
+        'name': 'get_user_goals',
+        'description': 'Query user\'s fitness and health goals including targets, progress, and completion status. Use this when discussing goal setting, progress toward targets, or motivation.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'status': {
+                    'type': 'string',
+                    'enum': ['active', 'completed', 'all'],
+                    'description': 'Filter by goal status (default: active)',
+                    'default': 'active'
+                }
+            }
+        }
+    }
+
+
+def get_coaching_history_schema() -> Dict[str, Any]:
+    """
+    Function schema for querying previous coaching sessions.
+
+    Allows AI to READ past coaching notes, feedback, and action items.
+    """
+    return {
+        'name': 'get_coaching_history',
+        'description': 'Query previous coaching sessions including discussion notes, feedback, and action items. Use this to reference past conversations, follow up on previous advice, or check on assigned tasks.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'limit': {
+                    'type': 'integer',
+                    'description': 'Number of sessions to retrieve (default: 5, max: 20)',
+                    'default': 5
+                }
+            }
+        }
+    }
+
+
+def get_progress_summary_schema() -> Dict[str, Any]:
+    """
+    Function schema for getting comprehensive progress overview.
+
+    Allows AI to READ aggregated metrics across all data types.
+    """
+    return {
+        'name': 'get_progress_summary',
+        'description': 'Get comprehensive progress overview including weight change, workout consistency, nutrition adherence, and goal progress. Use this for weekly check-ins or overall progress discussions.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'period_days': {
+                    'type': 'integer',
+                    'description': 'Analysis period in days (default: 30, max: 90)',
+                    'default': 30
+                }
+            }
+        }
+    }
+
+
+def create_behavior_definition_schema() -> Dict[str, Any]:
+    """
+    Function schema for creating a behavior definition.
+
+    Allows AI to create new trackable behavior categories for the user.
+    """
+    return {
+        'name': 'create_behavior_definition',
+        'description': 'Create a new behavior definition for tracking daily habits or routines. Use this when the user wants to track a new habit, routine, or behavior. Examples: morning meditation, reading, cold shower, journaling.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'name': {
+                    'type': 'string',
+                    'description': 'Name of the behavior (e.g., "Morning Meditation", "Read 20 Pages")'
+                },
+                'description': {
+                    'type': 'string',
+                    'description': 'Optional description or details about the behavior'
+                },
+                'category': {
+                    'type': 'string',
+                    'enum': ['HEALTH', 'FITNESS', 'NUTRITION', 'LEARNING', 'PRODUCTIVITY', 'WELLNESS', 'CUSTOM'],
+                    'description': 'Category of the behavior',
+                    'default': 'CUSTOM'
+                },
+                'icon': {
+                    'type': 'string',
+                    'description': 'Bootstrap icon class (e.g., "bi-book", "bi-heart", "bi-lightning"). See https://icons.getbootstrap.com/',
+                    'default': 'bi-check-circle'
+                },
+                'color': {
+                    'type': 'string',
+                    'description': 'Hex color code for the behavior (e.g., "#4A90E2", "#E27D60")',
+                    'default': '#4A90E2'
+                },
+                'target_frequency': {
+                    'type': 'integer',
+                    'description': 'Target number of days per week to complete this behavior (1-7)',
+                    'default': 7
+                }
+            },
+            'required': ['name']
+        }
+    }
+
+
+def log_behavior_schema() -> Dict[str, Any]:
+    """
+    Function schema for logging behavior completion.
+
+    Allows AI to mark behaviors as completed for a specific date.
+    """
+    return {
+        'name': 'log_behavior',
+        'description': 'Log completion of a behavior for a specific date. Use this when the user mentions they completed a tracked behavior or wants to mark something as done.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'behavior_name': {
+                    'type': 'string',
+                    'description': 'Name of the behavior to log (must match an existing behavior definition)'
+                },
+                'tracked_date': {
+                    'type': 'string',
+                    'description': 'Date of completion in ISO format (YYYY-MM-DD). Use today\'s date if not specified.'
+                },
+                'completed': {
+                    'type': 'boolean',
+                    'description': 'Whether the behavior was completed (true) or not (false)',
+                    'default': True
+                },
+                'notes': {
+                    'type': 'string',
+                    'description': 'Optional notes about the behavior completion'
+                }
+            },
+            'required': ['behavior_name', 'tracked_date']
+        }
+    }
+
+
+def get_behavior_tracking_schema() -> Dict[str, Any]:
+    """
+    Function schema for querying behavior tracking data.
+
+    Allows AI to READ behavior completion history, streaks, and patterns.
+    """
+    return {
+        'name': 'get_behavior_tracking',
+        'description': 'Query behavior tracking data including completion history, current streaks, and adherence patterns. Use this when discussing habits, consistency, or progress on tracked behaviors.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'days': {
+                    'type': 'integer',
+                    'description': 'Number of days to look back (default: 7, max: 30)',
+                    'default': 7
+                },
+                'behavior_name': {
+                    'type': 'string',
+                    'description': 'Optional filter for a specific behavior by name. If omitted, returns data for all behaviors.'
+                }
+            }
+        }
+    }
+
+
+def get_behavior_plan_compliance_schema() -> Dict[str, Any]:
+    """
+    Function schema for querying behavior plan compliance.
+
+    Allows AI to READ adherence to target frequencies and identify gaps.
+    """
+    return {
+        'name': 'get_behavior_plan_compliance',
+        'description': 'Analyze behavior plan compliance by comparing actual completion frequency against target frequency. Use this when checking if the user is staying on track with their habits or when they ask about their consistency.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'period': {
+                    'type': 'string',
+                    'enum': ['week', 'month'],
+                    'description': 'Analysis period (default: week)',
+                    'default': 'week'
+                },
+                'include_recommendations': {
+                    'type': 'boolean',
+                    'description': 'Whether to include AI-generated recommendations for improvement',
+                    'default': True
+                }
+            }
+        }
+    }
+
+
 def get_all_function_declarations() -> List[Dict[str, Any]]:
     """
     Get all function declarations for Gemini function calling.
@@ -248,10 +539,22 @@ def get_all_function_declarations() -> List[Dict[str, Any]]:
         List of function schema dictionaries
     """
     return [
+        # WRITE operations (create records)
         create_health_metric_schema(),
         create_meal_log_schema(),
         create_workout_schema(),
-        create_coaching_session_schema()
+        create_coaching_session_schema(),
+        create_behavior_definition_schema(),
+        log_behavior_schema(),
+        # READ operations (query data)
+        get_recent_health_metrics_schema(),
+        get_workout_history_schema(),
+        get_nutrition_summary_schema(),
+        get_user_goals_schema(),
+        get_coaching_history_schema(),
+        get_progress_summary_schema(),
+        get_behavior_tracking_schema(),
+        get_behavior_plan_compliance_schema()
     ]
 
 
@@ -269,10 +572,22 @@ def get_function_schema_by_name(function_name: str) -> Dict[str, Any]:
         ValueError: If function name is not found
     """
     schemas = {
+        # WRITE operations
         'create_health_metric': create_health_metric_schema(),
         'create_meal_log': create_meal_log_schema(),
         'create_workout': create_workout_schema(),
-        'create_coaching_session': create_coaching_session_schema()
+        'create_coaching_session': create_coaching_session_schema(),
+        'create_behavior_definition': create_behavior_definition_schema(),
+        'log_behavior': log_behavior_schema(),
+        # READ operations
+        'get_recent_health_metrics': get_recent_health_metrics_schema(),
+        'get_workout_history': get_workout_history_schema(),
+        'get_nutrition_summary': get_nutrition_summary_schema(),
+        'get_user_goals': get_user_goals_schema(),
+        'get_coaching_history': get_coaching_history_schema(),
+        'get_progress_summary': get_progress_summary_schema(),
+        'get_behavior_tracking': get_behavior_tracking_schema(),
+        'get_behavior_plan_compliance': get_behavior_plan_compliance_schema()
     }
 
     if function_name not in schemas:
