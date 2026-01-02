@@ -63,8 +63,8 @@ remote_copy "$IMPORT_SCRIPT" "${REMOTE_TEMP_DIR}/import_behavior_data.py"
 echo -e "${GREEN}✓ Import script copied${NC}"
 echo ""
 
-# Step 2: Copy behavior tracker file to remote
-echo -e "${YELLOW}[2/6] Copying behavior-tracker.md to remote server...${NC}"
+# Step 3: Copy behavior tracker file to remote
+echo -e "${YELLOW}[3/7] Copying behavior-tracker.md to remote server...${NC}"
 if [ ! -f "$LOCAL_BEHAVIOR_FILE" ]; then
     echo -e "${RED}Error: Local behavior tracker file not found at $LOCAL_BEHAVIOR_FILE${NC}"
     exit 1
@@ -73,31 +73,31 @@ remote_copy "$LOCAL_BEHAVIOR_FILE" "${REMOTE_TEMP_DIR}/behavior-tracker.md"
 echo -e "${GREEN}✓ Behavior tracker file copied${NC}"
 echo ""
 
-# Step 3: Run database migration
-echo -e "${YELLOW}[3/6] Running database migration...${NC}"
+# Step 4: Run database migration
+echo -e "${YELLOW}[4/7] Running database migration...${NC}"
 MIGRATION_CMD="cd ${REMOTE_APP_DIR} && docker-compose -f docker-compose.yml -f docker-compose.remote.yml exec -T web flask db migrate -m 'Add behavior tracking system'"
 echo "Command: $MIGRATION_CMD"
 remote_exec "$MIGRATION_CMD" || echo -e "${YELLOW}Note: Migration may already exist${NC}"
 echo ""
 
-# Step 4: Apply database migration
-echo -e "${YELLOW}[4/6] Applying database migration...${NC}"
+# Step 5: Apply database migration
+echo -e "${YELLOW}[5/7] Applying database migration...${NC}"
 UPGRADE_CMD="cd ${REMOTE_APP_DIR} && docker-compose -f docker-compose.yml -f docker-compose.remote.yml exec -T web flask db upgrade"
 echo "Command: $UPGRADE_CMD"
 remote_exec "$UPGRADE_CMD"
 echo -e "${GREEN}✓ Database migration applied${NC}"
 echo ""
 
-# Step 5: Import behavior data
-echo -e "${YELLOW}[5/6] Importing behavior tracker data...${NC}"
+# Step 6: Import behavior data
+echo -e "${YELLOW}[6/7] Importing behavior tracker data...${NC}"
 IMPORT_CMD="cd ${REMOTE_APP_DIR} && docker cp ${REMOTE_TEMP_DIR}/import_behavior_data.py primary-assistant-web:/tmp/ && docker cp ${REMOTE_TEMP_DIR}/behavior-tracker.md primary-assistant-web:/tmp/ && docker-compose -f docker-compose.yml -f docker-compose.remote.yml exec -T web python /tmp/import_behavior_data.py /tmp/behavior-tracker.md"
 echo "Command: $IMPORT_CMD"
 remote_exec "$IMPORT_CMD"
 echo -e "${GREEN}✓ Behavior data imported${NC}"
 echo ""
 
-# Step 6: Cleanup temporary files
-echo -e "${YELLOW}[6/6] Cleaning up temporary files...${NC}"
+# Step 7: Cleanup temporary files
+echo -e "${YELLOW}[7/7] Cleaning up temporary files...${NC}"
 CLEANUP_CMD="rm -f ${REMOTE_TEMP_DIR}/import_behavior_data.py ${REMOTE_TEMP_DIR}/behavior-tracker.md && cd ${REMOTE_APP_DIR} && docker-compose -f docker-compose.yml -f docker-compose.remote.yml exec -T web rm -f /tmp/import_behavior_data.py /tmp/behavior-tracker.md"
 remote_exec "$CLEANUP_CMD" || echo -e "${YELLOW}Note: Cleanup warnings are normal${NC}"
 echo -e "${GREEN}✓ Cleanup complete${NC}"
