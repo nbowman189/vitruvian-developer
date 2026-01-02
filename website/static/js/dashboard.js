@@ -12,6 +12,74 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 /**
+ * Check if user is authenticated
+ * @returns {Promise<boolean>} True if authenticated, false otherwise
+ */
+async function checkAuthStatus() {
+    try {
+        console.log('[Dashboard] Checking authentication status...');
+        const response = await fetch('/auth/status', {
+            method: 'GET',
+            credentials: 'same-origin'
+        });
+
+        console.log('[Dashboard] Auth status response:', response.status, response.ok);
+
+        if (!response.ok) {
+            console.warn('[Dashboard] Auth check failed, response not OK');
+            return false;
+        }
+
+        const data = await response.json();
+        console.log('[Dashboard] Auth status data:', data);
+        console.log('[Dashboard] Is authenticated:', data.authenticated);
+        return data.authenticated || false;
+    } catch (error) {
+        console.error('[Dashboard] Error checking auth status:', error);
+        return false;
+    }
+}
+
+/**
+ * Show login prompts for unauthenticated users
+ */
+function showLoginPrompts() {
+    // Hide loading spinners
+    document.querySelectorAll('.spinner-border').forEach(spinner => {
+        spinner.style.display = 'none';
+    });
+
+    // Quick stats - show login prompt
+    const quickStatsCards = [
+        'latest-weight',
+        'recent-workout-title',
+        'next-session-title',
+        'nutrition-streak-value'
+    ];
+
+    quickStatsCards.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.innerHTML = '<a href="/auth/login" class="text-primary">Log in to view</a>';
+        }
+    });
+
+    // Activity feed
+    const activityFeed = document.getElementById('activity-feed');
+    if (activityFeed) {
+        activityFeed.innerHTML = `
+            <div class="text-center py-5">
+                <i class="bi bi-lock" style="font-size: 3rem; color: var(--text-muted);"></i>
+                <p class="mt-3">Please log in to view your activity</p>
+                <a href="/auth/login" class="btn btn-primary">Log In</a>
+            </div>
+        `;
+    }
+
+    // Behavior tracker handled by its own error handling
+}
+
+/**
  * Load all dashboard data
  */
 async function loadDashboardData() {
@@ -46,7 +114,14 @@ async function loadLatestWeight() {
 
         document.getElementById('weight-date').textContent = metric.recorded_date ? DateUtils.formatDateDisplay(metric.recorded_date) : '--';
     } catch (error) {
-        console.error('Error loading latest weight:', error);
+        // 404 means no data yet - this is expected for new users, don't log as error
+        if (!error.message || !error.message.includes('404')) {
+            console.error('Error loading latest weight:', error);
+        }
+        // Set placeholders (already set in HTML, but being explicit)
+        document.getElementById('latest-weight').textContent = '--';
+        document.getElementById('weight-change').textContent = '--';
+        document.getElementById('weight-date').textContent = '--';
     }
 }
 
@@ -261,7 +336,7 @@ async function initializeActivityFeed() {
 
     try {
         const response = await API.get('/api/activity/recent?limit=5');
-        const activities = response.data;
+        const activities = Array.isArray(response.data) ? response.data : [];
         displayActivities(activities);
         initializeActivityFilters();
     } catch (error) {
@@ -376,7 +451,7 @@ async function loadTodaysBehaviors() {
 
     try {
         const response = await API.get('/api/behavior/logs/today');
-        const behaviors = response.data;
+        const behaviors = Array.isArray(response.data) ? response.data : [];
 
         if (!behaviors || behaviors.length === 0) {
             container.innerHTML = `
@@ -421,12 +496,24 @@ async function loadTodaysBehaviors() {
 
     } catch (error) {
         console.error('Error loading today\'s behaviors:', error);
-        container.innerHTML = `
-            <div class="behavior-error-state">
-                <i class="bi bi-exclamation-triangle" style="color: var(--danger);"></i>
-                <p>Failed to load behaviors. Please try again.</p>
-            </div>
-        `;
+
+        // Check if it's an authentication error
+        if (error.message && error.message.includes('401')) {
+            container.innerHTML = `
+                <div class="behavior-auth-required">
+                    <i class="bi bi-lock" style="font-size: 3rem; color: var(--text-muted);"></i>
+                    <p>Please log in to track your behaviors</p>
+                    <a href="/auth/login" class="btn-primary">Log In</a>
+                </div>
+            `;
+        } else {
+            container.innerHTML = `
+                <div class="behavior-error-state">
+                    <i class="bi bi-exclamation-triangle" style="color: var(--danger);"></i>
+                    <p>Failed to load behaviors. Please try again.</p>
+                </div>
+            `;
+        }
     }
 }
 

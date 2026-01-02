@@ -79,6 +79,8 @@ secrets/
 # Migration scripts with credentials (DO NOT COMMIT)
 scripts/migrate_and_import_behaviors.sh
 scripts/migrate_and_import_behaviors.bat
+scripts/migrate_and_import_all_data.sh
+scripts/migrate_and_import_all_data.bat
 
 # Backup files
 *.bak

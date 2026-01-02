@@ -235,12 +235,12 @@ If the automated script fails, you can run steps manually:
 ### 1. SSH into remote server
 ```bash
 ssh nathan@vit-dev-website
-# Password: Serbatik11!!
+# Use your configured SSH password
 ```
 
 ### 2. Run migration
 ```bash
-cd /home/nathan/primary-assistant
+cd /home/nathan/vitruvian-developer
 docker-compose -f docker-compose.yml -f docker-compose.remote.yml exec web flask db migrate -m "Add behavior tracking system"
 docker-compose -f docker-compose.yml -f docker-compose.remote.yml exec web flask db upgrade
 ```
@@ -255,7 +255,7 @@ scp /Users/nathanbowman/primary-assistant/Health_and_Fitness/data/behavior-track
 ### 4. Run import
 ```bash
 # On remote server:
-cd /home/nathan/primary-assistant
+cd /home/nathan/vitruvian-developer
 docker cp /tmp/import_behavior_data.py primary-assistant-web:/tmp/
 docker cp /tmp/behavior-tracker.md primary-assistant-web:/tmp/
 docker-compose -f docker-compose.yml -f docker-compose.remote.yml exec web python /tmp/import_behavior_data.py /tmp/behavior-tracker.md
