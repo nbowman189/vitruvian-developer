@@ -1,6 +1,85 @@
 # Session Notes
 
-## Latest Session - December 17, 2024: AI Coach CSRF Fix - COMPLETE ✅
+## Latest Session - January 3, 2026: Behavior Tracker Deployment & Docker Cache Fix - COMPLETE ✅
+
+### Issues Resolved:
+
+**Problem 1:** Behavior History page returning 500 error on `/api/behavior/logs` endpoint
+**Problem 2:** Docker deployments not loading updated Python code despite rebuilding
+
+### Root Causes:
+
+**Issue 1 - Function Signature Mismatch:**
+- `validate_pagination_params()` in `website/api/__init__.py` had uncommitted changes
+- Local code: `def validate_pagination_params(default_per_page=20, max_per_page=100):`
+- Remote code: `def validate_pagination_params():` (no parameters)
+- `behavior.py` called it with parameters: `validate_pagination_params(default_per_page=50, max_per_page=1000)`
+- Result: `TypeError: validate_pagination_params() got an unexpected keyword argument 'default_per_page'`
+
+**Issue 2 - Docker Layer Caching:**
+- Even `docker-compose up -d --build` uses cached layers
+- Python code changes weren't being copied into Docker image
+- Container was running old code even after "rebuild"
+
+### Solutions Applied:
+
+**Fix #1 - Commit Missing Changes:**
+```bash
+git add website/api/__init__.py
+git commit -m "Add parameters to validate_pagination_params for flexible pagination limits"
+git push origin main
+```
+
+**Fix #2 - Force No-Cache Rebuild:**
+```bash
+# WRONG (uses cache):
+docker-compose up -d --build web
+
+# CORRECT (forces fresh build):
+docker-compose stop web
+docker-compose rm -f web
+docker-compose build --no-cache web
+docker-compose up -d web
+```
+
+**Fix #3 - Update Deployment Script:**
+- Updated `scripts/deploy-remote.sh` to use `build --no-cache` instead of `up -d --build`
+- Ensures all future deployments use correct process
+
+### Key Lessons Learned:
+
+1. **Docker's layer caching is aggressive** - Even `--build` flag can skip copying updated files
+2. **Always use `build --no-cache` for remote deployments** - Only way to guarantee fresh code
+3. **Commit all changes before deploying** - Uncommitted local changes won't be on remote server
+4. **Use detailed error debugging** - Modified error handler to return full Python traceback for diagnosis
+
+### Files Modified:
+- `website/api/__init__.py` - Committed parameter changes to `validate_pagination_params()`
+- `scripts/deploy-remote.sh` - Changed to use `build --no-cache`
+- `CLAUDE.md` - Updated deployment documentation with --no-cache warnings
+
+### Git Commits:
+- `342b673` - "Force no-cache rebuild in deployment script to ensure code updates"
+- `ea6bd2f` - "Add parameters to validate_pagination_params for flexible pagination limits"
+- `0110c74` - "Update deployment docs: emphasize --no-cache requirement for Docker builds"
+
+### Deployment Command Reference:
+```bash
+# ALWAYS use this for remote Python code deployments:
+./scripts/deploy-remote.sh
+
+# OR manually:
+cd /home/nathan/vitruvian-developer
+git pull origin main
+docker-compose -f docker-compose.yml -f docker-compose.remote.yml stop web
+docker-compose -f docker-compose.yml -f docker-compose.remote.yml rm -f web
+docker-compose -f docker-compose.yml -f docker-compose.remote.yml build --no-cache web
+docker-compose -f docker-compose.yml -f docker-compose.remote.yml up -d web
+```
+
+---
+
+## Previous Session - December 17, 2024: AI Coach CSRF Fix - COMPLETE ✅
 
 ### Issue Resolved:
 **Problem:** AI Coach API endpoints were blocked by CSRF protection
