@@ -428,12 +428,16 @@ def get_behavior_logs():
 
         logger.info(f"Successfully serialized {len(serialized_logs)} logs")
 
-        return paginated_response(
-            items=serialized_logs,
-            page=logs.page,
-            per_page=logs.per_page,
-            total=logs.total
-        )
+        # Return in same format as other endpoints to ensure compatibility
+        return success_response({
+            'items': serialized_logs,
+            'pagination': {
+                'page': logs.page,
+                'per_page': logs.per_page,
+                'total': logs.total,
+                'pages': (logs.total // logs.per_page) + (1 if logs.total % logs.per_page > 0 else 0)
+            }
+        })
 
     except Exception as e:
         logger.error(f"Error fetching behavior logs: {e}", exc_info=True)
