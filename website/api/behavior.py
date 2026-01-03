@@ -370,29 +370,39 @@ def get_behavior_logs():
         - per_page (int): Items per page (default: 50, max: 200)
     """
     try:
+        from sqlalchemy.orm import joinedload
+
+        # Log request details for debugging
+        logger.info(f"Behavior logs request - user_id: {current_user.id}, start_date: {request.args.get('start_date')}, end_date: {request.args.get('end_date')}")
+
         # Get query parameters
         start_date_str = request.args.get('start_date')
         end_date_str = request.args.get('end_date')
         behavior_id = request.args.get('behavior_id', type=int)
 
         # Validate pagination
-        page, per_page = validate_pagination_params(default_per_page=50, max_per_page=200)
+        page, per_page = validate_pagination_params(default_per_page=50, max_per_page=1000)
+        logger.info(f"Pagination params - page: {page}, per_page: {per_page}")
 
-        # Build query
-        query = BehaviorLog.query.filter_by(user_id=current_user.id)
+        # Build query with eager loading of behavior_definition
+        query = BehaviorLog.query.options(joinedload(BehaviorLog.behavior_definition)).filter_by(user_id=current_user.id)
 
         # Date filters
         if start_date_str:
             is_valid, result = validate_date_format(start_date_str)
             if not is_valid:
+                logger.error(f"Invalid start_date: {start_date_str}")
                 return error_response(f'Invalid start_date: {result}')
             query = query.filter(BehaviorLog.tracked_date >= result)
+            logger.info(f"Applied start_date filter: {result}")
 
         if end_date_str:
             is_valid, result = validate_date_format(end_date_str)
             if not is_valid:
+                logger.error(f"Invalid end_date: {end_date_str}")
                 return error_response(f'Invalid end_date: {result}')
             query = query.filter(BehaviorLog.tracked_date <= result)
+            logger.info(f"Applied end_date filter: {result}")
 
         # Behavior filter
         if behavior_id:
@@ -402,10 +412,24 @@ def get_behavior_logs():
         query = query.order_by(BehaviorLog.tracked_date.desc())
 
         # Paginate
+        logger.info("Executing query with pagination...")
         logs = query.paginate(page=page, per_page=per_page, error_out=False)
+        logger.info(f"Query completed - found {logs.total} total logs, returning page {logs.page} with {len(logs.items)} items")
+
+        # Serialize logs
+        logger.info("Serializing logs...")
+        serialized_logs = []
+        for i, log in enumerate(logs.items):
+            try:
+                serialized_logs.append(log.to_dict())
+            except Exception as serialize_error:
+                logger.error(f"Error serializing log {log.id}: {serialize_error}", exc_info=True)
+                raise
+
+        logger.info(f"Successfully serialized {len(serialized_logs)} logs")
 
         return paginated_response(
-            items=[log.to_dict() for log in logs.items],
+            items=serialized_logs,
             page=logs.page,
             per_page=logs.per_page,
             total=logs.total
