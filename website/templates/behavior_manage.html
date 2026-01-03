@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Behaviors - Vitruvian Tracker{% endblock %}
+
+{% block content %}
+<!-- Dashboard Navbar -->
+{% include 'components/navbar_auth.html' %}
+
+<!-- Flash Messages -->
+<div class="container mt-3">
+    {% include 'components/flash_messages.html' %}
+</div>
+
+<!-- Manage Behaviors Content -->
+<div class="dashboard-container">
+    <!-- Page Header -->
+    <section class="page-header">
+        <h1><i class="bi bi-gear"></i> Manage Behaviors</h1>
+        <p class="text-muted">Create and organize your daily behavior tracking categories</p>
+        <div class="header-actions mt-3">
+            <button id="add-behavior-btn" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Add Behavior
+            </button>
+            <a href="/behavior/history" class="btn btn-outline-secondary">
+                <i class="bi bi-calendar-check"></i> View History
+            </a>
+        </div>
+    </section>
+
+    <!-- Behaviors List Section -->
+    <section class="behaviors-list-section">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    Your Behaviors <span id="behavior-count" class="badge bg-secondary">0</span>
+                </h5>
+                <div class="view-toggles">
+                    <button class="active" data-view="active">Active</button>
+                    <button data-view="archived">Archived</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Empty State -->
+                <div id="empty-state" class="text-center py-5" style="display: none;">
+                    <i class="bi bi-inbox" style="font-size: 4rem; color: #ccc;"></i>
+                    <h4 class="mt-3">No behaviors yet</h4>
+                    <p class="text-muted">Create your first behavior to start tracking your daily habits</p>
+                    <button class="btn btn-primary" onclick="openAddModal()">
+                        <i class="bi bi-plus-circle"></i> Add Your First Behavior
+                    </button>
+                </div>
+
+                <!-- Sortable Behavior List -->
+                <div id="behaviors-container" class="behaviors-sortable">
+                    <!-- Behavior cards populated via JavaScript -->
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Add/Edit Behavior Modal -->
+<div class="modal fade" id="behaviorModal" tabindex="-1" aria-labelledby="modal-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-title">Add Behavior</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="behavior-form">
+                    <!-- Name Field -->
+                    <div class="mb-3">
+                        <label for="behavior-name" class="form-label">Behavior Name *</label>
+                        <input type="text" id="behavior-name" class="form-control"
+                               placeholder="e.g., Morning Meditation" maxlength="100" required>
+                        <small class="text-muted">Clear, specific name</small>
+                    </div>
+
+                    <!-- Description Field -->
+                    <div class="mb-3">
+                        <label for="behavior-description" class="form-label">Description (Optional)</label>
+                        <textarea id="behavior-description" class="form-control"
+                                  rows="3" placeholder="What does this behavior involve?"></textarea>
+                    </div>
+
+                    <!-- Category Dropdown -->
+                    <div class="mb-3">
+                        <label for="behavior-category" class="form-label">Category *</label>
+                        <select id="behavior-category" class="form-select" required>
+                            <option value="">Select a category...</option>
+                            <option value="health">🏥 Health</option>
+                            <option value="fitness">💪 Fitness</option>
+                            <option value="nutrition">🥗 Nutrition</option>
+                            <option value="learning">📚 Learning</option>
+                            <option value="productivity">⚡ Productivity</option>
+                            <option value="wellness">🧘 Wellness</option>
+                            <option value="custom">✨ Custom</option>
+                        </select>
+                    </div>
+
+                    <!-- Icon Picker -->
+                    <div class="mb-3">
+                        <label class="form-label">Icon *</label>
+                        <div class="icon-picker-container">
+                            <button type="button" class="icon-preview-btn" onclick="openIconPicker()">
+                                <i id="selected-icon-preview" class="bi bi-star"></i>
+                                <span>Choose Icon</span>
+                            </button>
+                            <input type="hidden" id="behavior-icon" value="star" required>
+                        </div>
+
+                        <!-- Icon Picker Dropdown (Hidden by default) -->
+                        <div id="icon-picker-dropdown" class="icon-picker-grid" style="display: none;">
+                            <div class="icon-search">
+                                <input type="text" placeholder="Search icons..." onkeyup="filterIcons(this.value)">
+                            </div>
+                            <div class="icon-grid">
+                                <!-- Common icons populated via JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Color Picker -->
+                    <div class="mb-3">
+                        <label class="form-label">Color *</label>
+                        <div class="color-picker-container">
+                            <!-- Predefined Color Palette -->
+                            <div class="color-swatches">
+                                <!-- Generated via JavaScript -->
+                            </div>
+                            <!-- Custom Color Input -->
+                            <div class="custom-color-input mt-2">
+                                <label class="form-label-sm">Custom Color</label>
+                                <input type="color" id="behavior-color" value="#2563eb" required>
+                                <input type="text" id="behavior-color-hex"
+                                       value="#2563eb" pattern="^#[0-9A-Fa-f]{6}$"
+                                       class="form-control form-control-sm"
+                                       placeholder="#2563eb">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Target Frequency -->
+                    <div class="mb-3">
+                        <label for="behavior-frequency" class="form-label">Target Frequency *</label>
+                        <div class="input-group">
+                            <input type="number" id="behavior-frequency"
+                                   class="form-control" min="1" max="7" value="7" required>
+                            <span class="input-group-text">times per week</span>
+                        </div>
+                        <small class="text-muted">How many days per week should you do this?</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveBehavior()">
+                    <span id="save-btn-text">Add Behavior</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Archive Confirmation Modal -->
+<div class="modal fade" id="archiveModal" tabindex="-1" aria-labelledby="archiveModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="archiveModalLabel">Archive Behavior?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>This will hide the behavior from your daily checklist. Historical data will be preserved.</p>
+                <p class="text-muted mb-0">You can restore it later from the Archived view.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" onclick="confirmArchive()">
+                    Archive
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/common.js"></script>
+<script src="/static/js/behavior-manage.js"></script>
+{% endblock %}

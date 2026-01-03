@@ -74,15 +74,12 @@ def insights():
 @main_bp.route('/dashboard')
 @log_request
 def dashboard():
-    """Render user dashboard page"""
-    from flask_login import login_required
-    from flask import abort
-    from flask_login import current_user
+    """Render user dashboard page
 
-    # Require authentication
-    if not current_user.is_authenticated:
-        abort(401)
-
+    Dashboard is publicly accessible. The JavaScript checks authentication
+    and shows login prompts for unauthenticated users or loads data for
+    authenticated users.
+    """
     return render_template('dashboard.html')
 
 
@@ -123,6 +120,32 @@ def coaching_sessions():
         abort(401)
 
     return render_template('coaching_sessions.html')
+
+
+@main_bp.route('/behavior/history')
+@log_request
+def behavior_history():
+    """Render behavior tracker history page"""
+    from flask import abort
+    from flask_login import current_user
+
+    if not current_user.is_authenticated:
+        abort(401)
+
+    return render_template('behavior_history.html')
+
+
+@main_bp.route('/behavior/manage')
+@log_request
+def behavior_manage():
+    """Render behavior management page"""
+    from flask import abort
+    from flask_login import current_user
+
+    if not current_user.is_authenticated:
+        abort(401)
+
+    return render_template('behavior_manage.html')
 
 
 @main_bp.route('/nutrition/meals')
