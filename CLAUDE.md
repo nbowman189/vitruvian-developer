@@ -22,24 +22,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 2. **Remote Deployment (CRITICAL - Code is baked into Docker image):**
    ```bash
-   # Use the deployment script:
+   # Use the deployment script (RECOMMENDED):
    ./scripts/deploy-remote.sh
 
-   # OR manual process:
+   # OR manual process (MUST use --no-cache):
    cd /home/nathan/vitruvian-developer
    git pull origin main
    docker-compose -f docker-compose.yml -f docker-compose.remote.yml stop web
    docker-compose -f docker-compose.yml -f docker-compose.remote.yml rm -f web
-   docker-compose -f docker-compose.yml -f docker-compose.remote.yml up -d --build web
+   docker-compose -f docker-compose.yml -f docker-compose.remote.yml build --no-cache web
+   docker-compose -f docker-compose.yml -f docker-compose.remote.yml up -d web
    ```
 
 3. **NEVER use `docker-compose restart`** - it doesn't load new code!
 
-4. **After JavaScript changes:** Purge Cloudflare cache or enable Development Mode
+4. **ALWAYS use `--no-cache` when rebuilding** - Docker's layer caching can prevent Python code updates from being copied into the image
+
+5. **After JavaScript changes:** Purge Cloudflare cache or enable Development Mode
 
 **Known Issues:**
 1. **Code Not Mounted as Volume:** Website code is baked into Docker image, so containers MUST be rebuilt (not just restarted) for code changes to take effect
-2. **Cloudflare Cache:** Must purge or enable Development Mode after JavaScript/CSS updates
+2. **Docker Build Cache:** Even `--build` can use cached layers. ALWAYS use `build --no-cache` followed by `up -d` (not `up -d --build`) for guaranteed fresh build
+3. **Cloudflare Cache:** Must purge or enable Development Mode after JavaScript/CSS updates
 
 ---
 
