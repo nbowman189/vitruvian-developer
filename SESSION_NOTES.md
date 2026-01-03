@@ -1,11 +1,13 @@
 # Session Notes
 
-## Latest Session - January 3, 2026: Behavior Tracker Deployment & Docker Cache Fix - COMPLETE ✅
+## Latest Session - January 3, 2026: Behavior Tracker Deployment & Docker Volume Fix - COMPLETE ✅
 
 ### Issues Resolved:
 
 **Problem 1:** Behavior History page returning 500 error on `/api/behavior/logs` endpoint
 **Problem 2:** Docker deployments not loading updated Python code despite rebuilding
+**Problem 3:** Manage Behaviors page - JavaScript and CSS files missing or outdated after rebuild
+**Problem 4:** Static files volume mount overwriting freshly built files
 
 ### Root Causes:
 
@@ -20,6 +22,20 @@
 - Even `docker-compose up -d --build` uses cached layers
 - Python code changes weren't being copied into Docker image
 - Container was running old code even after "rebuild"
+
+**Issue 3 - Static Files Missing/Outdated:**
+- `behavior-manage.js` (16,410 bytes) completely missing from container despite being in git
+- `style.css` outdated in container (5,834 lines vs 6,116 lines)
+- Files existed on remote server and in git, but not in running container
+- Even `--no-cache` rebuild didn't fix the problem
+
+**Issue 4 - Root Cause: Volume Mount Overwriting Built Files:**
+- Docker image build correctly copies ALL files including `behavior-manage.js` and updated `style.css`
+- `docker-compose.yml` line 63: `static_files:/app/website/static` mounts persistent volume
+- When container starts, Docker mounts old `static_files` volume OVER the freshly built directory
+- Result: Newly built static files immediately replaced by old volume contents
+- `docker cp` workaround worked because it copied INTO the mounted volume (which persists)
+- `--no-cache` flag was irrelevant because the build was fine - volume mount was the issue
 
 ### Solutions Applied:
 
@@ -46,17 +62,44 @@ docker-compose up -d web
 - Updated `scripts/deploy-remote.sh` to use `build --no-cache` instead of `up -d --build`
 - Ensures all future deployments use correct process
 
+**Fix #4 - Remove Static Files Volume Mount (PERMANENT SOLUTION):**
+```bash
+# Removed from docker-compose.yml:
+# web service: - static_files:/app/website/static
+# nginx service: - static_files:/app/website/static:ro
+# volumes section: static_files definition
+
+# Updated nginx configurations:
+# - Changed from serving files directly (alias /app/website/static/)
+# - Changed to proxying /static/ requests to Flask app
+# - Flask serves static files from built-in directory in Docker image
+```
+
+**Why This Works:**
+- Static files (JS, CSS, images) are application code, not user data
+- They should be baked into the Docker image during build, not stored in volumes
+- Volumes are for persistent user-generated data (uploads, logs, database)
+- Nginx now proxies static file requests to Flask, which serves from the image
+- Every deployment gets fresh static files automatically
+
 ### Key Lessons Learned:
 
-1. **Docker's layer caching is aggressive** - Even `--build` flag can skip copying updated files
-2. **Always use `build --no-cache` for remote deployments** - Only way to guarantee fresh code
-3. **Commit all changes before deploying** - Uncommitted local changes won't be on remote server
-4. **Use detailed error debugging** - Modified error handler to return full Python traceback for diagnosis
+1. **Docker volume mounts override image contents** - Volume mounts replace directories even after fresh builds
+2. **Static files should NOT use volumes** - They're application code, not user data
+3. **Docker's layer caching is aggressive** - Even `--build` flag can skip copying updated files (separate issue)
+4. **Always use `build --no-cache` for remote deployments** - Only way to guarantee fresh code
+5. **Commit all changes before deploying** - Uncommitted local changes won't be on remote server
+6. **Use detailed error debugging** - Modified error handler to return full Python traceback for diagnosis
+7. **Separate concerns: Code vs Data** - Code → Docker image, User data → Docker volumes
 
 ### Files Modified:
 - `website/api/__init__.py` - Committed parameter changes to `validate_pagination_params()`
 - `scripts/deploy-remote.sh` - Changed to use `build --no-cache`
 - `CLAUDE.md` - Updated deployment documentation with --no-cache warnings
+- `docker-compose.yml` - Removed `static_files` volume mount from web and nginx services
+- `docker/nginx/nginx.conf` - Changed to proxy /static/ requests to Flask
+- `docker/nginx/nginx-remote.conf` - Changed to proxy /static/ requests to Flask
+- `SESSION_NOTES.md` - Documented root cause investigation and permanent fix
 
 ### Git Commits:
 - `342b673` - "Force no-cache rebuild in deployment script to ensure code updates"

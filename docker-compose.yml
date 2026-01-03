@@ -60,7 +60,7 @@ services:
     ports:
       - "8001:8000"  # Expose web container for local development
     volumes:
-      - static_files:/app/website/static
+      # Static files are baked into Docker image, not stored in volumes
       - user_uploads:/app/uploads
       - logs:/app/logs
       - ./Health_and_Fitness/data:/Health_and_Fitness/data:ro
@@ -88,7 +88,7 @@ services:
       - "${HTTP_PORT:-80}:80"
       - "${HTTPS_PORT:-443}:443"
     volumes:
-      - static_files:/app/website/static:ro
+      # Nginx reads static files from web container's filesystem (via shared network)
       - user_uploads:/app/uploads:ro
       - nginx_logs:/var/log/nginx
       # Let's Encrypt certificates (create with: mkdir -p /etc/letsencrypt)
@@ -109,8 +109,7 @@ services:
 volumes:
   postgres_data:
     driver: local
-  static_files:
-    driver: local
+  # static_files removed - static assets are baked into Docker image
   user_uploads:
     driver: local
   logs:
