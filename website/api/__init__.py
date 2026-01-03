@@ -163,9 +163,13 @@ def validate_date_format(date_string):
         return False, f"Invalid date format: {date_string}. Expected ISO format (YYYY-MM-DD)"
 
 
-def validate_pagination_params():
+def validate_pagination_params(default_per_page=20, max_per_page=100):
     """
     Validate and extract pagination parameters from request.
+
+    Args:
+        default_per_page: Default items per page if not specified
+        max_per_page: Maximum allowed items per page
 
     Returns:
         Tuple of (page, per_page) with validated values
@@ -176,9 +180,9 @@ def validate_pagination_params():
         page = 1
 
     try:
-        per_page = min(100, max(1, int(request.args.get('per_page', 20))))
+        per_page = min(max_per_page, max(1, int(request.args.get('per_page', default_per_page))))
     except (ValueError, TypeError):
-        per_page = 20
+        per_page = default_per_page
 
     return page, per_page
 
