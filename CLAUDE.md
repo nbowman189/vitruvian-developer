@@ -13,14 +13,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - ✅ Cleaned up CLAUDE.md documentation (829→591 lines, removed obsolete content)
 - ✅ Committed and ready to push: commit hash `79f80d0`
 
-**Deployment Notes:**
-- Use `docker cp` to copy updated files to running containers (Docker caching issue)
-- Fix file permissions: `chown appuser:appuser` and `chmod 644`
-- **Critical:** Purge Cloudflare cache after deploying JavaScript changes
+**Deployment Process:**
+1. **Local Changes:**
+   - Make code changes
+   - Test locally if possible
+   - Commit: `git add -A && git commit -m "description"`
+   - Push: `git push origin main`
+
+2. **Remote Deployment (CRITICAL - Code is baked into Docker image):**
+   ```bash
+   # Use the deployment script:
+   ./scripts/deploy-remote.sh
+
+   # OR manual process:
+   cd /home/nathan/vitruvian-developer
+   git pull origin main
+   docker-compose -f docker-compose.yml -f docker-compose.remote.yml stop web
+   docker-compose -f docker-compose.yml -f docker-compose.remote.yml rm -f web
+   docker-compose -f docker-compose.yml -f docker-compose.remote.yml up -d --build web
+   ```
+
+3. **NEVER use `docker-compose restart`** - it doesn't load new code!
+
+4. **After JavaScript changes:** Purge Cloudflare cache or enable Development Mode
 
 **Known Issues:**
-1. **Docker Build Cache:** Static files not always copied during rebuild - use `docker cp` as workaround
-2. **Cloudflare Cache:** Must purge or enable Development Mode after JavaScript updates
+1. **Code Not Mounted as Volume:** Website code is baked into Docker image, so containers MUST be rebuilt (not just restarted) for code changes to take effect
+2. **Cloudflare Cache:** Must purge or enable Development Mode after JavaScript/CSS updates
 
 ---
 
@@ -140,6 +159,15 @@ docker-compose -f docker-compose.yml -f docker-compose.remote.yml restart web
 
 # 5. CRITICAL: Purge Cloudflare cache or enable Development Mode for 3 hours
 ```
+
+### SSL/TLS Configuration
+
+**IMPORTANT: This project does NOT use SSL certificates on nginx.**
+
+- **Cloudflare handles all SSL termination** - nginx only listens on HTTP port 80
+- nginx sets `X-Forwarded-Proto: https` to tell Flask the original request was HTTPS
+- No Let's Encrypt, no SSL certificates, no SSL configuration needed
+- See `docs/deployment/SSL_CONFIGURATION.md` for complete details
 
 ### Authentication System
 
