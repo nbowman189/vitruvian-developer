@@ -1098,7 +1098,8 @@ def _query_behavior_tracking(user_id: int, params: dict) -> tuple:
     behaviors = behavior_query.order_by(BehaviorDefinition.display_order).all()
 
     if not behaviors:
-        return {}, f"No behaviors found{' matching \"' + behavior_name + '\"' if behavior_name else ''}."
+        suffix = f' matching "{behavior_name}"' if behavior_name else ''
+        return {}, f"No behaviors found{suffix}."
 
     # Query logs
     behavior_ids = [b.id for b in behaviors]
