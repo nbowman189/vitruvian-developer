@@ -30,13 +30,14 @@ sshpass -p "Serbatik11!!" ssh -o StrictHostKeyChecking=no nathan@vit-dev-website
 echo "✅ Code updated on remote server"
 echo ""
 
-# Step 3: Rebuild and restart containers
-echo "🔨 Step 3: Rebuilding Docker containers..."
+# Step 3: Rebuild and restart containers (force no-cache rebuild)
+echo "🔨 Step 3: Rebuilding Docker containers (forcing clean build)..."
 sshpass -p "Serbatik11!!" ssh -o StrictHostKeyChecking=no nathan@vit-dev-website \
     "cd /home/nathan/vitruvian-developer && \
      docker-compose -f docker-compose.yml -f docker-compose.remote.yml stop web && \
      docker-compose -f docker-compose.yml -f docker-compose.remote.yml rm -f web && \
-     docker-compose -f docker-compose.yml -f docker-compose.remote.yml up -d --build web"
+     docker-compose -f docker-compose.yml -f docker-compose.remote.yml build --no-cache web && \
+     docker-compose -f docker-compose.yml -f docker-compose.remote.yml up -d web"
 echo "✅ Containers rebuilt and started"
 echo ""
 
