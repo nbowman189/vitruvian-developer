@@ -8,6 +8,7 @@
 **Problem 2:** Docker deployments not loading updated Python code despite rebuilding
 **Problem 3:** Manage Behaviors page - JavaScript and CSS files missing or outdated after rebuild
 **Problem 4:** Static files volume mount overwriting freshly built files
+**Problem 5:** Coaching Sessions page displaying fields in reversed order
 
 ### Root Causes:
 
@@ -36,6 +37,12 @@
 - Result: Newly built static files immediately replaced by old volume contents
 - `docker cp` workaround worked because it copied INTO the mounted volume (which persists)
 - `--no-cache` flag was irrelevant because the build was fine - volume mount was the issue
+
+**Issue 5 - Coaching Sessions Field Mapping:**
+- Template displayed `coach_feedback` in card header and `discussion_notes` in card body
+- User confirmed correct mapping should be reversed:
+  - Card header (collapsed): `discussion_notes` (topic/summary)
+  - Card body (expanded): `coach_feedback` (detailed feedback)
 
 ### Solutions Applied:
 
@@ -82,6 +89,18 @@ docker-compose up -d web
 - Nginx now proxies static file requests to Flask, which serves from the image
 - Every deployment gets fresh static files automatically
 
+**Fix #5 - Coaching Sessions Field Mapping:**
+```javascript
+// CORRECT mapping in coaching_sessions.html:
+const title = session.discussion_notes || 'Coaching Session';  // Header
+const hasContent = session.coach_feedback && session.coach_feedback.length > 0;  // Body
+
+// Render markdown for expanded content:
+if (markdownDiv && session.coach_feedback) {
+    markdownDiv.innerHTML = marked.parse(session.coach_feedback);
+}
+```
+
 ### Key Lessons Learned:
 
 1. **Docker volume mounts override image contents** - Volume mounts replace directories even after fresh builds
@@ -99,12 +118,16 @@ docker-compose up -d web
 - `docker-compose.yml` - Removed `static_files` volume mount from web and nginx services
 - `docker/nginx/nginx.conf` - Changed to proxy /static/ requests to Flask
 - `docker/nginx/nginx-remote.conf` - Changed to proxy /static/ requests to Flask
+- `website/templates/coaching_sessions.html` - Fixed field mapping (discussion_notes → header, coach_feedback → body)
 - `SESSION_NOTES.md` - Documented root cause investigation and permanent fix
 
 ### Git Commits:
 - `342b673` - "Force no-cache rebuild in deployment script to ensure code updates"
 - `ea6bd2f` - "Add parameters to validate_pagination_params for flexible pagination limits"
 - `0110c74` - "Update deployment docs: emphasize --no-cache requirement for Docker builds"
+- `950942b` - "Fix Docker volume mount overwriting static files"
+- `a86a36c` - "Fix coaching sessions: swap coach_feedback and discussion_notes display" (incorrect)
+- `35b59e5` - "Fix coaching sessions field mapping (correct version)"
 
 ### Deployment Command Reference:
 ```bash
@@ -119,6 +142,36 @@ docker-compose -f docker-compose.yml -f docker-compose.remote.yml rm -f web
 docker-compose -f docker-compose.yml -f docker-compose.remote.yml build --no-cache web
 docker-compose -f docker-compose.yml -f docker-compose.remote.yml up -d web
 ```
+
+### Current Deployment Status - STABLE ✅
+
+**Remote Server:** vit-dev-website (vitruvian.bowmanhomelabtech.net)
+
+**Container Status:**
+- ✅ primary-assistant-db: Up (healthy)
+- ✅ primary-assistant-web: Up (healthy)
+- ✅ primary-assistant-nginx: Up (healthy)
+
+**Deployed Commit:** `35b59e5` - "Fix coaching sessions field mapping (correct version)"
+
+**Working Features:**
+- ✅ Behavior History page - Pagination working correctly
+- ✅ Manage Behaviors page - Full CRUD interface with drag-and-drop reordering
+- ✅ Coaching Sessions page - Correct field mapping (discussion_notes in header, coach_feedback in body)
+- ✅ Static files served from Docker image (no more volume mount issues)
+- ✅ All JavaScript and CSS files loading correctly
+
+**Post-Deployment Steps Required:**
+1. **Purge Cloudflare cache** - Necessary for JavaScript/CSS changes to take effect
+   - Option 1: Purge Everything in Cloudflare dashboard
+   - Option 2: Enable Development Mode for 3 hours
+2. Test all pages after cache purge
+
+**Known Issues:** None
+
+**Next Session Priorities:**
+- Continue with AI Fitness Coach expansion (if plan mode work is needed)
+- Any new feature requests or bug fixes
 
 ---
 
