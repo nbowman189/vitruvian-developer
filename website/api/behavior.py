@@ -440,8 +440,12 @@ def get_behavior_logs():
         })
 
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
         logger.error(f"Error fetching behavior logs: {e}", exc_info=True)
-        return error_response('Failed to fetch behavior logs', status_code=500)
+        logger.error(f"Full traceback: {error_details}")
+        # Temporarily return detailed error for debugging
+        return error_response(f'Failed to fetch behavior logs: {str(e)}', errors=[error_details], status_code=500)
 
 
 @behavior_api_bp.route('/logs', methods=['POST'])
