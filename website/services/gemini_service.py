@@ -15,6 +15,14 @@ from google.generativeai.types import HarmCategory, HarmBlockThreshold
 
 logger = logging.getLogger(__name__)
 
+# Import quota manager at module level
+try:
+    from .quota_manager import quota_manager
+except ImportError:
+    # If import fails, create a dummy manager for graceful degradation
+    logger.warning("Failed to import quota_manager, quota tracking disabled")
+    quota_manager = None
+
 
 # Custom Exceptions
 class QuotaExhaustedError(Exception):
@@ -74,9 +82,6 @@ class GeminiService:
         Raises:
             ValueError: If API key is not provided or found in environment
         """
-        from flask import current_app
-        from .quota_manager import quota_manager
-
         self.api_key = api_key or os.environ.get('GEMINI_API_KEY')
 
         if not self.api_key:
@@ -89,6 +94,7 @@ class GeminiService:
 
         # Load model fallback chain from config
         try:
+            from flask import current_app
             self.model_names = current_app.config.get('GEMINI_MODEL_FALLBACK_CHAIN', [
                 'gemini-2.0-flash-exp',
                 'gemini-1.5-flash',
@@ -115,7 +121,11 @@ class GeminiService:
                 'max_output_tokens': 2048,
             }
 
+        # Set quota manager (may be None if import failed)
         self.quota_manager = quota_manager
+        if not self.quota_manager:
+            logger.warning("Quota manager not available, fallback system disabled")
+
         self.system_prompt = TRANSFORMATIVE_TRAINER_PERSONA
 
         logger.info(f"GeminiService initialized with {len(self.model_names)} fallback models")
@@ -155,7 +165,8 @@ class GeminiService:
 
         # Try each model in fallback chain
         for model_name in self.model_names:
-            if not self.quota_manager.is_quota_available(model_name):
+            # Check quota if manager is available
+            if self.quota_manager and not self.quota_manager.is_quota_available(model_name):
                 logger.info(f"Skipping {model_name} - quota exhausted")
                 continue
 
@@ -188,7 +199,11 @@ class GeminiService:
                 if self._is_quota_error(e):
                     retry_delay = self._extract_retry_delay(e)
                     logger.warning(f"{model_name} quota exhausted, retry in {retry_delay}s")
-                    self.quota_manager.mark_quota_exhausted(model_name, retry_delay)
+
+                    # Mark quota exhausted if manager available
+                    if self.quota_manager:
+                        self.quota_manager.mark_quota_exhausted(model_name, retry_delay)
+
                     continue  # Try next model
 
                 # Non-quota error - propagate
@@ -196,7 +211,7 @@ class GeminiService:
                 raise
 
         # All models exhausted
-        seconds_until_reset = self.quota_manager.get_seconds_until_reset()
+        seconds_until_reset = self.quota_manager.get_seconds_until_reset() if self.quota_manager else None
         raise QuotaExhaustedError(
             "All AI models have reached their quota limits.",
             seconds_until_reset=seconds_until_reset
