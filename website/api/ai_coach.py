@@ -123,10 +123,15 @@ def send_message():
 
         # Get AI response with function calling support
         try:
+            logger.info(f"Calling gemini.chat with message: {user_message[:50]}...")
+            logger.info(f"Conversation history length: {len(conversation.messages)}")
+            function_decls = get_all_function_declarations()
+            logger.info(f"Function declarations count: {len(function_decls) if function_decls else 0}")
+
             assistant_response, function_call = gemini.chat(
                 user_message=user_message,
                 conversation_history=conversation.messages,
-                function_declarations=get_all_function_declarations(),
+                function_declarations=function_decls,
                 max_context_messages=10
             )
         except QuotaExhaustedError as e:
@@ -159,7 +164,9 @@ def send_message():
 
         except ValueError as e:
             # API key or configuration error
-            logger.error(f"Gemini service configuration error: {e}")
+            logger.error(f"Gemini service configuration error: {e}", exc_info=True)
+            logger.error(f"ValueError type: {type(e)}")
+            logger.error(f"ValueError args: {e.args}")
             return error_response(
                 'AI coach is not configured properly. Please contact administrator.',
                 status_code=503
