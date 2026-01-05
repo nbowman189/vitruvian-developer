@@ -256,12 +256,10 @@ def get_recent_health_metrics_schema() -> Dict[str, Any]:
                 'days': {
                     'type': 'integer',
                     'description': 'Number of days to look back (default: 7, max: 90)',
-                    'default': 7
                 },
                 'include_trends': {
                     'type': 'boolean',
                     'description': 'Whether to include trend calculations (weight change, averages)',
-                    'default': True
                 }
             }
         }
@@ -283,7 +281,6 @@ def get_workout_history_schema() -> Dict[str, Any]:
                 'days': {
                     'type': 'integer',
                     'description': 'Number of days to look back (default: 7, max: 30)',
-                    'default': 7
                 },
                 'session_type': {
                     'type': 'string',
@@ -293,7 +290,6 @@ def get_workout_history_schema() -> Dict[str, Any]:
                 'include_exercises': {
                     'type': 'boolean',
                     'description': 'Whether to include exercise details (sets, reps, weight)',
-                    'default': False
                 }
             }
         }
@@ -315,13 +311,11 @@ def get_nutrition_summary_schema() -> Dict[str, Any]:
                 'days': {
                     'type': 'integer',
                     'description': 'Number of days to look back (default: 7, max: 30)',
-                    'default': 7
                 },
                 'summary_type': {
                     'type': 'string',
                     'enum': ['daily', 'weekly'],
                     'description': 'Summarize data by day or week (default: weekly)',
-                    'default': 'weekly'
                 }
             }
         }
@@ -344,7 +338,6 @@ def get_user_goals_schema() -> Dict[str, Any]:
                     'type': 'string',
                     'enum': ['active', 'completed', 'all'],
                     'description': 'Filter by goal status (default: active)',
-                    'default': 'active'
                 }
             }
         }
@@ -366,7 +359,6 @@ def get_coaching_history_schema() -> Dict[str, Any]:
                 'limit': {
                     'type': 'integer',
                     'description': 'Number of sessions to retrieve (default: 5, max: 20)',
-                    'default': 5
                 }
             }
         }
@@ -388,7 +380,6 @@ def get_progress_summary_schema() -> Dict[str, Any]:
                 'period_days': {
                     'type': 'integer',
                     'description': 'Analysis period in days (default: 30, max: 90)',
-                    'default': 30
                 }
             }
         }
@@ -419,22 +410,18 @@ def create_behavior_definition_schema() -> Dict[str, Any]:
                     'type': 'string',
                     'enum': ['HEALTH', 'FITNESS', 'NUTRITION', 'LEARNING', 'PRODUCTIVITY', 'WELLNESS', 'CUSTOM'],
                     'description': 'Category of the behavior',
-                    'default': 'CUSTOM'
                 },
                 'icon': {
                     'type': 'string',
                     'description': 'Bootstrap icon class (e.g., "bi-book", "bi-heart", "bi-lightning"). See https://icons.getbootstrap.com/',
-                    'default': 'bi-check-circle'
                 },
                 'color': {
                     'type': 'string',
                     'description': 'Hex color code for the behavior (e.g., "#4A90E2", "#E27D60")',
-                    'default': '#4A90E2'
                 },
                 'target_frequency': {
                     'type': 'integer',
                     'description': 'Target number of days per week to complete this behavior (1-7)',
-                    'default': 7
                 }
             },
             'required': ['name']
@@ -465,7 +452,6 @@ def log_behavior_schema() -> Dict[str, Any]:
                 'completed': {
                     'type': 'boolean',
                     'description': 'Whether the behavior was completed (true) or not (false)',
-                    'default': True
                 },
                 'notes': {
                     'type': 'string',
@@ -492,7 +478,6 @@ def get_behavior_tracking_schema() -> Dict[str, Any]:
                 'days': {
                     'type': 'integer',
                     'description': 'Number of days to look back (default: 7, max: 30)',
-                    'default': 7
                 },
                 'behavior_name': {
                     'type': 'string',
@@ -519,12 +504,10 @@ def get_behavior_plan_compliance_schema() -> Dict[str, Any]:
                     'type': 'string',
                     'enum': ['week', 'month'],
                     'description': 'Analysis period (default: week)',
-                    'default': 'week'
                 },
                 'include_recommendations': {
                     'type': 'boolean',
                     'description': 'Whether to include AI-generated recommendations for improvement',
-                    'default': True
                 }
             }
         }
