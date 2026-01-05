@@ -288,6 +288,36 @@ Modern chat interface for AI coaching with sidebar, messages, and modals.
     text-align: right;
 }
 
+/* Message Content Formatting */
+.message-bubble p {
+    margin: 0 0 0.75em 0;
+    line-height: 1.6;
+}
+
+.message-bubble p:last-child {
+    margin-bottom: 0;
+}
+
+.message-bubble strong {
+    font-weight: 600;
+    color: #212529;
+}
+
+.message-bubble em {
+    font-style: italic;
+}
+
+.message-bubble .list-item {
+    margin: 0.5em 0;
+    padding-left: 0.5em;
+    line-height: 1.6;
+}
+
+.message-bubble .list-item strong {
+    color: #667eea;
+    margin-right: 0.5em;
+}
+
 /* Record Preview Card in Chat */
 .record-preview-card {
     margin-top: 12px;

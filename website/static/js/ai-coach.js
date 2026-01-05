@@ -275,6 +275,45 @@ class AICoachChat {
     }
 
     /**
+     * Convert markdown-style text to HTML
+     */
+    formatMessageContent(text) {
+        // Escape HTML to prevent XSS
+        const escapeHtml = (str) => {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        };
+
+        // Escape the text first
+        let formatted = escapeHtml(text);
+
+        // Convert **bold** to <strong>
+        formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+        // Convert *italic* (but not ** bold which we already handled)
+        formatted = formatted.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
+
+        // Convert numbered lists (lines starting with "1. ", "2. ", etc.)
+        formatted = formatted.replace(/^(\d+)\.\s+(.+)$/gm, '<div class="list-item"><strong>$1.</strong> $2</div>');
+
+        // Convert double newlines to paragraph breaks
+        formatted = formatted.replace(/\n\n/g, '</p><p>');
+
+        // Convert single newlines to <br>
+        formatted = formatted.replace(/\n/g, '<br>');
+
+        // Wrap in paragraph tags
+        formatted = `<p>${formatted}</p>`;
+
+        // Clean up empty paragraphs
+        formatted = formatted.replace(/<p><\/p>/g, '');
+        formatted = formatted.replace(/<p>\s*<\/p>/g, '');
+
+        return formatted;
+    }
+
+    /**
      * Add message to UI
      */
     addMessageToUI(role, content) {
@@ -292,7 +331,13 @@ class AICoachChat {
 
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble';
-        bubble.textContent = content;
+
+        // Format markdown-style content to HTML for assistant messages
+        if (role === 'assistant') {
+            bubble.innerHTML = this.formatMessageContent(content);
+        } else {
+            bubble.textContent = content;
+        }
 
         const time = document.createElement('div');
         time.className = 'message-time';
