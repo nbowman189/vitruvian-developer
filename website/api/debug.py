@@ -205,3 +205,79 @@ def test_gemini_chat_with_functions():
             'error': str(e),
             'traceback': traceback.format_exc()
         }, 500
+
+
+@debug_api_bp.route('/check-health-records', methods=['GET'])
+@csrf.exempt
+def check_health_records():
+    """Debug endpoint to check recent health metric records."""
+    from flask_login import current_user
+    from ..models.health import HealthMetric
+    from datetime import datetime, timedelta
+
+    debug_info = {
+        'user_authenticated': current_user.is_authenticated
+    }
+
+    if not current_user.is_authenticated:
+        return {
+            'success': False,
+            'debug_info': debug_info,
+            'error': 'User not authenticated'
+        }, 401
+
+    try:
+        debug_info['user_id'] = current_user.id
+        debug_info['username'] = current_user.username
+
+        # Get all health metrics for user
+        all_metrics = HealthMetric.query.filter_by(user_id=current_user.id).all()
+        debug_info['total_health_metrics'] = len(all_metrics)
+
+        # Get recent metrics (last 30 days)
+        thirty_days_ago = datetime.utcnow().date() - timedelta(days=30)
+        recent_metrics = HealthMetric.query.filter(
+            HealthMetric.user_id == current_user.id,
+            HealthMetric.recorded_date >= thirty_days_ago
+        ).order_by(HealthMetric.recorded_date.desc()).all()
+
+        debug_info['recent_health_metrics_count'] = len(recent_metrics)
+        debug_info['recent_metrics'] = [
+            {
+                'id': m.id,
+                'recorded_date': m.recorded_date.isoformat(),
+                'weight_lbs': m.weight_lbs,
+                'body_fat_percentage': m.body_fat_percentage,
+                'notes': m.notes
+            }
+            for m in recent_metrics[:10]  # Show last 10
+        ]
+
+        # Get latest metric
+        latest = HealthMetric.query.filter_by(user_id=current_user.id).order_by(
+            HealthMetric.recorded_date.desc()
+        ).first()
+
+        if latest:
+            debug_info['latest_metric'] = {
+                'id': latest.id,
+                'recorded_date': latest.recorded_date.isoformat(),
+                'weight_lbs': latest.weight_lbs,
+                'body_fat_percentage': latest.body_fat_percentage,
+                'created_at': latest.created_at.isoformat() if latest.created_at else None
+            }
+        else:
+            debug_info['latest_metric'] = None
+
+        return {
+            'success': True,
+            'debug_info': debug_info
+        }, 200
+
+    except Exception as e:
+        return {
+            'success': False,
+            'debug_info': debug_info,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }, 500
