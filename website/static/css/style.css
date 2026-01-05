@@ -6105,6 +6105,31 @@ button:focus {
     }
 }
 
+/* ==================== AI COACH QUOTA COUNTDOWN ==================== */
+
+.quota-countdown-message {
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.quota-countdown-message .alert {
+    text-align: center;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.quota-countdown-message i {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.countdown-timer {
+    font-family: 'Courier New', monospace;
+    color: #856404;
+    margin-top: 10px;
+}
+
 /* REDUCED MOTION PREFERENCES */
 @media (prefers-reduced-motion: reduce) {
     * {

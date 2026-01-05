@@ -232,6 +232,19 @@ class AICoachChat {
             this.removeTypingIndicator(typingId);
 
             if (!data.success) {
+                // Check for quota exhausted error
+                if (data.errors && data.errors[0]?.type === 'quota_exhausted') {
+                    const secondsUntilReset = data.errors[0].seconds_until_reset;
+
+                    if (secondsUntilReset) {
+                        // Show countdown message with auto-refresh
+                        this.showQuotaCountdown(data.message, secondsUntilReset);
+                    } else {
+                        this.showError(data.message);
+                    }
+                    return;
+                }
+
                 throw new Error(data.message || 'Failed to send message');
             }
 
@@ -766,6 +779,56 @@ class AICoachChat {
     showError(message) {
         // Use Bootstrap toast or alert
         alert(`Error: ${message}`);
+    }
+
+    showQuotaCountdown(message, totalSeconds) {
+        const messagesContainer = document.getElementById('chat-messages');
+
+        // Create countdown message element
+        const countdownDiv = document.createElement('div');
+        countdownDiv.className = 'quota-countdown-message';
+        countdownDiv.innerHTML = `
+            <div class="alert alert-warning">
+                <i class="bi bi-clock-history"></i>
+                <p>${this.escapeHtml(message)}</p>
+                <p class="countdown-timer" style="font-size: 1.2rem; font-weight: bold; margin-top: 10px;">
+                    <span id="countdown-value"></span>
+                </p>
+            </div>
+        `;
+
+        messagesContainer.appendChild(countdownDiv);
+
+        // Scroll to bottom
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        // Update countdown every second
+        const countdownElement = document.getElementById('countdown-value');
+        let remaining = totalSeconds;
+
+        const updateCountdown = () => {
+            if (remaining <= 0) {
+                countdownElement.textContent = "Quota should be reset now. You can try again!";
+                countdownElement.style.color = "#28a745";  // Green
+                return;
+            }
+
+            const hours = Math.floor(remaining / 3600);
+            const minutes = Math.floor((remaining % 3600) / 60);
+            const seconds = remaining % 60;
+
+            let parts = [];
+            if (hours > 0) parts.push(`${hours}h`);
+            if (minutes > 0) parts.push(`${minutes}m`);
+            if (seconds > 0 || parts.length === 0) parts.push(`${seconds}s`);
+
+            countdownElement.textContent = `Resets in: ${parts.join(' ')}`;
+
+            remaining--;
+            setTimeout(updateCountdown, 1000);
+        };
+
+        updateCountdown();
     }
 
     showSuccess(message) {
