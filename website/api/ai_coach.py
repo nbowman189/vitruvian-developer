@@ -453,7 +453,8 @@ def save_record():
             return error_response(str(e), status_code=400)
         except Exception as e:
             logger.error(f"Error saving record: {e}", exc_info=True)
-            return error_response('Failed to save record', status_code=500)
+            # Return actual error message for debugging
+            return error_response(f'Failed to save record: {str(e)}', status_code=500)
 
         # Increment records_created counter
         conversation.increment_records_created()
@@ -464,7 +465,8 @@ def save_record():
         except Exception as e:
             db.session.rollback()
             logger.error(f"Failed to commit record: {e}", exc_info=True)
-            return error_response('Failed to save record', status_code=500)
+            # Return actual error message for debugging
+            return error_response(f'Failed to commit record: {str(e)}', status_code=500)
 
         return success_response(
             {
