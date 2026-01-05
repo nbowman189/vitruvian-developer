@@ -303,9 +303,21 @@ class GeminiService:
         }
 
     def _build_messages(self, history: List[Dict], user_message: str) -> List[Dict]:
-        """Build message list with system prompt."""
+        """Build message list with system prompt and current date context."""
+        from datetime import datetime
+
+        # Inject current date into system prompt
+        current_date = datetime.now().strftime('%Y-%m-%d')
+        day_of_week = datetime.now().strftime('%A')
+
+        contextualized_prompt = f"""CURRENT DATE: {current_date} ({day_of_week})
+
+{self.system_prompt}
+
+IMPORTANT: When users say "today", use the date {current_date}. When creating records, ALWAYS include the appropriate date field (recorded_date, meal_date, session_date, etc.) with the correct date value in YYYY-MM-DD format."""
+
         messages = [
-            {'role': 'user', 'parts': [self.system_prompt]},
+            {'role': 'user', 'parts': [contextualized_prompt]},
             {'role': 'model', 'parts': ["I understand. I am The Transformative Trainer, ready to help you on your health and fitness journey with tough love, empathy, and structured tracking tools. Let's get started!"]}
         ]
 
