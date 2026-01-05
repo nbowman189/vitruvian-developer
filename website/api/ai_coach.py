@@ -818,7 +818,7 @@ def query_user_data():
 def _query_health_metrics(user_id: int, params: dict) -> tuple:
     """Query recent health metrics."""
     from ..models.health import HealthMetric
-    from datetime import timedelta
+    from datetime import date, timedelta
 
     # Get parameters
     days = min(params.get('days', 7), 90)  # Max 90 days
@@ -893,7 +893,7 @@ def _query_health_metrics(user_id: int, params: dict) -> tuple:
 def _query_workout_history(user_id: int, params: dict) -> tuple:
     """Query recent workout sessions."""
     from ..models.workout import WorkoutSession, SessionType
-    from datetime import timedelta
+    from datetime import date, timedelta
 
     # Get parameters
     days = min(params.get('days', 7), 30)  # Max 30 days
@@ -955,7 +955,7 @@ def _query_workout_history(user_id: int, params: dict) -> tuple:
 def _query_nutrition_summary(user_id: int, params: dict) -> tuple:
     """Query nutrition data and adherence."""
     from ..models.nutrition import MealLog
-    from datetime import timedelta
+    from datetime import date, timedelta
 
     # Get parameters
     days = min(params.get('days', 7), 30)  # Max 30 days
@@ -1120,7 +1120,7 @@ def _query_progress_summary(user_id: int, params: dict) -> tuple:
 def _query_behavior_tracking(user_id: int, params: dict) -> tuple:
     """Query behavior tracking data including completion history and streaks."""
     from ..models.behavior import BehaviorDefinition, BehaviorLog
-    from datetime import timedelta
+    from datetime import date, timedelta
 
     # Get parameters
     days = min(params.get('days', 7), 30)  # Max 30 days
@@ -1220,7 +1220,7 @@ def _query_behavior_tracking(user_id: int, params: dict) -> tuple:
 def _query_behavior_compliance(user_id: int, params: dict) -> tuple:
     """Analyze behavior plan compliance by comparing actual vs. target frequency."""
     from ..models.behavior import BehaviorDefinition, BehaviorLog
-    from datetime import timedelta
+    from datetime import date, timedelta
 
     # Get parameters
     period = params.get('period', 'week')
