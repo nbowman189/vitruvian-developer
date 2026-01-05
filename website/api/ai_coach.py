@@ -131,6 +131,16 @@ def send_message():
             )
         except Exception as e:
             logger.error(f"Gemini API error: {e}", exc_info=True)
+
+            # Check for quota exceeded error
+            error_str = str(e).lower()
+            if '429' in error_str or 'quota' in error_str or 'resourceexhausted' in str(type(e).__name__).lower():
+                return error_response(
+                    'AI coach quota limit reached. The service has exceeded its free tier quota. '
+                    'Please try again later when the quota resets.',
+                    status_code=429
+                )
+
             return error_response(
                 'Failed to get response from AI coach. Please try again.',
                 status_code=500
