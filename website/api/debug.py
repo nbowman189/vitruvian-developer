@@ -139,3 +139,69 @@ def test_gemini_chat():
             'error': str(e),
             'traceback': traceback.format_exc()
         }, 500
+
+
+@debug_api_bp.route('/gemini-chat-with-functions', methods=['GET'])
+@csrf.exempt
+def test_gemini_chat_with_functions():
+    """Debug endpoint to test chat() with function declarations."""
+    debug_info = {}
+
+    try:
+        from ..services.gemini_service import GeminiService
+        from ..utils.ai_coach_tools import get_all_function_declarations
+
+        # Try to instantiate
+        try:
+            service = GeminiService()
+            debug_info['instantiation_success'] = True
+        except Exception as e:
+            return {
+                'success': False,
+                'error': 'Failed to instantiate GeminiService',
+                'details': str(e),
+                'traceback': traceback.format_exc()
+            }, 500
+
+        # Get function declarations
+        try:
+            function_decls = get_all_function_declarations()
+            debug_info['function_declarations_count'] = len(function_decls) if function_decls else 0
+            debug_info['function_declarations_loaded'] = True
+        except Exception as e:
+            debug_info['function_declarations_loaded'] = False
+            debug_info['function_declarations_error'] = str(e)
+            debug_info['function_declarations_traceback'] = traceback.format_exc()
+            function_decls = None
+
+        # Try to call chat() with function declarations
+        try:
+            response, function_call = service.chat(
+                user_message="I want to log my weight today at 175 lbs",
+                conversation_history=[],
+                function_declarations=function_decls,
+                max_context_messages=10
+            )
+
+            debug_info['chat_success'] = True
+            debug_info['response_length'] = len(response) if response else 0
+            debug_info['response_preview'] = response[:100] if response else None
+            debug_info['function_call'] = function_call
+
+        except Exception as e:
+            debug_info['chat_success'] = False
+            debug_info['chat_error_type'] = type(e).__name__
+            debug_info['chat_error_message'] = str(e)
+            debug_info['chat_traceback'] = traceback.format_exc()
+
+        return {
+            'success': True,
+            'debug_info': debug_info
+        }, 200
+
+    except Exception as e:
+        return {
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }, 500
