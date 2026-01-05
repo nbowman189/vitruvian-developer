@@ -372,6 +372,12 @@ class AICoachChat {
 
         if (!lastMessageContent) return;
 
+        // Handle batch records specially
+        if (functionCall.name === 'create_batch_records') {
+            this.handleBatchRecords(functionCall.args, lastMessageContent);
+            return;
+        }
+
         // Create record preview card
         const previewCard = document.createElement('div');
         previewCard.className = 'record-preview-card';
@@ -396,6 +402,56 @@ class AICoachChat {
         // Add click handler
         previewCard.querySelector('.review-record-btn').addEventListener('click', () => {
             this.showRecordModal(functionCall.name, functionCall.args);
+        });
+
+        this.scrollToBottom();
+    }
+
+    /**
+     * Handle batch records display
+     */
+    handleBatchRecords(args, containerElement) {
+        const records = args.records || [];
+
+        if (records.length === 0) {
+            return;
+        }
+
+        // Create batch preview card
+        const batchCard = document.createElement('div');
+        batchCard.className = 'record-preview-card batch-records';
+
+        let recordPreviews = records.map((record, idx) => {
+            const recordType = this.getFriendlyRecordType(`create_${record.record_type}`);
+            const fields = this.formatRecordFields(`create_${record.record_type}`, record.data);
+
+            return `
+                <div class="batch-record-item">
+                    <h5>${idx + 1}. ${recordType}</h5>
+                    <div class="record-preview-fields">
+                        ${fields}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        batchCard.innerHTML = `
+            <h4><i class="bi bi-stack"></i> Multiple Records (${records.length})</h4>
+            <div class="batch-records-list">
+                ${recordPreviews}
+            </div>
+            <div class="record-preview-actions">
+                <button class="btn btn-primary btn-sm review-record-btn">
+                    <i class="bi bi-pencil"></i> Review & Save All
+                </button>
+            </div>
+        `;
+
+        containerElement.appendChild(batchCard);
+
+        // Add click handler
+        batchCard.querySelector('.review-record-btn').addEventListener('click', () => {
+            this.showRecordModal('create_batch_records', args);
         });
 
         this.scrollToBottom();
@@ -445,6 +501,10 @@ class AICoachChat {
     generateRecordForm(functionName, data) {
         let formHtml = '';
 
+        if (functionName === 'create_batch_records') {
+            return this.generateBatchRecordsForm(data);
+        }
+
         switch (functionName) {
             case 'create_health_metric':
                 formHtml = this.generateHealthMetricForm(data);
@@ -461,6 +521,69 @@ class AICoachChat {
         }
 
         return formHtml;
+    }
+
+    /**
+     * Generate batch records form with tabs
+     */
+    generateBatchRecordsForm(data) {
+        const records = data.records || [];
+
+        if (records.length === 0) {
+            return '<p>No records to display.</p>';
+        }
+
+        // Create tab navigation
+        let tabNav = '<ul class="nav nav-tabs mb-3" role="tablist">';
+        let tabContent = '<div class="tab-content">';
+
+        records.forEach((record, idx) => {
+            const recordType = this.getFriendlyRecordType(`create_${record.record_type}`);
+            const isActive = idx === 0 ? 'active' : '';
+
+            // Tab button
+            tabNav += `
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link ${isActive}" id="record-tab-${idx}"
+                            data-bs-toggle="tab" data-bs-target="#record-pane-${idx}"
+                            type="button" role="tab">
+                        ${idx + 1}. ${recordType}
+                    </button>
+                </li>
+            `;
+
+            // Tab content
+            let recordForm = '';
+            switch (record.record_type) {
+                case 'health_metric':
+                    recordForm = this.generateHealthMetricForm(record.data);
+                    break;
+                case 'meal_log':
+                    recordForm = this.generateMealLogForm(record.data);
+                    break;
+                case 'workout':
+                    recordForm = this.generateWorkoutForm(record.data);
+                    break;
+                case 'coaching_session':
+                    recordForm = this.generateCoachingSessionForm(record.data);
+                    break;
+                default:
+                    recordForm = '<p>Unknown record type</p>';
+            }
+
+            tabContent += `
+                <div class="tab-pane fade ${isActive ? 'show active' : ''}"
+                     id="record-pane-${idx}" role="tabpanel"
+                     data-record-type="${record.record_type}">
+                    ${recordForm}
+                </div>
+            `;
+        });
+
+        tabNav += '</ul>';
+        tabContent += '</div>';
+
+        return tabNav + tabContent;
     }
 
     /**
@@ -693,25 +816,69 @@ class AICoachChat {
 
         const { functionName, recordData } = this.pendingRecordData;
         const modal = bootstrap.Modal.getInstance(document.getElementById('record-preview-modal'));
-
-        // Collect form data
-        const formData = {};
         const modalBody = document.getElementById('record-preview-body');
-        modalBody.querySelectorAll('input, select, textarea').forEach(input => {
-            if (input.value) {
-                formData[input.name] = input.type === 'number' ?
-                    parseFloat(input.value) : input.value;
+
+        let finalData = {};
+
+        // Handle batch records differently
+        if (functionName === 'create_batch_records') {
+            const records = [];
+
+            // Loop through all tab panes
+            modalBody.querySelectorAll('.tab-pane').forEach((pane, idx) => {
+                const recordType = pane.getAttribute('data-record-type');
+                const data = {};
+
+                // Collect form inputs from this specific tab
+                pane.querySelectorAll('input, select, textarea').forEach(input => {
+                    if (input.value) {
+                        data[input.name] = input.type === 'number' ?
+                            parseFloat(input.value) : input.value;
+                    }
+                });
+
+                // Include special fields from original recordData
+                const originalRecord = recordData.records[idx];
+                if (originalRecord) {
+                    // Include exercises if workout
+                    if (recordType === 'workout' && originalRecord.data.exercises) {
+                        data.exercises = originalRecord.data.exercises;
+                    }
+
+                    // Include action items if coaching
+                    if (recordType === 'coaching_session' && originalRecord.data.action_items) {
+                        data.action_items = originalRecord.data.action_items;
+                    }
+                }
+
+                records.push({
+                    record_type: recordType,
+                    data: data
+                });
+            });
+
+            finalData = { records: records };
+        } else {
+            // Single record - existing logic
+            const formData = {};
+            modalBody.querySelectorAll('input, select, textarea').forEach(input => {
+                if (input.value) {
+                    formData[input.name] = input.type === 'number' ?
+                        parseFloat(input.value) : input.value;
+                }
+            });
+
+            // Include exercises if workout
+            if (functionName === 'create_workout' && recordData.exercises) {
+                formData.exercises = recordData.exercises;
             }
-        });
 
-        // Include exercises if workout
-        if (functionName === 'create_workout' && recordData.exercises) {
-            formData.exercises = recordData.exercises;
-        }
+            // Include action items if coaching
+            if (functionName === 'create_coaching_session' && recordData.action_items) {
+                formData.action_items = recordData.action_items;
+            }
 
-        // Include action items if coaching
-        if (functionName === 'create_coaching_session' && recordData.action_items) {
-            formData.action_items = recordData.action_items;
+            finalData = formData;
         }
 
         try {
@@ -726,7 +893,7 @@ class AICoachChat {
                 body: JSON.stringify({
                     conversation_id: this.currentConversationId,
                     function_name: functionName,
-                    record_data: formData
+                    record_data: finalData
                 })
             });
 
@@ -740,7 +907,12 @@ class AICoachChat {
             modal.hide();
 
             // Show success message
-            this.showSuccess('Record saved successfully!');
+            const recordCount = functionName === 'create_batch_records' ?
+                finalData.records.length : 1;
+            const message = recordCount > 1 ?
+                `${recordCount} records saved successfully!` :
+                'Record saved successfully!';
+            this.showSuccess(message);
 
             // Reload conversation to update records count
             this.loadConversations();

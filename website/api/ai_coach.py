@@ -434,6 +434,7 @@ def save_record():
 
         # Route to appropriate handler based on function name
         handler_map = {
+            'create_batch_records': _save_batch_records,  # NEW: Batch creation
             'create_health_metric': _save_health_metric,
             'create_meal_log': _save_meal_log,
             'create_workout': _save_workout,
@@ -743,6 +744,93 @@ def _save_behavior_log(user_id: int, data: dict) -> tuple:
         )
         db.session.add(log)
         return log, 'behavior_log'
+
+
+def _save_batch_records(user_id: int, data: dict) -> tuple:
+    """
+    Save multiple records at once (batch operation).
+
+    Args:
+        user_id: User ID
+        data: Dictionary containing 'records' array with record_type and data for each
+
+    Returns:
+        Tuple of (list of records, 'batch_records')
+    """
+    records_data = data.get('records', [])
+    if not records_data:
+        raise ValueError('records array is required and cannot be empty')
+
+    # Map record types to handlers
+    handler_map = {
+        'health_metric': _save_health_metric,
+        'meal_log': _save_meal_log,
+        'workout': _save_workout,
+        'coaching_session': _save_coaching_session,
+        'behavior_definition': _save_behavior_definition,
+        'behavior_log': _save_behavior_log
+    }
+
+    saved_records = []
+    errors = []
+
+    for idx, record_spec in enumerate(records_data):
+        record_type = record_spec.get('record_type')
+        record_data = record_spec.get('data', {})
+
+        if not record_type:
+            errors.append(f"Record {idx + 1}: record_type is required")
+            continue
+
+        handler = handler_map.get(record_type)
+        if not handler:
+            errors.append(f"Record {idx + 1}: Unknown record_type '{record_type}'")
+            continue
+
+        try:
+            record, rec_type = handler(user_id, record_data)
+            saved_records.append({
+                'record': record,
+                'record_type': rec_type,
+                'index': idx
+            })
+        except ValueError as e:
+            errors.append(f"Record {idx + 1} ({record_type}): {str(e)}")
+        except Exception as e:
+            logger.error(f"Error saving batch record {idx}: {e}", exc_info=True)
+            errors.append(f"Record {idx + 1} ({record_type}): Failed to save")
+
+    if errors and not saved_records:
+        # All records failed
+        raise ValueError(f"All records failed: {'; '.join(errors)}")
+
+    # Return saved records (even if some failed)
+    # The batch record wrapper will contain metadata about successes and failures
+    class BatchRecordWrapper:
+        """Wrapper to hold multiple records and metadata."""
+        def __init__(self, records, errors):
+            self.records = records
+            self.errors = errors
+            self.id = None  # Batch doesn't have a single ID
+
+        def to_dict(self):
+            return {
+                'total_records': len(self.records) + len(self.errors),
+                'successful': len(self.records),
+                'failed': len(self.errors),
+                'records': [
+                    {
+                        'record_type': r['record_type'],
+                        'record_id': r['record'].id,
+                        'record': r['record'].to_dict(),
+                        'index': r['index']
+                    }
+                    for r in self.records
+                ],
+                'errors': self.errors
+            }
+
+    return BatchRecordWrapper(saved_records, errors), 'batch_records'
 
 
 # ====================================================================================

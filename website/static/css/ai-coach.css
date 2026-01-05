@@ -362,6 +362,45 @@ Modern chat interface for AI coaching with sidebar, messages, and modals.
     margin-top: 12px;
 }
 
+/* Batch Records Styles */
+.batch-records {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 2px solid #667eea;
+}
+
+.batch-records h4 {
+    color: #667eea;
+    font-weight: 600;
+}
+
+.batch-records-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin: 16px 0;
+}
+
+.batch-record-item {
+    background: #fff;
+    padding: 14px;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.batch-record-item h5 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #212529;
+    margin: 0 0 10px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.batch-record-item .record-preview-fields {
+    margin-bottom: 0;
+}
+
 /* ======================
    Chat Input
    ====================== */

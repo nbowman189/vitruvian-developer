@@ -514,6 +514,44 @@ def get_behavior_plan_compliance_schema() -> Dict[str, Any]:
     }
 
 
+def create_batch_records_schema() -> Dict[str, Any]:
+    """
+    Function schema for creating multiple records at once.
+
+    Allows the AI to create workout, meal, health metric, and other records
+    in a single function call when the user mentions multiple items.
+    """
+    return {
+        'name': 'create_batch_records',
+        'description': 'Create multiple records at once (workouts, meals, health metrics, etc.) in a single operation. Use this when the user mentions multiple things to log in one message, such as "I did a workout and ate breakfast" or "I weighed myself and logged my meals today".',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'records': {
+                    'type': 'array',
+                    'description': 'Array of records to create. Each record specifies its type and data.',
+                    'items': {
+                        'type': 'object',
+                        'properties': {
+                            'record_type': {
+                                'type': 'string',
+                                'enum': ['health_metric', 'meal_log', 'workout', 'coaching_session', 'behavior_definition', 'behavior_log'],
+                                'description': 'Type of record to create'
+                            },
+                            'data': {
+                                'type': 'object',
+                                'description': 'Record data. Structure should match the schema for the specified record_type. For health_metric: include recorded_date, weight_lbs, body_fat_percentage, etc. For meal_log: include meal_date, meal_type, calories, protein_g, etc. For workout: include session_date, session_type, duration_minutes, exercises array. For coaching_session: include session_date, discussion_notes, coach_feedback. For behavior_definition: include name, category, description. For behavior_log: include tracked_date, behavior_name, completed.'
+                            }
+                        },
+                        'required': ['record_type', 'data']
+                    }
+                }
+            },
+            'required': ['records']
+        }
+    }
+
+
 def get_all_function_declarations() -> List[Dict[str, Any]]:
     """
     Get all function declarations for Gemini function calling.
@@ -523,6 +561,7 @@ def get_all_function_declarations() -> List[Dict[str, Any]]:
     """
     return [
         # WRITE operations (create records)
+        create_batch_records_schema(),  # NEW: Batch creation (highest priority)
         create_health_metric_schema(),
         create_meal_log_schema(),
         create_workout_schema(),
