@@ -82,9 +82,16 @@ class GeminiService:
         Raises:
             ValueError: If API key is not provided or found in environment
         """
-        self.api_key = api_key or os.environ.get('GEMINI_API_KEY')
+        # Debug logging
+        logger.info(f"GeminiService.__init__ called with api_key parameter: {bool(api_key)}")
+        env_key = os.environ.get('GEMINI_API_KEY')
+        logger.info(f"GEMINI_API_KEY from environment: {bool(env_key)}")
+
+        self.api_key = api_key or env_key
 
         if not self.api_key:
+            logger.error("GEMINI_API_KEY not found in parameters or environment")
+            logger.error(f"Environment keys available: {', '.join([k for k in os.environ.keys() if 'GEMINI' in k or 'API' in k])}")
             raise ValueError(
                 "GEMINI_API_KEY not found. Please set it in your environment or pass it to GeminiService."
             )
