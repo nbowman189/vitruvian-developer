@@ -6,7 +6,7 @@ Handles all authentication-related routes including login, logout, registration,
 password reset, and profile management.
 """
 
-from flask import render_template, redirect, url_for, flash, request, current_app
+from flask import render_template, redirect, url_for, flash, request, current_app, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from datetime import datetime, timezone
 from urllib.parse import urlparse
@@ -21,7 +21,7 @@ from .forms import (
 )
 from ..models import db
 from ..models.user import User, UserRole
-from .. import limiter
+from .. import limiter, csrf
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
@@ -313,3 +313,29 @@ def delete_account():
         current_app.logger.error(f'Error deleting account: {e}')
         flash('An error occurred while deleting your account.', 'danger')
         return redirect(url_for('auth.profile'))
+
+
+@auth_bp.route('/status', methods=['GET'])
+@csrf.exempt
+def auth_status():
+    """
+    Check authentication status (JSON endpoint for AJAX calls).
+
+    Returns:
+        JSON response with authentication status and user info
+    """
+    if current_user.is_authenticated:
+        return jsonify({
+            'authenticated': True,
+            'user': {
+                'id': current_user.id,
+                'username': current_user.username,
+                'email': current_user.email,
+                'role': current_user.role
+            }
+        }), 200
+    else:
+        return jsonify({
+            'authenticated': False,
+            'user': None
+        }), 200

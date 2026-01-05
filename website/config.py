@@ -170,6 +170,25 @@ class BaseConfig:
     LOG_MAX_BYTES = int(os.environ.get('LOG_MAX_BYTES', 10485760))  # 10MB
     LOG_BACKUP_COUNT = int(os.environ.get('LOG_BACKUP_COUNT', 5))
 
+    # ==================== AI/ML Settings ====================
+    # Gemini API Configuration
+    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+
+    # Model fallback chain (priority order: high → low)
+    # Can be overridden via environment variable as comma-separated list
+    GEMINI_MODEL_FALLBACK_CHAIN = os.environ.get(
+        'GEMINI_MODEL_FALLBACK_CHAIN',
+        'gemini-2.0-flash-exp,gemini-1.5-flash,gemini-1.5-flash-8b'
+    ).split(',')
+
+    # Generation config (shared across all models)
+    GEMINI_GENERATION_CONFIG = {
+        'temperature': float(os.environ.get('GEMINI_TEMPERATURE', '0.7')),
+        'top_p': float(os.environ.get('GEMINI_TOP_P', '0.95')),
+        'top_k': int(os.environ.get('GEMINI_TOP_K', '40')),
+        'max_output_tokens': int(os.environ.get('GEMINI_MAX_OUTPUT_TOKENS', '2048')),
+    }
+
     # ==================== Email Configuration (Future) ====================
     # Commented out for future implementation
     # MAIL_SERVER = os.environ.get('MAIL_SERVER')
@@ -208,13 +227,15 @@ class ProductionConfig(BaseConfig):
     TESTING = False
 
     # Production security settings (allow environment override for remote deployments)
-    SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'true').lower() == 'true'
-    REMEMBER_COOKIE_SECURE = os.environ.get('REMEMBER_COOKIE_SECURE', 'true').lower() == 'true'
-    PREFERRED_URL_SCHEME = 'https'
+    # Note: SESSION_COOKIE_SECURE set to False for Cloudflare Flexible SSL (HTTP origin)
+    SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'false').lower() == 'true'
+    REMEMBER_COOKIE_SECURE = os.environ.get('REMEMBER_COOKIE_SECURE', 'false').lower() == 'true'
+    # PREFERRED_URL_SCHEME removed - Flask will generate relative URLs
+    # (Cloudflare handles HTTPS, origin is HTTP-only)
 
-    # Stricter session configuration (allow environment override)
-    SESSION_COOKIE_SAMESITE = os.environ.get('SESSION_COOKIE_SAMESITE', 'Strict')
-    REMEMBER_COOKIE_SAMESITE = os.environ.get('REMEMBER_COOKIE_SAMESITE', 'Strict')
+    # Session configuration (Lax allows same-site AJAX requests)
+    SESSION_COOKIE_SAMESITE = os.environ.get('SESSION_COOKIE_SAMESITE', 'Lax')
+    REMEMBER_COOKIE_SAMESITE = os.environ.get('REMEMBER_COOKIE_SAMESITE', 'Lax')
 
     # Production caching (consider Redis for multi-server setups)
     CACHE_TYPE = os.environ.get('CACHE_TYPE', 'SimpleCache')

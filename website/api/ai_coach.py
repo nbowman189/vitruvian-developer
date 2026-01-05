@@ -22,7 +22,7 @@ from ..models.health import HealthMetric
 from ..models.nutrition import MealLog, MealType
 from ..models.workout import WorkoutSession, ExerciseLog, SessionType
 from ..models.coaching import CoachingSession
-from ..services.gemini_service import GeminiService
+from ..services.gemini_service import GeminiService, QuotaExhaustedError
 from ..utils.ai_coach_tools import get_all_function_declarations
 from . import (
     success_response,
@@ -129,18 +129,45 @@ def send_message():
                 function_declarations=get_all_function_declarations(),
                 max_context_messages=10
             )
-        except Exception as e:
-            logger.error(f"Gemini API error: {e}", exc_info=True)
+        except QuotaExhaustedError as e:
+            # All models quota exhausted
+            logger.warning(f"All AI models quota exhausted: {e}")
 
-            # Check for quota exceeded error
-            error_str = str(e).lower()
-            if '429' in error_str or 'quota' in error_str or 'resourceexhausted' in str(type(e).__name__).lower():
-                return error_response(
-                    'AI coach quota limit reached. The service has exceeded its free tier quota. '
-                    'Please try again later when the quota resets.',
-                    status_code=429
+            # Build user-friendly error message with countdown
+            if e.seconds_until_reset:
+                minutes = e.seconds_until_reset // 60
+                hours = minutes // 60
+
+                if hours > 0:
+                    time_str = f"{hours} hour{'s' if hours != 1 else ''}"
+                elif minutes > 0:
+                    time_str = f"{minutes} minute{'s' if minutes != 1 else ''}"
+                else:
+                    time_str = f"{e.seconds_until_reset} second{'s' if e.seconds_until_reset != 1 else ''}"
+
+                message = (
+                    f"AI coach temporarily unavailable. All model quotas have been exceeded. "
+                    f"Service will reset in approximately {time_str}. Please try again later."
                 )
+            else:
+                message = "AI coach quota limit reached. Please try again later."
 
+            return error_response(message, status_code=429, errors=[{
+                'type': 'quota_exhausted',
+                'seconds_until_reset': e.seconds_until_reset
+            }])
+
+        except ValueError as e:
+            # API key or configuration error
+            logger.error(f"Gemini service configuration error: {e}")
+            return error_response(
+                'AI coach is not configured properly. Please contact administrator.',
+                status_code=503
+            )
+
+        except Exception as e:
+            # Unexpected error
+            logger.error(f"Unexpected Gemini API error: {e}", exc_info=True)
             return error_response(
                 'Failed to get response from AI coach. Please try again.',
                 status_code=500

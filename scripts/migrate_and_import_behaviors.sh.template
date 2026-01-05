@@ -24,7 +24,7 @@ REMOTE_HOST="your-remote-host"
 REMOTE_PASSWORD="your-password"
 LOCAL_BEHAVIOR_FILE="/Users/nathanbowman/primary-assistant/Health_and_Fitness/data/behavior-tracker.md"
 REMOTE_TEMP_DIR="/tmp"
-REMOTE_APP_DIR="/home/your-username/primary-assistant"
+REMOTE_APP_DIR="/home/your-username/vitruvian-developer"
 
 echo -e "${GREEN}==================================================${NC}"
 echo -e "${GREEN}Behavior Tracker Migration and Import${NC}"

@@ -7,12 +7,28 @@ Handles conversation management, function calling, and persona loading.
 """
 
 import os
+import re
 import logging
 from typing import List, Dict, Tuple, Optional, Any
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 
 logger = logging.getLogger(__name__)
+
+
+# Custom Exceptions
+class QuotaExhaustedError(Exception):
+    """
+    Raised when all model quotas are exhausted.
+
+    Attributes:
+        message: Error message
+        seconds_until_reset: Seconds until next quota reset (None if unknown)
+    """
+
+    def __init__(self, message: str, seconds_until_reset: Optional[int] = None):
+        super().__init__(message)
+        self.seconds_until_reset = seconds_until_reset
 
 
 # The Transformative Trainer Persona
@@ -50,7 +66,7 @@ class GeminiService:
 
     def __init__(self, api_key: Optional[str] = None):
         """
-        Initialize Gemini service with API key.
+        Initialize Gemini service with model fallback chain.
 
         Args:
             api_key: Google Gemini API key (defaults to GEMINI_API_KEY env var)
@@ -58,6 +74,9 @@ class GeminiService:
         Raises:
             ValueError: If API key is not provided or found in environment
         """
+        from flask import current_app
+        from .quota_manager import quota_manager
+
         self.api_key = api_key or os.environ.get('GEMINI_API_KEY')
 
         if not self.api_key:
@@ -68,26 +87,38 @@ class GeminiService:
         # Configure the Gemini API
         genai.configure(api_key=self.api_key)
 
-        # Initialize the model with safety settings
-        # Using gemini-2.5-flash instead of gemini-2.5-pro for higher free tier limits
-        self.model = genai.GenerativeModel(
-            model_name='gemini-2.5-flash',
-            generation_config={
+        # Load model fallback chain from config
+        try:
+            self.model_names = current_app.config.get('GEMINI_MODEL_FALLBACK_CHAIN', [
+                'gemini-2.0-flash-exp',
+                'gemini-1.5-flash',
+                'gemini-1.5-flash-8b'
+            ])
+
+            self.generation_config = current_app.config.get('GEMINI_GENERATION_CONFIG', {
                 'temperature': 0.7,
                 'top_p': 0.95,
                 'top_k': 40,
                 'max_output_tokens': 2048,
-            },
-            safety_settings={
-                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+            })
+        except RuntimeError:
+            # Working outside Flask application context (testing)
+            self.model_names = [
+                'gemini-2.0-flash-exp',
+                'gemini-1.5-flash',
+                'gemini-1.5-flash-8b'
+            ]
+            self.generation_config = {
+                'temperature': 0.7,
+                'top_p': 0.95,
+                'top_k': 40,
+                'max_output_tokens': 2048,
             }
-        )
 
+        self.quota_manager = quota_manager
         self.system_prompt = TRANSFORMATIVE_TRAINER_PERSONA
-        logger.info("GeminiService initialized successfully")
+
+        logger.info(f"GeminiService initialized with {len(self.model_names)} fallback models")
 
     def chat(
         self,
@@ -97,7 +128,10 @@ class GeminiService:
         max_context_messages: int = 10
     ) -> Tuple[str, Optional[Dict]]:
         """
-        Send a message to Gemini AI and get response.
+        Send message with automatic model fallback on quota errors.
+
+        Tries models in priority order. If quota exhausted, marks model
+        and retries with next model. Raises QuotaExhaustedError if all fail.
 
         Args:
             user_message: The user's message
@@ -111,89 +145,62 @@ class GeminiService:
             - function_call_data: Dict with function call details if AI wants to call a function, else None
 
         Raises:
-            Exception: If Gemini API call fails
+            QuotaExhaustedError: If all model quotas are exhausted
+            Exception: If Gemini API call fails with non-quota error
         """
-        try:
-            # Prune conversation history to last N messages
-            recent_history = conversation_history[-max_context_messages:] if conversation_history else []
+        # Build conversation context
+        recent_history = conversation_history[-max_context_messages:] if conversation_history else []
+        messages = self._build_messages(recent_history, user_message)
+        tools = [{'function_declarations': function_declarations}] if function_declarations else None
 
-            # Build the full conversation context
-            messages = []
+        # Try each model in fallback chain
+        for model_name in self.model_names:
+            if not self.quota_manager.is_quota_available(model_name):
+                logger.info(f"Skipping {model_name} - quota exhausted")
+                continue
 
-            # Add system prompt as first message
-            messages.append({
-                'role': 'user',
-                'parts': [self.system_prompt]
-            })
-            messages.append({
-                'role': 'model',
-                'parts': ["I understand. I am The Transformative Trainer, ready to help you on your health and fitness journey with tough love, empathy, and structured tracking tools. Let's get started!"]
-            })
+            try:
+                logger.info(f"Attempting with {model_name}")
 
-            # Add conversation history
-            for msg in recent_history:
-                role = 'model' if msg['role'] == 'assistant' else 'user'
-                messages.append({
-                    'role': role,
-                    'parts': [msg['content']]
-                })
-
-            # Add current user message
-            messages.append({
-                'role': 'user',
-                'parts': [user_message]
-            })
-
-            # Configure function calling if provided
-            tools = None
-            if function_declarations:
-                tools = [{'function_declarations': function_declarations}]
-
-            # Start chat session
-            chat = self.model.start_chat(history=messages[:-1])
-
-            # Send message with optional function calling
-            if tools:
-                response = chat.send_message(
-                    user_message,
-                    tools=tools
+                # Create model instance
+                model = genai.GenerativeModel(
+                    model_name=model_name,
+                    generation_config=self.generation_config,
+                    safety_settings=self._get_safety_settings()
                 )
-            else:
-                response = chat.send_message(user_message)
 
-            # Extract response
-            assistant_response = ""
-            function_call = None
+                # Start chat and send message
+                chat = model.start_chat(history=messages[:-1])
 
-            # Check if there's a function call
-            if response.candidates and len(response.candidates) > 0:
-                candidate = response.candidates[0]
+                if tools:
+                    response = chat.send_message(user_message, tools=tools)
+                else:
+                    response = chat.send_message(user_message)
 
-                if candidate.content.parts:
-                    for part in candidate.content.parts:
-                        # Check for text response
-                        if hasattr(part, 'text') and part.text:
-                            assistant_response += part.text
+                # Extract response
+                assistant_response, function_call = self._extract_response(response)
 
-                        # Check for function call
-                        if hasattr(part, 'function_call') and part.function_call:
-                            fc = part.function_call
-                            function_call = {
-                                'name': fc.name,
-                                'args': dict(fc.args) if fc.args else {}
-                            }
-                            logger.info(f"Function call detected: {fc.name}")
+                logger.info(f"Success with {model_name}")
+                return assistant_response, function_call
 
-            # If no text response but there's a function call, add a default message
-            if not assistant_response and function_call:
-                assistant_response = self._get_default_function_call_message(function_call['name'])
+            except Exception as e:
+                # Check if quota error
+                if self._is_quota_error(e):
+                    retry_delay = self._extract_retry_delay(e)
+                    logger.warning(f"{model_name} quota exhausted, retry in {retry_delay}s")
+                    self.quota_manager.mark_quota_exhausted(model_name, retry_delay)
+                    continue  # Try next model
 
-            logger.info(f"Gemini response received. Function call: {function_call is not None}")
-            return assistant_response, function_call
+                # Non-quota error - propagate
+                logger.error(f"Non-quota error with {model_name}: {e}", exc_info=True)
+                raise
 
-        except Exception as e:
-            logger.error(f"Gemini API error: {str(e)}", exc_info=True)
-            raise Exception(f"Failed to get response from AI coach: {str(e)}")
+        # All models exhausted
+        seconds_until_reset = self.quota_manager.get_seconds_until_reset()
+        raise QuotaExhaustedError(
+            "All AI models have reached their quota limits.",
+            seconds_until_reset=seconds_until_reset
+        )
 
     def _get_default_function_call_message(self, function_name: str) -> str:
         """
@@ -237,6 +244,76 @@ class GeminiService:
 
         return "\n".join(context_lines)
 
+    def _is_quota_error(self, exception: Exception) -> bool:
+        """Check if exception is a quota/rate limit error."""
+        error_str = str(exception).lower()
+        error_type = type(exception).__name__.lower()
+        return ('429' in error_str or 'quota' in error_str or
+                'resourceexhausted' in error_type or 'rate' in error_str)
+
+    def _extract_retry_delay(self, exception: Exception) -> int:
+        """
+        Extract retry_delay from quota error.
+
+        Returns:
+            Retry delay in seconds (default 3600 = 1 hour if not found)
+        """
+        error_str = str(exception)
+
+        # Look for "retry_delay { seconds: 51 }" pattern
+        match = re.search(r'retry_delay.*?seconds[:\s]+(\d+)', error_str)
+        if match:
+            return int(match.group(1))
+
+        # Default to 1 hour if not specified
+        logger.warning("Could not parse retry_delay, defaulting to 3600s")
+        return 3600
+
+    def _get_safety_settings(self) -> dict:
+        """Get safety settings."""
+        return {
+            HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+            HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+            HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+            HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        }
+
+    def _build_messages(self, history: List[Dict], user_message: str) -> List[Dict]:
+        """Build message list with system prompt."""
+        messages = [
+            {'role': 'user', 'parts': [self.system_prompt]},
+            {'role': 'model', 'parts': ["I understand. I am The Transformative Trainer, ready to help you on your health and fitness journey with tough love, empathy, and structured tracking tools. Let's get started!"]}
+        ]
+
+        for msg in history:
+            role = 'model' if msg['role'] == 'assistant' else 'user'
+            messages.append({'role': role, 'parts': [msg['content']]})
+
+        messages.append({'role': 'user', 'parts': [user_message]})
+        return messages
+
+    def _extract_response(self, response) -> Tuple[str, Optional[Dict]]:
+        """Extract text and function call from API response."""
+        assistant_response = ""
+        function_call = None
+
+        if response.candidates and len(response.candidates) > 0:
+            candidate = response.candidates[0]
+            if candidate.content.parts:
+                for part in candidate.content.parts:
+                    if hasattr(part, 'text') and part.text:
+                        assistant_response += part.text
+                    if hasattr(part, 'function_call') and part.function_call:
+                        fc = part.function_call
+                        function_call = {'name': fc.name, 'args': dict(fc.args) if fc.args else {}}
+                        logger.info(f"Function call detected: {fc.name}")
+
+        if not assistant_response and function_call:
+            assistant_response = self._get_default_function_call_message(function_call['name'])
+
+        logger.info(f"Gemini response received. Function call: {function_call is not None}")
+        return assistant_response, function_call
+
     @staticmethod
     def validate_api_key(api_key: str) -> bool:
         """
@@ -250,7 +327,8 @@ class GeminiService:
         """
         try:
             genai.configure(api_key=api_key)
-            model = genai.GenerativeModel('gemini-2.5-flash')
+            # Use first model from default fallback chain
+            model = genai.GenerativeModel('gemini-2.0-flash-exp')
             model.generate_content("Test")
             return True
         except Exception as e:

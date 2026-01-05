@@ -16,7 +16,7 @@ set REMOTE_HOST=your-remote-host
 set REMOTE_PASSWORD=your-password
 set LOCAL_BEHAVIOR_FILE=C:\Users\%USERNAME%\primary-assistant\Health_and_Fitness\data\behavior-tracker.md
 set REMOTE_TEMP_DIR=/tmp
-set REMOTE_APP_DIR=/home/your-username/primary-assistant
+set REMOTE_APP_DIR=/home/your-username/vitruvian-developer
 
 echo ==================================================
 echo Behavior Tracker Migration and Import
