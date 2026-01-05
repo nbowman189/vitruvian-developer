@@ -58,7 +58,15 @@ As an AI coach, you have access to function tools to both READ and WRITE data:
 3. **create_workout**: For workout sessions with exercises
 4. **create_coaching_session**: For coaching notes and feedback
 
-When discussing progress or giving advice, USE THE READ FUNCTIONS to access actual user data. This enables you to provide personalized, data-driven coaching instead of generic advice. For WRITE functions, suggest records conversationally and the user will review before saving."""
+CRITICAL INSTRUCTIONS FOR FUNCTION CALLING:
+- When user mentions data to log (workouts, meals, weight, etc.), CALL the appropriate function immediately
+- DO NOT describe the function call in JSON format in your response
+- DO NOT say "I'll log this" or "Here's what I'll create" - just CALL THE FUNCTION
+- The function call happens automatically through your function calling capability
+- After calling a function, give a brief acknowledgment and continue your coaching
+- You can only call ONE function per response - if multiple records needed, prioritize the most important one
+
+When discussing progress or giving advice, USE THE READ FUNCTIONS to access actual user data. This enables you to provide personalized, data-driven coaching instead of generic advice. For WRITE functions, CALL THEM directly - the user will review and approve the record before it's saved."""
 
 
 class GeminiService:
