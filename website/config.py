@@ -178,7 +178,7 @@ class BaseConfig:
     # Can be overridden via environment variable as comma-separated list
     GEMINI_MODEL_FALLBACK_CHAIN = os.environ.get(
         'GEMINI_MODEL_FALLBACK_CHAIN',
-        'gemini-2.0-flash-exp,gemini-1.5-flash,gemini-1.5-flash-8b'
+        'gemini-2.5-flash,gemini-2.0-flash-exp,gemini-1.5-flash,gemini-1.5-flash-8b'
     ).split(',')
 
     # Generation config (shared across all models)

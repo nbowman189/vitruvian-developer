@@ -103,6 +103,7 @@ class GeminiService:
         try:
             from flask import current_app
             self.model_names = current_app.config.get('GEMINI_MODEL_FALLBACK_CHAIN', [
+                'gemini-2.5-flash',
                 'gemini-2.0-flash-exp',
                 'gemini-1.5-flash',
                 'gemini-1.5-flash-8b'
@@ -117,6 +118,7 @@ class GeminiService:
         except RuntimeError:
             # Working outside Flask application context (testing)
             self.model_names = [
+                'gemini-2.5-flash',
                 'gemini-2.0-flash-exp',
                 'gemini-1.5-flash',
                 'gemini-1.5-flash-8b'
@@ -350,7 +352,7 @@ class GeminiService:
         try:
             genai.configure(api_key=api_key)
             # Use first model from default fallback chain
-            model = genai.GenerativeModel('gemini-2.0-flash-exp')
+            model = genai.GenerativeModel('gemini-2.5-flash')
             model.generate_content("Test")
             return True
         except Exception as e:
