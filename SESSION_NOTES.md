@@ -1,6 +1,245 @@
 # Session Notes
 
-## Latest Session - January 3, 2026: Behavior Tracker Deployment & Docker Volume Fix - COMPLETE ✅
+## Current Session - January 5, 2026: AI Coach Batch Records - PAUSED (API Quota Exhausted) ⏸️
+
+### Status: Implementation Complete, Testing Blocked by Cache Issue
+
+**Time Stopped**: ~4:10 PM PST
+**Reason**: Gemini API quota exhausted, user done for the day
+**Resume Point**: Cloudflare cache purge required to test batch records feature
+
+---
+
+### Work Completed Today ✅
+
+**AI Coach Batch Records Feature - FULLY IMPLEMENTED**
+
+Implemented complete batch record creation allowing AI to create multiple records (workout + meal + health metric, etc.) in a single function call instead of being limited to one record per response.
+
+#### Backend Implementation:
+- ✅ Added `create_batch_records_schema()` to `website/utils/ai_coach_tools.py` (placed first in function declarations)
+- ✅ Created `_save_batch_records()` handler in `website/api/ai_coach.py`
+- ✅ Added `BatchRecordWrapper` class for batch response handling
+- ✅ Supports partial success (some records can fail while others save)
+- ✅ Added to handler_map for routing
+
+#### Frontend Implementation:
+- ✅ Added `handleBatchRecords()` to display batch preview card with list of all records
+- ✅ Added `generateBatchRecordsForm()` for tabbed modal interface (Bootstrap tabs)
+- ✅ Updated `saveRecord()` to collect data from all tabs and submit batch
+- ✅ Updated `handleFunctionCall()` to detect and route batch records specially
+- ✅ Each record type gets its own tab for editing
+
+#### System Prompt Updates:
+- ✅ Updated `TRANSFORMATIVE_TRAINER_PERSONA` in `gemini_service.py`
+- ✅ Listed `create_batch_records` as #1 WRITE function (highest priority)
+- ✅ Added explicit instruction: "When user mentions MULTIPLE items to log, use create_batch_records"
+
+#### Styling:
+- ✅ Added CSS: `.batch-records`, `.batch-records-list`, `.batch-record-item`
+- ✅ Gradient background and distinct visual treatment
+- ✅ Responsive tab layout
+
+#### Deployment:
+- ✅ Code committed: `f95a442` - "Implement AI coach batch record creation feature"
+- ✅ Pushed to GitHub
+- ✅ Deployed to remote server with `--no-cache` rebuild
+- ✅ Container status: **Up (healthy)**
+- ✅ Updated JavaScript deployed in container (39,043 bytes)
+
+---
+
+### Current Issue 🚨
+
+**Problem**: User getting error `{"data":{},"errors":[],"message":"Failed to save conversation","success":false}` when trying to send ANY message to AI coach on remote server.
+
+**Investigation Results**:
+1. ✅ Backend container healthy and running
+2. ✅ Database migrations completed successfully
+3. ✅ GEMINI_API_KEY correctly set in container
+4. ✅ Updated `ai-coach.js` (39,043 bytes) deployed in container
+5. ❌ **NO POST requests to `/api/ai-coach/message` appearing in backend logs**
+
+**Root Cause Analysis**:
+The backend is NOT receiving the POST request at all, which indicates:
+
+**Most Likely**: Cloudflare is serving **cached (old) JavaScript** that doesn't have the batch records code
+- Updated JavaScript files were deployed to container
+- Cloudflare edge cache may still be serving old versions
+- User hasn't purged cache or enabled Development Mode yet
+
+**Possible**: JavaScript error in browser preventing request from being sent
+- Need browser console logs to confirm
+
+**Unlikely**: CSRF issue (endpoints are `@csrf.exempt`)
+
+---
+
+### Action Required Tomorrow 📋
+
+#### Step 1: Cloudflare Cache Purge (CRITICAL - Do This First!)
+
+**Option A - Purge Cache (Recommended)**:
+1. Log into Cloudflare dashboard
+2. Select domain: bowmanhomelabtech.net
+3. Go to **Caching** → **Configuration**
+4. Click **"Purge Everything"**
+5. Wait 30 seconds
+6. Hard refresh browser (Ctrl+Shift+R or Cmd+Shift+R)
+
+**Option B - Development Mode (Easier for Testing)**:
+1. Go to **Caching** → **Configuration**
+2. Enable **"Development Mode"** (bypasses cache for 3 hours)
+3. Hard refresh browser
+
+#### Step 2: Browser Console Debugging
+
+Once cache is purged:
+
+1. **Open Developer Tools** (F12 or Cmd+Option+I)
+2. **Console Tab**: Look for RED errors when sending message
+3. **Network Tab**:
+   - Filter for `/api/ai-coach/message`
+   - Click on request
+   - Check Status Code and Response
+4. **Copy any error messages** for debugging
+
+#### Step 3: Test Batch Records Feature
+
+After confirming simple messages work:
+
+1. Go to AI Coach page: https://vitruvian.bowmanhomelabtech.net/ai-coach
+2. Say: **"I did a 30-minute strength workout this morning and ate eggs and bacon for breakfast. I also weighed myself at 175 lbs."**
+3. Expected behavior:
+   - AI calls `create_batch_records` with 3 records (workout, meal, health metric)
+   - Batch preview card appears showing all 3 records
+   - "Review & Save All (3)" button visible
+   - Click opens modal with 3 tabs: "1. Workout", "2. Meal Log", "3. Health Metric"
+   - User can edit each record in its tab
+   - Click "Save All Records"
+   - Success message: "3 records saved successfully!"
+   - Records appear on Workout, Nutrition, and Health Metrics pages
+
+#### Step 4: Monitor Backend Logs (If Issues Persist)
+
+```bash
+sshpass -p "Serbatik11!!" ssh -T nathan@vit-dev-website "docker logs -f --tail=50 primary-assistant-web 2>&1"
+```
+
+Then send a message and look for:
+- POST request to `/api/ai-coach/message`
+- Any ERROR or Traceback messages
+- "Failed to save conversation" with actual exception details
+
+---
+
+### Files Modified Today
+
+**Backend**:
+- `website/api/ai_coach.py` - Added `_save_batch_records()` handler, `BatchRecordWrapper` class
+- `website/services/gemini_service.py` - Updated `TRANSFORMATIVE_TRAINER_PERSONA` system prompt
+- `website/utils/ai_coach_tools.py` - Added `create_batch_records_schema()`
+
+**Frontend**:
+- `website/static/js/ai-coach.js` - Batch preview, tabbed modal, updated save logic (39,043 bytes)
+- `website/static/css/ai-coach.css` - Batch records styling
+
+**Git Commit**:
+- Hash: `f95a442`
+- Message: "Implement AI coach batch record creation feature"
+- Files changed: 5 files, +362 lines, -22 lines
+
+---
+
+### Testing Checklist for Tomorrow
+
+- [ ] **CRITICAL**: Purge Cloudflare cache or enable Development Mode
+- [ ] Hard refresh browser (Ctrl+Shift+R)
+- [ ] Open browser console and check for errors
+- [ ] Send simple message: "Hello"
+- [ ] Verify message sends successfully (no "Failed to save conversation")
+- [ ] Test batch records with: "I did a workout and ate breakfast"
+- [ ] Verify batch preview card displays correctly
+- [ ] Verify tabbed modal works with 2+ records
+- [ ] Verify batch save persists all records
+- [ ] Check records appear on respective pages (Health, Nutrition, Workout)
+- [ ] Test with 3+ records to verify tab scrolling/layout
+
+---
+
+### Quick Reference Commands
+
+```bash
+# Check remote logs
+sshpass -p "Serbatik11!!" ssh -T nathan@vit-dev-website "docker logs --tail=100 primary-assistant-web"
+
+# Monitor logs in real-time
+sshpass -p "Serbatik11!!" ssh -T nathan@vit-dev-website "docker logs -f primary-assistant-web 2>&1"
+
+# Check container status
+sshpass -p "Serbatik11!!" ssh -T nathan@vit-dev-website "docker ps | grep web"
+
+# Check deployed file size
+sshpass -p "Serbatik11!!" ssh -T nathan@vit-dev-website "docker exec primary-assistant-web ls -lh /app/website/static/js/ai-coach.js"
+```
+
+---
+
+### Known Issues
+
+1. **Gemini API Deprecation Warning**: Using deprecated `google.generativeai` package
+   - Warning shows in logs: "All support for the google.generativeai package has ended"
+   - Functionality still works fine
+   - Future task: Migrate to `google.genai` package
+
+2. **Upload Directory Permissions**: Warning about `/app/instance/uploads`
+   - Warning: `[Errno 13] Permission denied: '/app/instance'`
+   - Non-critical, doesn't affect functionality
+
+3. **Rate Limiter Warning**: Using in-memory storage
+   - Warning: "Using the in-memory storage for tracking rate limits"
+   - Non-critical for single-instance deployment
+
+---
+
+### Expected Behavior After Cache Purge
+
+**Single Item Example**:
+User: "I weighed myself at 175 lbs today"
+- AI calls `create_health_metric` (existing single-record function)
+- Preview card shows one record
+- Modal has standard form (not tabbed)
+- Save creates 1 record
+
+**Multiple Items Example**:
+User: "I did a 45-minute cardio workout and had chicken and rice for lunch"
+- AI calls `create_batch_records` with 2 records
+- Batch preview card shows:
+  ```
+  Multiple Records (2)
+  1. Workout
+     Session Type: CARDIO, Duration: 45 min
+  2. Meal Log
+     Meal Type: LUNCH, Description: chicken and rice
+  ```
+- Click "Review & Save All (2)" opens tabbed modal
+- Tab 1: "1. Workout" - editable workout form
+- Tab 2: "2. Meal Log" - editable meal form
+- Click "Save All Records"
+- Success: "2 records saved successfully!"
+
+---
+
+### Contact Info
+- Remote Server: vit-dev-website (192.168.1.119)
+- Live Site: https://vitruvian.bowmanhomelabtech.net
+- GitHub Repo: https://github.com/nbowman189/vitruvian-developer
+- Current Branch: main
+- Latest Commit: f95a442
+
+---
+
+## Previous Session - January 3, 2026: Behavior Tracker Deployment & Docker Volume Fix - COMPLETE ✅
 
 ### Issues Resolved:
 
