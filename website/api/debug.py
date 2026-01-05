@@ -281,3 +281,165 @@ def check_health_records():
             'error': str(e),
             'traceback': traceback.format_exc()
         }, 500
+
+
+@debug_api_bp.route('/test-query-functions', methods=['GET'])
+@csrf.exempt
+def test_query_functions():
+    """Debug endpoint to test all query handler functions."""
+    from flask_login import current_user
+
+    debug_info = {
+        'user_authenticated': current_user.is_authenticated
+    }
+
+    if not current_user.is_authenticated:
+        return {
+            'success': False,
+            'debug_info': debug_info,
+            'error': 'User not authenticated'
+        }, 401
+
+    debug_info['user_id'] = current_user.id
+
+    # Import query handlers
+    from ..api.ai_coach import (
+        _query_health_metrics,
+        _query_workout_history,
+        _query_nutrition_summary,
+        _query_user_goals,
+        _query_coaching_history,
+        _query_progress_summary,
+        _query_behavior_tracking,
+        _query_behavior_compliance
+    )
+
+    # Test each query function
+    test_results = {}
+
+    # Test health metrics
+    try:
+        data, summary = _query_health_metrics(current_user.id, {'days': 7})
+        test_results['health_metrics'] = {
+            'success': True,
+            'summary': summary,
+            'data_keys': list(data.keys()) if data else []
+        }
+    except Exception as e:
+        test_results['health_metrics'] = {
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }
+
+    # Test workout history
+    try:
+        data, summary = _query_workout_history(current_user.id, {'days': 7})
+        test_results['workout_history'] = {
+            'success': True,
+            'summary': summary,
+            'data_keys': list(data.keys()) if data else []
+        }
+    except Exception as e:
+        test_results['workout_history'] = {
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }
+
+    # Test nutrition summary
+    try:
+        data, summary = _query_nutrition_summary(current_user.id, {'days': 7})
+        test_results['nutrition_summary'] = {
+            'success': True,
+            'summary': summary,
+            'data_keys': list(data.keys()) if data else []
+        }
+    except Exception as e:
+        test_results['nutrition_summary'] = {
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }
+
+    # Test user goals
+    try:
+        data, summary = _query_user_goals(current_user.id, {'status': 'active'})
+        test_results['user_goals'] = {
+            'success': True,
+            'summary': summary,
+            'data_keys': list(data.keys()) if data else []
+        }
+    except Exception as e:
+        test_results['user_goals'] = {
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }
+
+    # Test coaching history
+    try:
+        data, summary = _query_coaching_history(current_user.id, {'limit': 5})
+        test_results['coaching_history'] = {
+            'success': True,
+            'summary': summary,
+            'data_keys': list(data.keys()) if data else []
+        }
+    except Exception as e:
+        test_results['coaching_history'] = {
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }
+
+    # Test behavior tracking
+    try:
+        data, summary = _query_behavior_tracking(current_user.id, {'days': 7})
+        test_results['behavior_tracking'] = {
+            'success': True,
+            'summary': summary,
+            'data_keys': list(data.keys()) if data else []
+        }
+    except Exception as e:
+        test_results['behavior_tracking'] = {
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }
+
+    # Test behavior compliance
+    try:
+        data, summary = _query_behavior_compliance(current_user.id, {'period': 'week'})
+        test_results['behavior_compliance'] = {
+            'success': True,
+            'summary': summary,
+            'data_keys': list(data.keys()) if data else []
+        }
+    except Exception as e:
+        test_results['behavior_compliance'] = {
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }
+
+    # Test progress summary (calls all others)
+    try:
+        data, summary = _query_progress_summary(current_user.id, {'period_days': 30})
+        test_results['progress_summary'] = {
+            'success': True,
+            'summary': summary,
+            'data_keys': list(data.keys()) if data else []
+        }
+    except Exception as e:
+        test_results['progress_summary'] = {
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }
+
+    debug_info['test_results'] = test_results
+
+    return {
+        'success': True,
+        'debug_info': debug_info
+    }, 200
