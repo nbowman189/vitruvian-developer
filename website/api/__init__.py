@@ -326,6 +326,7 @@ from . import user
 from . import ai_coach
 from . import activity
 from . import behavior
+from . import debug
 
 # Register sub-blueprints
 api_bp.register_blueprint(health.health_api_bp)
@@ -336,3 +337,4 @@ api_bp.register_blueprint(user.user_api_bp)
 api_bp.register_blueprint(ai_coach.ai_coach_api_bp)
 api_bp.register_blueprint(activity.activity_api_bp)
 api_bp.register_blueprint(behavior.behavior_api_bp)
+api_bp.register_blueprint(debug.debug_api_bp)
