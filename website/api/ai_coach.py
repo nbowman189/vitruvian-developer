@@ -1018,7 +1018,7 @@ def _query_nutrition_summary(user_id: int, params: dict) -> tuple:
 
 def _query_user_goals(user_id: int, params: dict) -> tuple:
     """Query user goals and progress."""
-    from ..models.coaching import UserGoal
+    from ..models.coaching import UserGoal, GoalStatus
 
     # Get parameters
     status_filter = params.get('status', 'active')
@@ -1027,9 +1027,9 @@ def _query_user_goals(user_id: int, params: dict) -> tuple:
     query = UserGoal.query.filter(UserGoal.user_id == user_id)
 
     if status_filter == 'active':
-        query = query.filter(UserGoal.completed == False)
+        query = query.filter(UserGoal.status == GoalStatus.ACTIVE)
     elif status_filter == 'completed':
-        query = query.filter(UserGoal.completed == True)
+        query = query.filter(UserGoal.status == GoalStatus.COMPLETED)
     # 'all' - no filter
 
     goals = query.order_by(UserGoal.target_date.asc()).all()
