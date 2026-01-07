@@ -4,14 +4,16 @@ Gemini Service
 
 Google Gemini AI integration service for AI coaching interface.
 Handles conversation management, function calling, and persona loading.
+
+Migrated to google.genai SDK (January 2026)
 """
 
 import os
 import re
 import logging
 from typing import List, Dict, Tuple, Optional, Any
-import google.generativeai as genai
-from google.generativeai.types import HarmCategory, HarmBlockThreshold
+from google import genai
+from google.genai import types
 
 logger = logging.getLogger(__name__)
 
@@ -53,11 +55,10 @@ As an AI coach, you have access to function tools to both READ and WRITE data:
 6. **get_progress_summary**: Get comprehensive overview across all data
 
 **WRITE Functions** (suggest records for user approval):
-1. **create_batch_records**: Create MULTIPLE records at once (workouts, meals, health metrics, etc.) - USE THIS when user mentions multiple things to log
-2. **create_health_metric**: For weight, body fat, measurements tracking
-3. **create_meal_log**: For meal and nutrition tracking
-4. **create_workout**: For workout sessions with exercises
-5. **create_coaching_session**: For coaching notes and feedback
+1. **create_health_metric**: For weight, body fat, measurements tracking
+2. **create_meal_log**: For meal and nutrition tracking
+3. **create_workout**: For workout sessions with exercises
+4. **create_coaching_session**: For coaching notes and feedback
 
 CRITICAL INSTRUCTIONS FOR FUNCTION CALLING:
 - When user mentions data to log (workouts, meals, weight, etc.), CALL the appropriate function immediately
@@ -65,8 +66,9 @@ CRITICAL INSTRUCTIONS FOR FUNCTION CALLING:
 - DO NOT say "I'll log this" or "Here's what I'll create" - just CALL THE FUNCTION
 - The function call happens automatically through your function calling capability
 - After calling a function, give a brief acknowledgment and continue your coaching
-- **IMPORTANT**: When user mentions MULTIPLE items to log (e.g., "I did a workout and ate breakfast"), use **create_batch_records** to log them all at once
-- If only ONE item to log, use the specific function (create_workout, create_meal_log, etc.)
+- **CRITICAL**: When user mentions MULTIPLE items to log (e.g., "I weighed 176lbs, did a workout, and ate breakfast"), you MUST call MULTIPLE functions simultaneously - one for each item (create_health_metric, create_workout, create_meal_log)
+- You CAN and SHOULD call multiple functions in a single response when the user provides multiple pieces of data
+- Example: If user says "I weighed 180lbs and did 30min cardio", call BOTH create_health_metric AND create_workout
 
 When discussing progress or giving advice, USE THE READ FUNCTIONS to access actual user data. This enables you to provide personalized, data-driven coaching instead of generic advice. For WRITE functions, CALL THEM directly - the user will review and approve the record before it's saved."""
 
@@ -106,17 +108,17 @@ class GeminiService:
                 "GEMINI_API_KEY not found. Please set it in your environment or pass it to GeminiService."
             )
 
-        # Configure the Gemini API
-        genai.configure(api_key=self.api_key)
+        # Initialize the Gemini client
+        self.client = genai.Client(api_key=self.api_key)
 
         # Load model fallback chain from config
         try:
             from flask import current_app
             self.model_names = current_app.config.get('GEMINI_MODEL_FALLBACK_CHAIN', [
-                'gemini-2.5-flash',
+                'gemini-1.5-flash',  # Use 1.5-flash first - better function calling support
+                'gemini-1.5-flash-8b',
                 'gemini-2.0-flash-exp',
-                'gemini-1.5-flash',
-                'gemini-1.5-flash-8b'
+                'gemini-2.5-flash'  # 2.5 has code execution which interferes with function calling
             ])
 
             self.generation_config = current_app.config.get('GEMINI_GENERATION_CONFIG', {
@@ -128,10 +130,10 @@ class GeminiService:
         except RuntimeError:
             # Working outside Flask application context (testing)
             self.model_names = [
-                'gemini-2.5-flash',
+                'gemini-1.5-flash',  # Use 1.5-flash first - better function calling support
+                'gemini-1.5-flash-8b',
                 'gemini-2.0-flash-exp',
-                'gemini-1.5-flash',
-                'gemini-1.5-flash-8b'
+                'gemini-2.5-flash'  # 2.5 has code execution which interferes with function calling
             ]
             self.generation_config = {
                 'temperature': 0.7,
@@ -179,8 +181,7 @@ class GeminiService:
         """
         # Build conversation context
         recent_history = conversation_history[-max_context_messages:] if conversation_history else []
-        messages = self._build_messages(recent_history, user_message)
-        tools = [{'function_declarations': function_declarations}] if function_declarations else None
+        history = self._build_history(recent_history)
 
         # Try each model in fallback chain
         for model_name in self.model_names:
@@ -192,20 +193,37 @@ class GeminiService:
             try:
                 logger.info(f"Attempting with {model_name}")
 
-                # Create model instance
-                model = genai.GenerativeModel(
-                    model_name=model_name,
-                    generation_config=self.generation_config,
-                    safety_settings=self._get_safety_settings()
+                # Build generation config
+                config = types.GenerateContentConfig(
+                    system_instruction=self._get_contextualized_system_instruction(),
+                    temperature=self.generation_config.get('temperature', 0.7),
+                    top_p=self.generation_config.get('top_p', 0.95),
+                    top_k=self.generation_config.get('top_k', 40),
+                    max_output_tokens=self.generation_config.get('max_output_tokens', 2048),
+                    safety_settings=self._get_safety_settings(),
+                    # CRITICAL: Disable automatic function calling to preserve manual handling
+                    automatic_function_calling=types.AutomaticFunctionCallingConfig(
+                        disable=True
+                    )
                 )
 
-                # Start chat and send message
-                chat = model.start_chat(history=messages[:-1])
+                # Add function declarations and tool config if provided
+                if function_declarations:
+                    # Wrap function declarations in Tool object
+                    config.tools = [types.Tool(function_declarations=function_declarations)]
+                    config.tool_config = types.ToolConfig(
+                        function_calling_config=types.FunctionCallingConfig(mode='AUTO')
+                    )
 
-                if tools:
-                    response = chat.send_message(user_message, tools=tools)
-                else:
-                    response = chat.send_message(user_message)
+                # Create chat with history
+                chat = self.client.chats.create(
+                    model=model_name,
+                    config=config,
+                    history=history
+                )
+
+                # Send message
+                response = chat.send_message(message=user_message)
 
                 # Extract response
                 assistant_response, function_call = self._extract_response(response)
@@ -303,61 +321,109 @@ class GeminiService:
         logger.warning("Could not parse retry_delay, defaulting to 3600s")
         return 3600
 
-    def _get_safety_settings(self) -> dict:
-        """Get safety settings."""
-        return {
-            HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-            HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-            HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-            HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-        }
+    def _get_safety_settings(self) -> List[types.SafetySetting]:
+        """Get safety settings as list of SafetySetting objects."""
+        return [
+            types.SafetySetting(
+                category='HARM_CATEGORY_HARASSMENT',
+                threshold='BLOCK_MEDIUM_AND_ABOVE'
+            ),
+            types.SafetySetting(
+                category='HARM_CATEGORY_HATE_SPEECH',
+                threshold='BLOCK_MEDIUM_AND_ABOVE'
+            ),
+            types.SafetySetting(
+                category='HARM_CATEGORY_SEXUALLY_EXPLICIT',
+                threshold='BLOCK_MEDIUM_AND_ABOVE'
+            ),
+            types.SafetySetting(
+                category='HARM_CATEGORY_DANGEROUS_CONTENT',
+                threshold='BLOCK_MEDIUM_AND_ABOVE'
+            )
+        ]
 
-    def _build_messages(self, history: List[Dict], user_message: str) -> List[Dict]:
-        """Build message list with system prompt and current date context."""
+    def _get_contextualized_system_instruction(self) -> str:
+        """
+        Get system instruction with current date context.
+
+        Returns:
+            System instruction string with current date
+        """
         from datetime import datetime
 
-        # Inject current date into system prompt
         current_date = datetime.now().strftime('%Y-%m-%d')
         day_of_week = datetime.now().strftime('%A')
 
-        contextualized_prompt = f"""CURRENT DATE: {current_date} ({day_of_week})
+        return f"""CURRENT DATE: {current_date} ({day_of_week})
 
 {self.system_prompt}
 
 IMPORTANT: When users say "today", use the date {current_date}. When creating records, ALWAYS include the appropriate date field (recorded_date, meal_date, session_date, etc.) with the correct date value in YYYY-MM-DD format."""
 
-        messages = [
-            {'role': 'user', 'parts': [contextualized_prompt]},
-            {'role': 'model', 'parts': ["I understand. I am The Transformative Trainer, ready to help you on your health and fitness journey with tough love, empathy, and structured tracking tools. Let's get started!"]}
-        ]
+    def _build_history(self, history: List[Dict]) -> List[types.Content]:
+        """
+        Build chat history as list of Content objects.
+
+        Args:
+            history: List of message dicts with 'role' and 'content' keys
+
+        Returns:
+            List of types.Content objects for chat history
+        """
+        contents = []
 
         for msg in history:
             role = 'model' if msg['role'] == 'assistant' else 'user'
-            messages.append({'role': role, 'parts': [msg['content']]})
+            contents.append(
+                types.Content(
+                    role=role,
+                    parts=[types.Part.from_text(msg['content'])]
+                )
+            )
 
-        messages.append({'role': 'user', 'parts': [user_message]})
-        return messages
+        return contents
 
     def _extract_response(self, response) -> Tuple[str, Optional[Dict]]:
-        """Extract text and function call from API response."""
-        assistant_response = ""
+        """Extract text and function call(s) from API response.
+
+        Handles both single and multiple function calls from Gemini.
+        Returns multiple calls as a list in the 'function_call' dict under 'function_calls' key.
+        """
+        # Use convenience properties for text and function calls
+        assistant_response = response.text if hasattr(response, 'text') and response.text else ""
+
+        function_calls = []
+        if hasattr(response, 'function_calls') and response.function_calls:
+            for fc in response.function_calls:
+                function_calls.append({
+                    'name': fc.name,
+                    'args': dict(fc.args) if fc.args else {}
+                })
+                logger.info(f"Function call detected: {fc.name}")
+
+        # Handle function calls
         function_call = None
+        if function_calls:
+            if len(function_calls) == 1:
+                # Single function call - return as before for backwards compatibility
+                function_call = function_calls[0]
+            else:
+                # Multiple function calls - wrap in special structure
+                function_call = {
+                    'name': 'multiple_function_calls',
+                    'function_calls': function_calls
+                }
+                logger.info(f"Multiple function calls detected: {len(function_calls)}")
 
-        if response.candidates and len(response.candidates) > 0:
-            candidate = response.candidates[0]
-            if candidate.content.parts:
-                for part in candidate.content.parts:
-                    if hasattr(part, 'text') and part.text:
-                        assistant_response += part.text
-                    if hasattr(part, 'function_call') and part.function_call:
-                        fc = part.function_call
-                        function_call = {'name': fc.name, 'args': dict(fc.args) if fc.args else {}}
-                        logger.info(f"Function call detected: {fc.name}")
-
+        # Provide default message if no text but function call present
         if not assistant_response and function_call:
-            assistant_response = self._get_default_function_call_message(function_call['name'])
+            if function_call['name'] == 'multiple_function_calls':
+                count = len(function_call['function_calls'])
+                assistant_response = f"Great! I've prepared {count} records for you to review and save."
+            else:
+                assistant_response = self._get_default_function_call_message(function_call['name'])
 
-        logger.info(f"Gemini response received. Function call: {function_call is not None}")
+        logger.info(f"Gemini response received. Function calls: {len(function_calls)}")
         return assistant_response, function_call
 
     @staticmethod
@@ -372,10 +438,12 @@ IMPORTANT: When users say "today", use the date {current_date}. When creating re
             True if valid, False otherwise
         """
         try:
-            genai.configure(api_key=api_key)
-            # Use first model from default fallback chain
-            model = genai.GenerativeModel('gemini-2.5-flash')
-            model.generate_content("Test")
+            client = genai.Client(api_key=api_key)
+            # Make a simple test call using first model from default chain
+            client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents='Test'
+            )
             return True
         except Exception as e:
             logger.error(f"API key validation failed: {str(e)}")
