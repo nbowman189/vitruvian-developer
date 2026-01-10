@@ -178,6 +178,10 @@ class HealthMetric(db.Model):
             'body_fat_percentage': self.body_fat_percentage,
             'muscle_mass_lbs': self.muscle_mass_lbs,
             'bmi': self.bmi,
+            # Top-level access for common measurements
+            'waist_inches': self.waist_inches,
+            'chest_inches': self.chest_inches,
+            # Nested structure for all measurements
             'measurements': {
                 'waist_inches': self.waist_inches,
                 'chest_inches': self.chest_inches,
