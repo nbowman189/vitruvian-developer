@@ -21,6 +21,7 @@ from datetime import datetime, timedelta
 
 from ..models import db
 from ..models.nutrition import MealLog, MealType, AdherenceLevel
+from .. import csrf
 from . import (
     success_response,
     error_response,
@@ -93,6 +94,7 @@ def get_meals():
 
 
 @nutrition_api_bp.route('/meals', methods=['POST'])
+@csrf.exempt
 @require_active_user
 def create_meal():
     """
@@ -217,6 +219,7 @@ def get_meal(meal_id):
 
 
 @nutrition_api_bp.route('/meals/<int:meal_id>', methods=['PUT'])
+@csrf.exempt
 @require_active_user
 def update_meal(meal_id):
     """Update a meal log."""
@@ -291,6 +294,7 @@ def update_meal(meal_id):
 
 
 @nutrition_api_bp.route('/meals/<int:meal_id>', methods=['DELETE'])
+@csrf.exempt
 @require_active_user
 def delete_meal(meal_id):
     """Delete a meal log."""

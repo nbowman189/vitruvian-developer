@@ -22,6 +22,7 @@ from sqlalchemy import func, and_, desc
 
 from ..models import db
 from ..models.workout import WorkoutSession, ExerciseLog, ExerciseDefinition, SessionType
+from .. import csrf
 from . import (
     success_response,
     error_response,
@@ -105,6 +106,7 @@ def get_workouts():
 
 
 @workout_api_bp.route('', methods=['POST'])
+@csrf.exempt
 @require_active_user
 def create_workout():
     """
@@ -201,6 +203,7 @@ def get_workout(workout_id):
 
 
 @workout_api_bp.route('/<int:workout_id>', methods=['PUT'])
+@csrf.exempt
 @require_active_user
 def update_workout(workout_id):
     """
@@ -266,6 +269,7 @@ def update_workout(workout_id):
 
 
 @workout_api_bp.route('/<int:workout_id>', methods=['DELETE'])
+@csrf.exempt
 @require_active_user
 def delete_workout(workout_id):
     """
@@ -298,6 +302,7 @@ def delete_workout(workout_id):
 
 
 @workout_api_bp.route('/<int:workout_id>/exercises', methods=['POST'])
+@csrf.exempt
 @require_active_user
 def add_exercise_to_workout(workout_id):
     """
@@ -494,6 +499,7 @@ def get_exercise_definitions():
 
 
 @workout_api_bp.route('/exercises/definitions', methods=['POST'])
+@csrf.exempt
 @require_active_user
 def create_exercise_definition():
     """

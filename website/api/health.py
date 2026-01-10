@@ -21,6 +21,7 @@ from datetime import datetime, timedelta
 
 from ..models import db
 from ..models.health import HealthMetric
+from .. import csrf
 from . import (
     success_response,
     error_response,
@@ -98,6 +99,7 @@ def get_metrics():
 
 
 @health_api_bp.route('/metrics', methods=['POST'])
+@csrf.exempt
 @require_active_user
 def create_metric():
     """
@@ -219,6 +221,7 @@ def get_metric(metric_id):
 
 
 @health_api_bp.route('/metrics/<int:metric_id>', methods=['PUT'])
+@csrf.exempt
 @require_active_user
 def update_metric(metric_id):
     """
@@ -301,6 +304,7 @@ def update_metric(metric_id):
 
 
 @health_api_bp.route('/metrics/<int:metric_id>', methods=['DELETE'])
+@csrf.exempt
 @require_active_user
 def delete_metric(metric_id):
     """
