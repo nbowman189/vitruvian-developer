@@ -561,7 +561,7 @@ def get_all_function_declarations() -> List[Dict[str, Any]]:
     """
     return [
         # WRITE operations (create records)
-        create_batch_records_schema(),  # NEW: Batch creation (highest priority)
+        # create_batch_records_schema(),  # TEMPORARILY DISABLED - schema too complex for Gemini
         create_health_metric_schema(),
         create_meal_log_schema(),
         create_workout_schema(),

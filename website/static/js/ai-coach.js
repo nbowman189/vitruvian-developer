@@ -378,6 +378,12 @@ class AICoachChat {
             return;
         }
 
+        // Handle multiple function calls from Gemini
+        if (functionCall.name === 'multiple_function_calls') {
+            this.handleMultipleFunctionCalls(functionCall.function_calls, lastMessageContent);
+            return;
+        }
+
         // Create record preview card
         const previewCard = document.createElement('div');
         previewCard.className = 'record-preview-card';
@@ -402,6 +408,57 @@ class AICoachChat {
         // Add click handler
         previewCard.querySelector('.review-record-btn').addEventListener('click', () => {
             this.showRecordModal(functionCall.name, functionCall.args);
+        });
+
+        this.scrollToBottom();
+    }
+
+    /**
+     * Handle multiple function calls from Gemini
+     */
+    handleMultipleFunctionCalls(functionCalls, containerElement) {
+        if (!functionCalls || functionCalls.length === 0) {
+            return;
+        }
+
+        // Create batch preview card
+        const batchCard = document.createElement('div');
+        batchCard.className = 'record-preview-card batch-records';
+
+        let recordPreviews = functionCalls.map((fc, idx) => {
+            const recordType = this.getFriendlyRecordType(fc.name);
+            const fields = this.formatRecordFields(fc.name, fc.args);
+
+            return `
+                <div class="batch-record-item">
+                    <h5>${idx + 1}. ${recordType}</h5>
+                    <div class="record-preview-fields">
+                        ${fields}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        batchCard.innerHTML = `
+            <h4><i class="bi bi-stack"></i> Multiple Records (${functionCalls.length})</h4>
+            <div class="batch-records-list">
+                ${recordPreviews}
+            </div>
+            <div class="record-preview-actions">
+                <button class="btn btn-primary review-record-btn">
+                    <i class="bi bi-pencil"></i> Review & Save All
+                </button>
+            </div>
+        `;
+
+        containerElement.appendChild(batchCard);
+
+        // Store function calls for modal
+        this.pendingRecordData = { function_calls: functionCalls };
+
+        // Add click handler
+        batchCard.querySelector('.review-record-btn').addEventListener('click', () => {
+            this.showMultiRecordModal(functionCalls);
         });
 
         this.scrollToBottom();
@@ -490,6 +547,28 @@ class AICoachChat {
 
         const modalBody = document.getElementById('record-preview-body');
         modalBody.innerHTML = this.generateRecordForm(functionName, recordData);
+
+        const modal = new bootstrap.Modal(document.getElementById('record-preview-modal'));
+        modal.show();
+    }
+
+    /**
+     * Show modal for multiple function calls from Gemini
+     */
+    showMultiRecordModal(functionCalls) {
+        // Convert multiple function calls to batch records format
+        const records = functionCalls.map(fc => ({
+            record_type: fc.name.replace('create_', ''),
+            data: fc.args
+        }));
+
+        this.pendingRecordData = {
+            functionName: 'create_batch_records',
+            recordData: { records }
+        };
+
+        const modalBody = document.getElementById('record-preview-body');
+        modalBody.innerHTML = this.generateBatchRecordsForm({ records });
 
         const modal = new bootstrap.Modal(document.getElementById('record-preview-modal'));
         modal.show();

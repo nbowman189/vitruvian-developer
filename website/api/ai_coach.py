@@ -134,6 +134,9 @@ def send_message():
                 function_declarations=function_decls,
                 max_context_messages=10
             )
+
+            # Log Gemini response for debugging
+            logger.debug(f"Gemini response - text length: {len(assistant_response) if assistant_response else 0}, function: {function_call['name'] if function_call else None}")
         except QuotaExhaustedError as e:
             # All models quota exhausted
             logger.warning(f"All AI models quota exhausted: {e}")
