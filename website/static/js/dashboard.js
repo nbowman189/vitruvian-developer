@@ -794,7 +794,7 @@ async function submitLogForm(type, endpoint, form, modalId) {
         for (const [key, value] of formData.entries()) {
             if (value !== '' && value !== null) {
                 // Convert numeric fields
-                if (['weight_lbs', 'body_fat_percentage', 'duration_minutes', 'calories', 'protein_g', 'carbs_g', 'fat_g'].includes(key)) {
+                if (['weight_lbs', 'body_fat_percentage', 'waist_inches', 'chest_inches', 'duration_minutes', 'calories', 'protein_g', 'carbs_g', 'fat_g'].includes(key)) {
                     data[key] = parseFloat(value);
                 } else {
                     data[key] = value;
