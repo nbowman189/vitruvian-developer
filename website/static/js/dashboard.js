@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     initializeCharts();
     initializeBehaviorTracker();
     initializeQuickActions();
+    initializeLogForms();
     initializeActivityFeed();
 });
 
@@ -310,19 +311,30 @@ function initializeQuickActions() {
 }
 
 /**
- * Handle quick action clicks
+ * Handle quick action clicks - opens modals instead of redirecting
  * @param {string} action - Action identifier
  */
 function handleQuickAction(action) {
+    const today = new Date().toISOString().split('T')[0];
+
     switch (action) {
         case 'log-weight':
-            window.location.href = '/health/metrics';
+            document.getElementById('weight-date').value = today;
+            document.getElementById('log-weight-form').reset();
+            document.getElementById('weight-date').value = today;
+            new bootstrap.Modal(document.getElementById('logWeightModal')).show();
             break;
         case 'log-workout':
-            window.location.href = '/workout/new';
+            document.getElementById('workout-date').value = today;
+            document.getElementById('log-workout-form').reset();
+            document.getElementById('workout-date').value = today;
+            new bootstrap.Modal(document.getElementById('logWorkoutModal')).show();
             break;
         case 'log-meal':
-            window.location.href = '/nutrition/meals';
+            document.getElementById('meal-date').value = today;
+            document.getElementById('log-meal-form').reset();
+            document.getElementById('meal-date').value = today;
+            new bootstrap.Modal(document.getElementById('logMealModal')).show();
             break;
     }
 }
@@ -724,5 +736,125 @@ function initializeManageBehaviorsButton() {
             // TODO: Open behavior management modal or navigate to management page
             alert('Behavior management UI coming soon! For now, behaviors can be created and managed via the AI Coach.');
         });
+    }
+}
+
+/**
+ * Initialize log form handlers
+ */
+function initializeLogForms() {
+    // Log Weight Form
+    const weightForm = document.getElementById('log-weight-form');
+    if (weightForm) {
+        weightForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await submitLogForm('weight', '/api/health/metrics', weightForm, 'logWeightModal');
+        });
+    }
+
+    // Log Workout Form
+    const workoutForm = document.getElementById('log-workout-form');
+    if (workoutForm) {
+        workoutForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await submitLogForm('workout', '/api/workouts', workoutForm, 'logWorkoutModal');
+        });
+    }
+
+    // Log Meal Form
+    const mealForm = document.getElementById('log-meal-form');
+    if (mealForm) {
+        mealForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await submitLogForm('meal', '/api/nutrition/meals', mealForm, 'logMealModal');
+        });
+    }
+}
+
+/**
+ * Submit a log form to the API
+ * @param {string} type - Type of log (weight, workout, meal)
+ * @param {string} endpoint - API endpoint
+ * @param {HTMLFormElement} form - Form element
+ * @param {string} modalId - Modal element ID
+ */
+async function submitLogForm(type, endpoint, form, modalId) {
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+
+    try {
+        // Disable button and show loading
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
+
+        // Collect form data
+        const formData = new FormData(form);
+        const data = {};
+
+        for (const [key, value] of formData.entries()) {
+            if (value !== '' && value !== null) {
+                // Convert numeric fields
+                if (['weight_lbs', 'body_fat_percentage', 'duration_minutes', 'calories', 'protein_g', 'carbs_g', 'fat_g'].includes(key)) {
+                    data[key] = parseFloat(value);
+                } else {
+                    data[key] = value;
+                }
+            }
+        }
+
+        // Send to API
+        const response = await API.post(endpoint, data);
+
+        if (response.success) {
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById(modalId));
+            if (modal) modal.hide();
+
+            // Show success message
+            UIUtils.showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} logged successfully!`, 'success');
+
+            // Reset form
+            form.reset();
+
+            // Refresh relevant dashboard data
+            await refreshDashboardData(type);
+        } else {
+            throw new Error(response.message || 'Failed to save');
+        }
+
+    } catch (error) {
+        console.error(`Error logging ${type}:`, error);
+        UIUtils.showToast(error.message || `Failed to log ${type}. Please try again.`, 'error');
+    } finally {
+        // Restore button
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+}
+
+/**
+ * Refresh dashboard data after logging
+ * @param {string} type - Type of data logged
+ */
+async function refreshDashboardData(type) {
+    try {
+        switch (type) {
+            case 'weight':
+                await initializeStatsCards();
+                await createWeightTrendChart();
+                break;
+            case 'workout':
+                await initializeStatsCards();
+                await createWorkoutVolumeChart();
+                break;
+            case 'meal':
+                await initializeStatsCards();
+                await createNutritionAdherenceChart();
+                break;
+        }
+        // Also refresh activity feed
+        await initializeActivityFeed();
+    } catch (error) {
+        console.error('Error refreshing dashboard:', error);
     }
 }
