@@ -306,8 +306,8 @@ async function loadSessions() {
 
         let html = '';
         sessions.forEach((session, index) => {
-            const title = session.discussion_notes || 'Coaching Session';
-            const hasContent = session.coach_feedback && session.coach_feedback.length > 0;
+            const title = session.coach_feedback || 'Coaching Session';
+            const hasContent = session.discussion_notes && session.discussion_notes.length > 0;
 
             html += `
                 <div class="card mb-3 coaching-session-card">
@@ -344,8 +344,8 @@ async function loadSessions() {
         // Render markdown content for each session
         sessions.forEach(session => {
             const markdownDiv = document.querySelector(`#session-full-${session.id} .markdown-content`);
-            if (markdownDiv && session.coach_feedback) {
-                markdownDiv.innerHTML = marked.parse(session.coach_feedback);
+            if (markdownDiv && session.discussion_notes) {
+                markdownDiv.innerHTML = marked.parse(session.discussion_notes);
             }
         });
     } catch (error) {
