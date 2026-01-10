@@ -597,6 +597,12 @@ class AICoachChat {
             case 'create_coaching_session':
                 formHtml = this.generateCoachingSessionForm(data);
                 break;
+            case 'create_behavior_definition':
+                formHtml = this.generateBehaviorDefinitionForm(data);
+                break;
+            case 'log_behavior':
+                formHtml = this.generateBehaviorLogForm(data);
+                break;
         }
 
         return formHtml;
@@ -645,6 +651,12 @@ class AICoachChat {
                     break;
                 case 'coaching_session':
                     recordForm = this.generateCoachingSessionForm(record.data);
+                    break;
+                case 'behavior_definition':
+                    recordForm = this.generateBehaviorDefinitionForm(record.data);
+                    break;
+                case 'behavior_log':
+                    recordForm = this.generateBehaviorLogForm(record.data);
                     break;
                 default:
                     recordForm = '<p>Unknown record type</p>';
@@ -883,6 +895,86 @@ class AICoachChat {
             <div class="record-form-group">
                 <label class="record-form-label">Coach Feedback</label>
                 <textarea class="record-form-textarea" name="coach_feedback" rows="4">${data.coach_feedback || ''}</textarea>
+            </div>
+        `;
+    }
+
+    /**
+     * Generate behavior definition form
+     */
+    generateBehaviorDefinitionForm(data) {
+        const categories = ['HEALTH', 'FITNESS', 'NUTRITION', 'LEARNING', 'PRODUCTIVITY', 'WELLNESS', 'CUSTOM'];
+
+        return `
+            <div class="record-form-group">
+                <label class="record-form-label">Behavior Name *</label>
+                <input type="text" class="record-form-input" name="name"
+                       value="${data.name || ''}" required placeholder="e.g., Morning Meditation">
+            </div>
+            <div class="record-form-group">
+                <label class="record-form-label">Category</label>
+                <select class="record-form-select" name="category">
+                    ${categories.map(cat =>
+                        `<option value="${cat}" ${data.category === cat ? 'selected' : ''}>
+                            ${cat}
+                        </option>`
+                    ).join('')}
+                </select>
+            </div>
+            <div class="record-form-group">
+                <label class="record-form-label">Description</label>
+                <textarea class="record-form-textarea" name="description" rows="3">${data.description || ''}</textarea>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="record-form-group">
+                        <label class="record-form-label">Target Frequency (days/week)</label>
+                        <input type="number" min="1" max="7" class="record-form-input" name="target_frequency"
+                               value="${data.target_frequency || 7}">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="record-form-group">
+                        <label class="record-form-label">Icon</label>
+                        <input type="text" class="record-form-input" name="icon"
+                               value="${data.icon || ''}" placeholder="bi-heart">
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Generate behavior log form
+     */
+    generateBehaviorLogForm(data) {
+        return `
+            <div class="record-form-group">
+                <label class="record-form-label">Behavior Name *</label>
+                <input type="text" class="record-form-input" name="behavior_name"
+                       value="${data.behavior_name || ''}" required placeholder="Name of the behavior">
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="record-form-group">
+                        <label class="record-form-label">Date *</label>
+                        <input type="date" class="record-form-input" name="tracked_date"
+                               value="${data.tracked_date || ''}" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="record-form-group">
+                        <label class="record-form-label">Completed</label>
+                        <select class="record-form-select" name="completed">
+                            <option value="true" ${data.completed !== false ? 'selected' : ''}>Yes</option>
+                            <option value="false" ${data.completed === false ? 'selected' : ''}>No</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="record-form-group">
+                <label class="record-form-label">Notes</label>
+                <textarea class="record-form-textarea" name="notes" rows="2">${data.notes || ''}</textarea>
             </div>
         `;
     }
