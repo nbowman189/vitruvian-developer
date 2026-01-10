@@ -93,7 +93,7 @@ def health_metrics():
     if not current_user.is_authenticated:
         abort(401)
 
-    return render_template('health_metrics.html')
+    return render_template('health/metrics.html')
 
 
 @main_bp.route('/workout/workouts')
@@ -107,6 +107,19 @@ def workout_workouts():
         abort(401)
 
     return render_template('workout_workouts.html')
+
+
+@main_bp.route('/workout/new')
+@log_request
+def workout_new():
+    """Render new workout form"""
+    from flask import abort
+    from flask_login import current_user
+
+    if not current_user.is_authenticated:
+        abort(401)
+
+    return render_template('workout/workout_form.html')
 
 
 @main_bp.route('/coaching/sessions')
