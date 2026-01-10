@@ -93,7 +93,8 @@ async function loadWeightChart() {
 async function loadMetricsTable() {
     try {
         const response = await API.get('/api/health/metrics?per_page=30&sort=desc');
-        const metrics = response.data;
+        // Paginated response has items nested in data.items
+        const metrics = response.data?.items || response.data || [];
 
         const container = document.getElementById('metrics-table-container');
 
@@ -110,6 +111,8 @@ async function loadMetricsTable() {
                             <th>Date</th>
                             <th>Weight (lbs)</th>
                             <th>Body Fat %</th>
+                            <th>Waist</th>
+                            <th>Chest</th>
                             <th>BMI</th>
                             <th>Notes</th>
                         </tr>
@@ -123,6 +126,8 @@ async function loadMetricsTable() {
                     <td>${DateUtils.formatDateDisplay(metric.recorded_date)}</td>
                     <td>${metric.weight_lbs ? metric.weight_lbs : '-'}</td>
                     <td>${metric.body_fat_percentage ? metric.body_fat_percentage + '%' : '-'}</td>
+                    <td>${metric.waist_inches ? metric.waist_inches + '"' : '-'}</td>
+                    <td>${metric.chest_inches ? metric.chest_inches + '"' : '-'}</td>
                     <td>${metric.bmi ? metric.bmi.toFixed(1) : '-'}</td>
                     <td>${metric.notes || '-'}</td>
                 </tr>
