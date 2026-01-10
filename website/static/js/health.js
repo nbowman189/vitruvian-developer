@@ -121,11 +121,10 @@ async function loadMetrics() {
         params.append('sort', 'desc');
 
         if (dateRange && !startDate) {
-            const end = new Date();
             const start = new Date();
             start.setDate(start.getDate() - dateRange);
             params.append('start_date', DateUtils.formatDate(start));
-            params.append('end_date', DateUtils.formatDate(end));
+            // Don't set end_date to allow future-dated entries to show
         } else if (startDate && endDate) {
             params.append('start_date', startDate);
             params.append('end_date', endDate);
@@ -157,7 +156,7 @@ function renderTable(metrics) {
     if (!metrics || metrics.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center py-4 text-muted">
+                <td colspan="7" class="text-center py-4 text-muted">
                     <i class="bi bi-inbox" style="font-size: 2rem;"></i>
                     <p class="mt-2 mb-0">No metrics found</p>
                 </td>
@@ -167,16 +166,13 @@ function renderTable(metrics) {
     }
 
     tbody.innerHTML = metrics.map(metric => {
-        const leanMass = metric.weight_lbs && metric.body_fat_percentage
-            ? (metric.weight_lbs * (1 - metric.body_fat_percentage / 100)).toFixed(1)
-            : '-';
-
         return `
             <tr data-id="${metric.id}">
                 <td>${DateUtils.formatDateDisplay(metric.recorded_date)}</td>
                 <td>${metric.weight_lbs ? metric.weight_lbs.toFixed(1) : '-'}</td>
                 <td>${metric.body_fat_percentage ? metric.body_fat_percentage.toFixed(1) + '%' : '-'}</td>
-                <td>${leanMass !== '-' ? leanMass + ' lbs' : '-'}</td>
+                <td>${metric.waist_inches ? metric.waist_inches.toFixed(1) + '"' : '-'}</td>
+                <td>${metric.chest_inches ? metric.chest_inches.toFixed(1) + '"' : '-'}</td>
                 <td class="notes-cell">${metric.notes || '-'}</td>
                 <td class="actions-col">
                     <button class="btn btn-sm btn-outline-primary" onclick="editMetric(${metric.id})" title="Edit">
@@ -198,7 +194,7 @@ function showTableLoading() {
     const tbody = document.getElementById('metrics-table-body');
     tbody.innerHTML = `
         <tr>
-            <td colspan="6" class="text-center py-4">
+            <td colspan="7" class="text-center py-4">
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
@@ -214,7 +210,7 @@ function showTableError(message) {
     const tbody = document.getElementById('metrics-table-body');
     tbody.innerHTML = `
         <tr>
-            <td colspan="6" class="text-center py-4">
+            <td colspan="7" class="text-center py-4">
                 <div class="alert alert-danger mb-0">
                     <i class="bi bi-exclamation-triangle"></i> ${message}
                 </div>
@@ -487,6 +483,8 @@ async function handleFormSubmit(event) {
         recorded_date: document.getElementById('metric-date').value,
         weight_lbs: parseFloat(document.getElementById('metric-weight').value) || null,
         body_fat_percentage: parseFloat(document.getElementById('metric-bodyfat').value) || null,
+        waist_inches: parseFloat(document.getElementById('metric-waist').value) || null,
+        chest_inches: parseFloat(document.getElementById('metric-chest').value) || null,
         notes: document.getElementById('metric-notes').value || null
     };
 
@@ -523,9 +521,11 @@ async function editMetric(id) {
         document.getElementById('metric-date').value = metric.recorded_date;
         document.getElementById('metric-weight').value = metric.weight_lbs || '';
         document.getElementById('metric-bodyfat').value = metric.body_fat_percentage || '';
+        document.getElementById('metric-waist').value = metric.waist_inches || '';
+        document.getElementById('metric-chest').value = metric.chest_inches || '';
         document.getElementById('metric-notes').value = metric.notes || '';
 
-        document.getElementById('metricModalLabel').textContent = 'Edit Health Metric';
+        document.getElementById('metricModalLabel').innerHTML = '<i class="bi bi-heart-pulse"></i> Edit Health Metric';
         new bootstrap.Modal(document.getElementById('metricModal')).show();
     } catch (error) {
         console.error('Error loading metric:', error);
@@ -599,16 +599,14 @@ function exportToCSV() {
         return;
     }
 
-    const headers = ['Date', 'Weight (lbs)', 'Body Fat %', 'Lean Mass (lbs)', 'Notes'];
+    const headers = ['Date', 'Weight (lbs)', 'Body Fat %', 'Waist (in)', 'Chest (in)', 'Notes'];
     const rows = metricsData.map(m => {
-        const leanMass = m.weight_lbs && m.body_fat_percentage
-            ? (m.weight_lbs * (1 - m.body_fat_percentage / 100)).toFixed(1)
-            : '';
         return [
             m.recorded_date,
             m.weight_lbs || '',
             m.body_fat_percentage || '',
-            leanMass,
+            m.waist_inches || '',
+            m.chest_inches || '',
             (m.notes || '').replace(/,/g, ';')
         ];
     });

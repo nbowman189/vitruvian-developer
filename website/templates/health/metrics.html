@@ -125,7 +125,8 @@
                         <th scope="col" class="sortable" data-column="bodyfat">
                             Body Fat % <i class="bi bi-arrow-down-up sort-icon"></i>
                         </th>
-                        <th scope="col">Lean Mass (lbs)</th>
+                        <th scope="col">Waist</th>
+                        <th scope="col">Chest</th>
                         <th scope="col">Notes</th>
                         <th scope="col" class="actions-col">Actions</th>
                     </tr>
@@ -133,7 +134,7 @@
                 <tbody id="metrics-table-body">
                     <!-- Table rows will be loaded via JavaScript -->
                     <tr>
-                        <td colspan="6" class="text-center py-4">
+                        <td colspan="7" class="text-center py-4">
                             <div class="spinner-border text-primary" role="status">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
@@ -153,7 +154,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="metricModalLabel">Add Health Metric</h5>
+                <h5 class="modal-title" id="metricModalLabel"><i class="bi bi-heart-pulse"></i> Add Health Metric</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="metric-form">
@@ -162,34 +163,47 @@
 
                     <div class="mb-3">
                         <label for="metric-date" class="form-label">Date <span class="text-danger">*</span></label>
-                        <input type="date" class="form-control" id="metric-date" name="date" required>
+                        <input type="date" class="form-control" id="metric-date" name="recorded_date" required>
                         <div class="invalid-feedback">Please select a date.</div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="metric-weight" class="form-label">Weight (lbs) <span class="text-danger">*</span></label>
-                        <input type="number" step="0.1" class="form-control" id="metric-weight" name="weight"
-                               placeholder="175.5" required min="0" max="500">
-                        <div class="invalid-feedback">Please enter a valid weight.</div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label for="metric-weight" class="form-label">Weight (lbs) <span class="text-danger">*</span></label>
+                            <input type="number" step="0.1" class="form-control" id="metric-weight" name="weight_lbs"
+                                   placeholder="175.5" required min="0" max="500">
+                            <div class="invalid-feedback">Please enter a valid weight.</div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label for="metric-bodyfat" class="form-label">Body Fat %</label>
+                            <input type="number" step="0.1" class="form-control" id="metric-bodyfat" name="body_fat_percentage"
+                                   placeholder="20.0" min="0" max="100">
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="metric-bodyfat" class="form-label">Body Fat %</label>
-                        <input type="number" step="0.1" class="form-control" id="metric-bodyfat" name="bodyfat"
-                               placeholder="22.5" min="0" max="100">
-                        <div class="form-text">Optional - leave blank if not measured</div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label for="metric-waist" class="form-label">Waist (inches)</label>
+                            <input type="number" step="0.1" class="form-control" id="metric-waist" name="waist_inches"
+                                   placeholder="36.0" min="0" max="100">
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label for="metric-chest" class="form-label">Chest (inches)</label>
+                            <input type="number" step="0.1" class="form-control" id="metric-chest" name="chest_inches"
+                                   placeholder="42.0" min="0" max="100">
+                        </div>
                     </div>
 
                     <div class="mb-3">
                         <label for="metric-notes" class="form-label">Notes</label>
-                        <textarea class="form-control" id="metric-notes" name="notes" rows="3"
-                                  placeholder="Any additional observations..."></textarea>
+                        <textarea class="form-control" id="metric-notes" name="notes" rows="2"
+                                  placeholder="Any observations..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-circle"></i> Save Metric
+                        <i class="bi bi-check-circle"></i> Save
                     </button>
                 </div>
             </form>
