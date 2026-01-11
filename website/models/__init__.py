@@ -16,6 +16,7 @@ Models:
 - MealLog: Meal and nutrition tracking
 - UserSession: Session management for security
 - ConversationLog: AI coaching conversation history
+- Document: AI-generated and user documents (plans, reports, etc.)
 """
 
 # Import the shared db instance from main __init__.py
@@ -30,6 +31,7 @@ from .coaching import CoachingSession, UserGoal, ProgressPhoto
 from .nutrition import MealLog
 from .session import UserSession
 from .conversation import ConversationLog
+from .document import Document, DocumentType
 
 # Export all models and db instance
 __all__ = [
@@ -44,5 +46,7 @@ __all__ = [
     'ProgressPhoto',
     'MealLog',
     'UserSession',
-    'ConversationLog'
+    'ConversationLog',
+    'Document',
+    'DocumentType',
 ]

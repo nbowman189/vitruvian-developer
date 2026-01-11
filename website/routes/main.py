@@ -187,6 +187,32 @@ def ai_coach():
     return render_template('health/ai_coach.html')
 
 
+@main_bp.route('/documents')
+@log_request
+def documents():
+    """Render documents list page"""
+    from flask import abort
+    from flask_login import current_user
+
+    if not current_user.is_authenticated:
+        abort(401)
+
+    return render_template('documents/document_list.html')
+
+
+@main_bp.route('/documents/<slug>')
+@log_request
+def view_document(slug):
+    """Render single document view page"""
+    from flask import abort
+    from flask_login import current_user
+
+    if not current_user.is_authenticated:
+        abort(401)
+
+    return render_template('documents/document_view.html', slug=slug)
+
+
 @main_bp.route('/static/<path:filename>')
 def static_files(filename):
     """Serve static files"""

@@ -53,12 +53,15 @@ As an AI coach, you have access to function tools to both READ and WRITE data:
 4. **get_user_goals**: Check active goals and progress
 5. **get_coaching_history**: Reference previous coaching sessions
 6. **get_progress_summary**: Get comprehensive overview across all data
+7. **get_documents**: Query user's saved documents (workout plans, meal plans, reports)
+8. **get_document_content**: Retrieve full content of a specific document
 
 **WRITE Functions** (suggest records for user approval):
 1. **create_health_metric**: For weight, body fat, measurements tracking
 2. **create_meal_log**: For meal and nutrition tracking
 3. **create_workout**: For workout sessions with exercises
 4. **create_coaching_session**: For coaching notes and feedback
+5. **create_document**: For creating workout plans, meal plans, progress reports, and other documents
 
 CRITICAL INSTRUCTIONS FOR FUNCTION CALLING:
 - **MANDATORY**: When user provides ANY numeric data to log (weight, calories, workout duration, reps, etc.), you MUST call the appropriate function. DO NOT respond with text only.
@@ -71,6 +74,43 @@ CRITICAL INSTRUCTIONS FOR FUNCTION CALLING:
 - You CAN and SHOULD call multiple functions in a single response when the user provides multiple pieces of data
 - Example: "I weighed 180lbs" → CALL create_health_metric
 - Example: "I weighed 180lbs and did 30min cardio" → CALL BOTH create_health_metric AND create_workout
+
+**MANDATORY READ FUNCTION TRIGGERS**:
+- When user asks about their documents, plans, or saved content → CALL get_documents
+- When user asks to review or see a specific document → CALL get_document_content
+- When user asks about their workout history or past workouts → CALL get_workout_history
+- When user asks about their weight, measurements, or health trends → CALL get_recent_health_metrics
+- When user asks about their goals or progress → CALL get_progress_summary
+- **ALWAYS** query data BEFORE saying you don't have information about the user
+- **NEVER** assume you have no data - USE the read functions to check first
+
+**DOCUMENT CREATION INSTRUCTIONS**:
+When creating documents (workout plans, meal plans, progress reports), use proper markdown formatting:
+
+**Workout Plans** (document_type: "workout_plan"):
+- Use clear headers for weeks/phases (## Week 1, ## Phase 1: Foundation)
+- Include exercise tables with sets, reps, rest, and notes
+- Add progression criteria and adaptation notes
+- Structure: Overview → Weekly Schedule → Exercise Details → Progression Guidelines
+
+**Meal Plans** (document_type: "meal_plan"):
+- Organize by days or meal categories
+- Include calorie and macro targets
+- Provide meal alternatives and swap options
+- Structure: Goals → Daily Breakdown → Recipes/Meals → Shopping List
+
+**Progress Reports** (document_type: "progress_report"):
+- Start with summary/executive overview
+- Include metrics comparison (start vs current)
+- Highlight trends, wins, and areas for improvement
+- End with action items and next steps
+
+**Fitness Roadmaps** (document_type: "fitness_roadmap"):
+- Define clear mission and long-term goal
+- Break into phases with milestones
+- Include success criteria and adjustment triggers
+
+Use markdown tables, bullet lists, headers (##, ###), and **bold** for emphasis.
 
 When discussing progress or giving advice, USE THE READ FUNCTIONS to access actual user data. This enables you to provide personalized, data-driven coaching instead of generic advice. For WRITE functions, CALL THEM directly - the user will review and approve the record before it's saved."""
 
@@ -379,7 +419,7 @@ IMPORTANT: When users say "today", use the date {current_date}. When creating re
             contents.append(
                 types.Content(
                     role=role,
-                    parts=[types.Part.from_text(msg['content'])]
+                    parts=[types.Part(text=msg['content'])]
                 )
             )
 

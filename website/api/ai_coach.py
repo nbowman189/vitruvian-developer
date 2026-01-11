@@ -168,19 +168,34 @@ def send_message():
         except ValueError as e:
             # API key or configuration error
             logger.error(f"Gemini service configuration error: {e}", exc_info=True)
-            logger.error(f"ValueError type: {type(e)}")
-            logger.error(f"ValueError args: {e.args}")
+            error_detail = str(e) if str(e) else 'Configuration error'
             return error_response(
-                'AI coach is not configured properly. Please contact administrator.',
-                status_code=503
+                f'AI coach configuration error: {error_detail}',
+                status_code=503,
+                errors=[{
+                    'type': 'config_error',
+                    'detail': error_detail
+                }]
             )
 
         except Exception as e:
-            # Unexpected error
+            # Unexpected error - include error type and message for troubleshooting
             logger.error(f"Unexpected Gemini API error: {e}", exc_info=True)
+            error_type = type(e).__name__
+            error_detail = str(e) if str(e) else 'Unknown error'
+
+            # Truncate very long error messages
+            if len(error_detail) > 200:
+                error_detail = error_detail[:200] + '...'
+
             return error_response(
-                'Failed to get response from AI coach. Please try again.',
-                status_code=500
+                f'AI coach error: {error_detail}',
+                status_code=500,
+                errors=[{
+                    'type': 'api_error',
+                    'error_class': error_type,
+                    'detail': error_detail
+                }]
             )
 
         # Handle READ function calls (query data)
@@ -197,7 +212,9 @@ def send_message():
                 'get_coaching_history': _query_coaching_history,
                 'get_progress_summary': _query_progress_summary,
                 'get_behavior_tracking': _query_behavior_tracking,
-                'get_behavior_plan_compliance': _query_behavior_compliance
+                'get_behavior_plan_compliance': _query_behavior_compliance,
+                'get_documents': _query_documents,
+                'get_document_content': _query_document_content
             }
 
             if function_call['name'] in QUERY_HANDLERS:
@@ -443,7 +460,8 @@ def save_record():
             'create_workout': _save_workout,
             'create_coaching_session': _save_coaching_session,
             'create_behavior_definition': _save_behavior_definition,
-            'log_behavior': _save_behavior_log
+            'log_behavior': _save_behavior_log,
+            'create_document': _save_document
         }
 
         handler = handler_map.get(function_name)
@@ -884,7 +902,9 @@ def query_user_data():
             'get_coaching_history': _query_coaching_history,
             'get_progress_summary': _query_progress_summary,
             'get_behavior_tracking': _query_behavior_tracking,
-            'get_behavior_plan_compliance': _query_behavior_compliance
+            'get_behavior_plan_compliance': _query_behavior_compliance,
+            'get_documents': _query_documents,
+            'get_document_content': _query_document_content
         }
 
         if function_name not in QUERY_HANDLERS:
@@ -1432,5 +1452,147 @@ def _query_behavior_compliance(user_id: int, params: dict) -> tuple:
     on_track_count = sum(1 for b in data['behaviors'] if b['status'] in ['excellent', 'on_track'])
     summary = f"Behavior compliance for last {period}: {overall_compliance}% overall. " \
               f"{on_track_count}/{len(behaviors)} behaviors on track or better."
+
+    return data, summary
+
+
+# ====================================================================================
+# Document Handlers
+# ====================================================================================
+
+def _save_document(user_id: int, data: dict) -> tuple:
+    """Save a document (workout plan, meal plan, progress report, etc.)."""
+    from ..models.document import Document, DocumentType
+
+    # Validate required fields
+    title = data.get('title')
+    document_type_str = data.get('document_type')
+    content = data.get('content')
+
+    if not title:
+        raise ValueError('title is required')
+    if not document_type_str:
+        raise ValueError('document_type is required')
+    if not content:
+        raise ValueError('content is required')
+
+    # Validate document type
+    try:
+        document_type = DocumentType(document_type_str)
+    except ValueError:
+        valid_types = [dt.value for dt in DocumentType]
+        raise ValueError(f'Invalid document_type. Valid types: {valid_types}')
+
+    # Get existing slugs for collision detection
+    existing_slugs = [d.slug for d in Document.query.filter_by(user_id=user_id).all()]
+
+    # Generate slug
+    slug = Document.generate_slug(title, user_id, existing_slugs)
+
+    # Get conversation_id from context if available
+    conversation_id = data.get('conversation_id')
+
+    # Create document
+    document = Document(
+        user_id=user_id,
+        title=title.strip(),
+        slug=slug,
+        document_type=document_type,
+        content=content,
+        summary=data.get('summary', '')[:500] if data.get('summary') else None,
+        metadata_json=data.get('metadata', {}),
+        tags=data.get('tags', []),
+        source='ai_coach',
+        conversation_id=conversation_id,
+        is_public=False,
+        is_archived=False
+    )
+
+    db.session.add(document)
+    return document, 'document'
+
+
+def _query_documents(user_id: int, params: dict) -> tuple:
+    """Query user's documents."""
+    from ..models.document import Document, DocumentType
+
+    # Get parameters
+    document_type_str = params.get('document_type')
+    limit = min(params.get('limit', 10), 20)  # Max 20 documents
+    include_content = params.get('include_content', False)
+
+    # Build query
+    query = Document.query.filter(
+        Document.user_id == user_id,
+        Document.is_archived == False
+    )
+
+    # Filter by type if specified
+    if document_type_str:
+        try:
+            doc_type = DocumentType(document_type_str)
+            query = query.filter(Document.document_type == doc_type)
+        except ValueError:
+            pass  # Ignore invalid type
+
+    # Order by most recent
+    documents = query.order_by(Document.updated_at.desc()).limit(limit).all()
+
+    if not documents:
+        return {}, "No documents found. User hasn't saved any plans or reports yet."
+
+    # Build data response
+    data = {
+        'count': len(documents),
+        'documents': [d.to_dict(include_content=include_content) for d in documents]
+    }
+
+    # Group by type for summary
+    type_counts = {}
+    for doc in documents:
+        type_name = doc.document_type_display
+        type_counts[type_name] = type_counts.get(type_name, 0) + 1
+
+    type_summary = ', '.join([f"{count} {name}" for name, count in type_counts.items()])
+
+    summary = f"Found {len(documents)} documents: {type_summary}. " \
+              f"Most recent: \"{documents[0].title}\" ({documents[0].document_type_display})"
+
+    return data, summary
+
+
+def _query_document_content(user_id: int, params: dict) -> tuple:
+    """Query specific document content."""
+    from ..models.document import Document
+
+    document_id = params.get('document_id')
+    title = params.get('title')
+
+    if not document_id and not title:
+        return {}, "No document identifier provided. Please specify document_id or title."
+
+    # Build query
+    query = Document.query.filter(
+        Document.user_id == user_id,
+        Document.is_archived == False
+    )
+
+    if document_id:
+        query = query.filter(Document.id == document_id)
+    elif title:
+        # Fuzzy match on title
+        query = query.filter(Document.title.ilike(f'%{title}%'))
+
+    document = query.first()
+
+    if not document:
+        return {}, f"Document not found. Please check the document ID or title."
+
+    # Return full document data
+    data = document.to_dict(include_content=True)
+
+    summary = f"Retrieved document: \"{document.title}\" ({document.document_type_display}). " \
+              f"Created: {document.created_at.strftime('%Y-%m-%d')}. " \
+              f"Content length: {len(document.content)} characters."
 
     return data, summary

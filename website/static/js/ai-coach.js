@@ -232,12 +232,13 @@ class AICoachChat {
             this.removeTypingIndicator(typingId);
 
             if (!data.success) {
-                // Check for quota exhausted error
-                if (data.errors && data.errors[0]?.type === 'quota_exhausted') {
-                    const secondsUntilReset = data.errors[0].seconds_until_reset;
+                // Check for specific error types
+                const errorInfo = data.errors?.[0];
 
+                if (errorInfo?.type === 'quota_exhausted') {
+                    // Quota exhausted - show countdown
+                    const secondsUntilReset = errorInfo.seconds_until_reset;
                     if (secondsUntilReset) {
-                        // Show countdown message with auto-refresh
                         this.showQuotaCountdown(data.message, secondsUntilReset);
                     } else {
                         this.showError(data.message);
@@ -245,7 +246,19 @@ class AICoachChat {
                     return;
                 }
 
-                throw new Error(data.message || 'Failed to send message');
+                if (errorInfo?.type === 'api_error') {
+                    // API error - show detailed info for troubleshooting
+                    let errorMsg = data.message;
+                    if (errorInfo.error_class) {
+                        errorMsg += ` (${errorInfo.error_class})`;
+                    }
+                    this.showError(errorMsg);
+                    return;
+                }
+
+                // Generic error - show message from API
+                this.showError(data.message || 'Failed to send message');
+                return;
             }
 
             // Update conversation ID if new conversation
@@ -265,7 +278,9 @@ class AICoachChat {
 
         } catch (error) {
             console.error('Error sending message:', error);
-            this.showError('Failed to send message. Please try again.');
+            // Show the actual error message from the API if available
+            const errorMessage = error.message || 'Failed to send message. Please try again.';
+            this.showError(errorMessage);
             this.removeTypingIndicator();
         } finally {
             this.isSending = false;
@@ -603,6 +618,9 @@ class AICoachChat {
             case 'log_behavior':
                 formHtml = this.generateBehaviorLogForm(data);
                 break;
+            case 'create_document':
+                formHtml = this.generateDocumentForm(data);
+                break;
         }
 
         return formHtml;
@@ -657,6 +675,9 @@ class AICoachChat {
                     break;
                 case 'behavior_log':
                     recordForm = this.generateBehaviorLogForm(record.data);
+                    break;
+                case 'document':
+                    recordForm = this.generateDocumentForm(record.data);
                     break;
                 default:
                     recordForm = '<p>Unknown record type</p>';
@@ -980,6 +1001,123 @@ class AICoachChat {
     }
 
     /**
+     * Generate document form with markdown preview
+     */
+    generateDocumentForm(data) {
+        const documentTypes = [
+            { value: 'workout_plan', label: 'Workout Plan' },
+            { value: 'meal_plan', label: 'Meal Plan' },
+            { value: 'progress_report', label: 'Progress Report' },
+            { value: 'fitness_roadmap', label: 'Fitness Roadmap' },
+            { value: 'analysis', label: 'Analysis' },
+            { value: 'coaching_notes', label: 'Coaching Notes' },
+            { value: 'educational', label: 'Educational' },
+            { value: 'custom', label: 'Custom' }
+        ];
+
+        const tagsValue = Array.isArray(data.tags) ? data.tags.join(', ') : (data.tags || '');
+
+        return `
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="record-form-group">
+                        <label class="record-form-label">Title *</label>
+                        <input type="text" class="record-form-input" name="title"
+                               value="${this.escapeHtml(data.title || '')}" required>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="record-form-group">
+                        <label class="record-form-label">Type *</label>
+                        <select class="record-form-select" name="document_type" required>
+                            ${documentTypes.map(type =>
+                                `<option value="${type.value}" ${data.document_type === type.value ? 'selected' : ''}>
+                                    ${type.label}
+                                </option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="record-form-group">
+                <label class="record-form-label">Summary</label>
+                <input type="text" class="record-form-input" name="summary"
+                       value="${this.escapeHtml(data.summary || '')}" maxlength="500"
+                       placeholder="Brief description (max 500 characters)">
+            </div>
+            <div class="record-form-group">
+                <label class="record-form-label">Tags</label>
+                <input type="text" class="record-form-input" name="tags"
+                       value="${this.escapeHtml(tagsValue)}"
+                       placeholder="Comma-separated tags (e.g., strength, beginner, 4-week)">
+            </div>
+
+            <!-- Content with Preview Toggle -->
+            <div class="record-form-group">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="record-form-label mb-0">Content (Markdown) *</label>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-secondary active" id="doc-edit-btn" onclick="window.aiCoachChat.toggleDocumentView('edit')">
+                            <i class="bi bi-pencil"></i> Edit
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="doc-preview-btn" onclick="window.aiCoachChat.toggleDocumentView('preview')">
+                            <i class="bi bi-eye"></i> Preview
+                        </button>
+                    </div>
+                </div>
+                <div id="doc-edit-view">
+                    <textarea class="record-form-textarea" name="content" rows="15" required
+                              style="font-family: monospace; font-size: 0.9rem;">${this.escapeHtml(data.content || '')}</textarea>
+                </div>
+                <div id="doc-preview-view" class="document-preview p-3 border rounded bg-light" style="display: none; max-height: 400px; overflow-y: auto;">
+                    <div class="markdown-content">${this.renderMarkdown(data.content || '')}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Toggle between edit and preview views for document content
+     */
+    toggleDocumentView(view) {
+        const editView = document.getElementById('doc-edit-view');
+        const previewView = document.getElementById('doc-preview-view');
+        const editBtn = document.getElementById('doc-edit-btn');
+        const previewBtn = document.getElementById('doc-preview-btn');
+
+        if (view === 'preview') {
+            // Update preview content from textarea
+            const content = document.querySelector('textarea[name="content"]').value;
+            previewView.querySelector('.markdown-content').innerHTML = this.renderMarkdown(content);
+
+            editView.style.display = 'none';
+            previewView.style.display = 'block';
+            editBtn.classList.remove('active');
+            previewBtn.classList.add('active');
+        } else {
+            editView.style.display = 'block';
+            previewView.style.display = 'none';
+            editBtn.classList.add('active');
+            previewBtn.classList.remove('active');
+        }
+    }
+
+    /**
+     * Render markdown content to HTML
+     */
+    renderMarkdown(content) {
+        if (!content) return '<p class="text-muted">No content</p>';
+
+        // Use marked.js if available, otherwise fallback to basic conversion
+        if (typeof marked !== 'undefined') {
+            return marked.parse(content);
+        }
+
+        // Basic fallback - just escape and preserve newlines
+        return `<pre style="white-space: pre-wrap;">${this.escapeHtml(content)}</pre>`;
+    }
+
+    /**
      * Save record to database
      */
     async saveRecord() {
@@ -1047,6 +1185,18 @@ class AICoachChat {
             // Include action items if coaching
             if (functionName === 'create_coaching_session' && recordData.action_items) {
                 formData.action_items = recordData.action_items;
+            }
+
+            // Handle document-specific fields
+            if (functionName === 'create_document') {
+                // Convert tags from comma-separated string to array
+                if (formData.tags && typeof formData.tags === 'string') {
+                    formData.tags = formData.tags.split(',').map(t => t.trim()).filter(t => t);
+                }
+                // Include metadata from original record if present
+                if (recordData.metadata) {
+                    formData.metadata = recordData.metadata;
+                }
             }
 
             finalData = formData;
@@ -1165,8 +1315,25 @@ class AICoachChat {
     }
 
     showError(message) {
-        // Use Bootstrap toast or alert
-        alert(`Error: ${message}`);
+        // Display error in chat interface for better visibility
+        const messagesContainer = document.getElementById('chat-messages');
+
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message-bubble';
+        errorDiv.innerHTML = `
+            <div class="alert alert-danger" style="margin: 10px 0;">
+                <div style="display: flex; align-items: flex-start; gap: 10px;">
+                    <i class="bi bi-exclamation-triangle-fill" style="font-size: 1.2rem;"></i>
+                    <div>
+                        <strong>Error</strong>
+                        <p style="margin: 5px 0 0 0; word-break: break-word;">${this.escapeHtml(message)}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        messagesContainer.appendChild(errorDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
     showQuotaCountdown(message, totalSeconds) {
@@ -1228,7 +1395,10 @@ class AICoachChat {
             'create_health_metric': 'Health Metric',
             'create_meal_log': 'Meal Log',
             'create_workout': 'Workout Session',
-            'create_coaching_session': 'Coaching Session'
+            'create_coaching_session': 'Coaching Session',
+            'create_behavior_definition': 'Behavior',
+            'log_behavior': 'Behavior Log',
+            'create_document': 'Document'
         };
         return types[functionName] || 'Record';
     }

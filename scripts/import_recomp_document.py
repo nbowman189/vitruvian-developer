@@ -1,4 +1,20 @@
-# Nathan's 12-Week Recomposition Protocol: Phase 1
+#!/usr/bin/env python3
+"""
+Import the Nathan Recomposition Plan Phase 1 document into the database.
+Run inside Docker container: docker exec -it primary-assistant-web python scripts/import_recomp_document.py
+"""
+
+import sys
+import os
+
+# Add the website directory to the path
+sys.path.insert(0, '/app')
+
+from website import create_app, db
+from website.models import User, Document, DocumentType
+
+# Document content
+DOCUMENT_CONTENT = """# Nathan's 12-Week Recomposition Protocol: Phase 1
 
 This is your comprehensive plan for the next 12 weeks. It is engineered based on your specific goals, schedule, and equipment. Your mission is to execute this plan with consistency. This document is your single source of truth.
 
@@ -53,7 +69,7 @@ Don't worry as much about carbs and fats right now. **Your mission is to hit you
 **Snacks / Protein Shake:**
 *   **Hard-Boiled Eggs:** Prep these. Two eggs are ~150 kcal and 12g protein.
 *   **Hard-Boiled Eggs + Fruit + Nuts:** Two hard-boiled eggs, one large apple, and a handful of almonds (~405 kcal, ~18g protein).
-*   **The Sustainable Protein Shake:** You need a go-to recipe. This is non-negotiable for hitting 220g of protein.    
+*   **The Sustainable Protein Shake:** You need a go-to recipe. This is non-negotiable for hitting 220g of protein.
     *   2 scoops Orgain Plant-Based Protein Powder (or similar)
     *   12 oz Unsweetened Almond Milk
     *   1 large handful of spinach (you will not taste it)
@@ -110,3 +126,83 @@ Your path to one pull-up is a step-by-step process.
 *   **Logs:** Log every workout and every meal. This data is how we make adjustments. If you stall for 2 weeks, we will use the logs to identify the problem and fix it.
 
 This is your plan. It is a direct reflection of your goals and the principles of effective recomposition. The plan is engineered for success. Now, you just have to execute.
+"""
+
+def import_document():
+    """Import the recomposition plan document."""
+    app = create_app()
+
+    with app.app_context():
+        # Find the admin user (user_id=1)
+        user = User.query.filter_by(id=1).first()
+        if not user:
+            print("Error: No user with id=1 found. Please create an admin user first.")
+            return False
+
+        # Check if document already exists
+        existing = Document.query.filter_by(
+            user_id=user.id,
+            slug='nathans-12-week-recomposition-protocol-phase-1'
+        ).first()
+
+        if existing:
+            print(f"Document already exists with id={existing.id}. Updating content...")
+            existing.content = DOCUMENT_CONTENT
+            existing.title = "Nathan's 12-Week Recomposition Protocol: Phase 1"
+            existing.summary = "Comprehensive 12-week body recomposition plan with nutrition targets (2500 kcal, 220g protein), 4-day upper/lower workout split focused on pull-up progression, and tracking protocols."
+            existing.document_type = DocumentType.FITNESS_ROADMAP
+            existing.tags = ['recomposition', 'nutrition', 'workout-plan', 'pull-ups', 'phase-1', '12-week']
+            existing.source = 'import'
+            existing.metadata_json = {
+                'duration_weeks': 12,
+                'phase': 1,
+                'calorie_target': 2500,
+                'protein_target': 220,
+                'workout_days': 4,
+                'primary_goal': 'recomposition',
+                'performance_goal': '1 unassisted pull-up',
+                'weight_goal': 285
+            }
+            db.session.commit()
+            print(f"Updated document id={existing.id}")
+            return True
+
+        # Create new document
+        doc = Document(
+            user_id=user.id,
+            title="Nathan's 12-Week Recomposition Protocol: Phase 1",
+            slug='nathans-12-week-recomposition-protocol-phase-1',
+            document_type=DocumentType.FITNESS_ROADMAP,
+            content=DOCUMENT_CONTENT,
+            summary="Comprehensive 12-week body recomposition plan with nutrition targets (2500 kcal, 220g protein), 4-day upper/lower workout split focused on pull-up progression, and tracking protocols.",
+            tags=['recomposition', 'nutrition', 'workout-plan', 'pull-ups', 'phase-1', '12-week'],
+            source='import',
+            is_public=False,
+            is_archived=False,
+            metadata_json={
+                'duration_weeks': 12,
+                'phase': 1,
+                'calorie_target': 2500,
+                'protein_target': 220,
+                'workout_days': 4,
+                'primary_goal': 'recomposition',
+                'performance_goal': '1 unassisted pull-up',
+                'weight_goal': 285
+            }
+        )
+
+        db.session.add(doc)
+        db.session.commit()
+
+        print(f"Successfully created document:")
+        print(f"  ID: {doc.id}")
+        print(f"  Title: {doc.title}")
+        print(f"  Slug: {doc.slug}")
+        print(f"  Type: {doc.document_type.value}")
+        print(f"  Tags: {doc.tags}")
+
+        return True
+
+if __name__ == '__main__':
+    success = import_document()
+    sys.exit(0 if success else 1)

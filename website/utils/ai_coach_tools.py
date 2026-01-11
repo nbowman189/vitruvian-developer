@@ -552,6 +552,106 @@ def create_batch_records_schema() -> Dict[str, Any]:
     }
 
 
+def create_document_schema() -> Dict[str, Any]:
+    """
+    Function schema for creating a document.
+
+    Allows AI to create workout plans, meal plans, progress reports,
+    and other structured documents that can be saved and referenced later.
+    """
+    return {
+        'name': 'create_document',
+        'description': 'Create a document such as a workout plan, meal plan, progress report, fitness roadmap, or analysis document. Use this when the user asks you to create, write, or generate a plan, report, or document that should be saved for future reference.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'title': {
+                    'type': 'string',
+                    'description': 'Title of the document (e.g., "12-Week Strength Program", "January Progress Report")'
+                },
+                'document_type': {
+                    'type': 'string',
+                    'enum': ['workout_plan', 'meal_plan', 'progress_report', 'fitness_roadmap', 'analysis', 'coaching_notes', 'educational', 'custom'],
+                    'description': 'Type of document being created'
+                },
+                'content': {
+                    'type': 'string',
+                    'description': 'Full markdown content of the document. Use proper markdown formatting with headers (##), lists, tables, bold, etc.'
+                },
+                'summary': {
+                    'type': 'string',
+                    'description': 'Brief summary of the document (1-2 sentences, max 500 chars)'
+                },
+                'tags': {
+                    'type': 'array',
+                    'items': {'type': 'string'},
+                    'description': 'Tags for categorization (e.g., ["strength", "beginner", "4-week"])'
+                },
+                'metadata': {
+                    'type': 'object',
+                    'description': 'Optional metadata object with type-specific fields (e.g., {"duration_weeks": 12, "difficulty": "intermediate"})'
+                }
+            },
+            'required': ['title', 'document_type', 'content']
+        }
+    }
+
+
+def get_documents_schema() -> Dict[str, Any]:
+    """
+    Function schema for querying user's documents.
+
+    Allows AI to READ list of user's saved documents.
+    """
+    return {
+        'name': 'get_documents',
+        'description': 'Query the user\'s saved documents (workout plans, meal plans, progress reports, etc.). Use this when the user asks about their existing plans, wants to see what documents they have, or when you need to reference a previous plan.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'document_type': {
+                    'type': 'string',
+                    'enum': ['workout_plan', 'meal_plan', 'progress_report', 'fitness_roadmap', 'analysis', 'coaching_notes', 'educational', 'custom'],
+                    'description': 'Filter by document type. If omitted, returns all types.'
+                },
+                'limit': {
+                    'type': 'integer',
+                    'description': 'Maximum number of documents to return (default: 10, max: 20)'
+                },
+                'include_content': {
+                    'type': 'boolean',
+                    'description': 'Whether to include full document content (default: false for lists, use get_document_content for full content)'
+                }
+            }
+        }
+    }
+
+
+def get_document_content_schema() -> Dict[str, Any]:
+    """
+    Function schema for retrieving a specific document's content.
+
+    Allows AI to READ full content of a specific document.
+    """
+    return {
+        'name': 'get_document_content',
+        'description': 'Get the full content of a specific document. Use this when the user asks to see a specific plan, wants you to review a document, or needs to reference the details of a saved document.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'document_id': {
+                    'type': 'integer',
+                    'description': 'ID of the document to retrieve'
+                },
+                'title': {
+                    'type': 'string',
+                    'description': 'Title of the document to retrieve (use if document_id is not known)'
+                }
+            }
+        }
+    }
+
+
 def get_all_function_declarations() -> List[Dict[str, Any]]:
     """
     Get all function declarations for Gemini function calling.
@@ -568,6 +668,7 @@ def get_all_function_declarations() -> List[Dict[str, Any]]:
         create_coaching_session_schema(),
         create_behavior_definition_schema(),
         log_behavior_schema(),
+        create_document_schema(),
         # READ operations (query data)
         get_recent_health_metrics_schema(),
         get_workout_history_schema(),
@@ -576,7 +677,9 @@ def get_all_function_declarations() -> List[Dict[str, Any]]:
         get_coaching_history_schema(),
         get_progress_summary_schema(),
         get_behavior_tracking_schema(),
-        get_behavior_plan_compliance_schema()
+        get_behavior_plan_compliance_schema(),
+        get_documents_schema(),
+        get_document_content_schema()
     ]
 
 
@@ -601,6 +704,7 @@ def get_function_schema_by_name(function_name: str) -> Dict[str, Any]:
         'create_coaching_session': create_coaching_session_schema(),
         'create_behavior_definition': create_behavior_definition_schema(),
         'log_behavior': log_behavior_schema(),
+        'create_document': create_document_schema(),
         # READ operations
         'get_recent_health_metrics': get_recent_health_metrics_schema(),
         'get_workout_history': get_workout_history_schema(),
@@ -609,7 +713,9 @@ def get_function_schema_by_name(function_name: str) -> Dict[str, Any]:
         'get_coaching_history': get_coaching_history_schema(),
         'get_progress_summary': get_progress_summary_schema(),
         'get_behavior_tracking': get_behavior_tracking_schema(),
-        'get_behavior_plan_compliance': get_behavior_plan_compliance_schema()
+        'get_behavior_plan_compliance': get_behavior_plan_compliance_schema(),
+        'get_documents': get_documents_schema(),
+        'get_document_content': get_document_content_schema()
     }
 
     if function_name not in schemas:

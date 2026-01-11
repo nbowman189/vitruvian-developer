@@ -81,6 +81,7 @@ class ConversationLog(db.Model):
 
     # Relationships
     user = relationship('User', back_populates='conversation_logs')
+    documents = relationship('Document', back_populates='conversation')
 
     # Table Constraints
     __table_args__ = (

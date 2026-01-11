@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+
+{% block title %}Document - Vitruvian Tracker{% endblock %}
+
+{% block extra_css %}
+<style>
+.document-header {
+    background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.document-type-badge {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 1rem;
+}
+
+.document-type-workout_plan { background-color: rgba(255,255,255,0.2); }
+.document-type-meal_plan { background-color: rgba(46,125,50,0.8); }
+.document-type-progress_report { background-color: rgba(245,124,0,0.8); }
+.document-type-fitness_roadmap { background-color: rgba(123,31,162,0.8); }
+.document-type-analysis { background-color: rgba(2,136,209,0.8); }
+.document-type-coaching_notes { background-color: rgba(93,64,55,0.8); }
+.document-type-educational { background-color: rgba(69,90,100,0.8); }
+.document-type-custom { background-color: rgba(97,97,97,0.8); }
+
+.document-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Markdown content styling */
+.markdown-content {
+    line-height: 1.8;
+    color: #2c3e50;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4 {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+    color: #1a202c;
+}
+
+.markdown-content h1:first-child,
+.markdown-content h2:first-child {
+    margin-top: 0;
+}
+
+.markdown-content h1 {
+    font-size: 2rem;
+    border-bottom: 3px solid #e2e8f0;
+    padding-bottom: 0.5rem;
+}
+
+.markdown-content h2 {
+    font-size: 1.75rem;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 0.4rem;
+}
+
+.markdown-content h3 {
+    font-size: 1.5rem;
+    color: var(--primary-color, #2563eb);
+}
+
+.markdown-content p {
+    margin-bottom: 1.25rem;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+    margin-bottom: 1.5rem;
+    padding-left: 2rem;
+}
+
+.markdown-content li {
+    margin-bottom: 0.5rem;
+}
+
+.markdown-content table {
+    width: 100%;
+    margin-bottom: 1.5rem;
+    border-collapse: collapse;
+}
+
+.markdown-content th,
+.markdown-content td {
+    border: 1px solid #e2e8f0;
+    padding: 0.75rem;
+    text-align: left;
+}
+
+.markdown-content th {
+    background-color: #f7fafc;
+    font-weight: 600;
+}
+
+.markdown-content tr:nth-child(even) {
+    background-color: #f7fafc;
+}
+
+.markdown-content blockquote {
+    border-left: 4px solid var(--primary-color, #2563eb);
+    padding: 1rem 1.5rem;
+    margin: 1.5rem 0;
+    background-color: #f7fafc;
+    border-radius: 0 0.25rem 0.25rem 0;
+}
+
+.markdown-content code {
+    background-color: #f7fafc;
+    color: #e53e3e;
+    padding: 0.2em 0.4em;
+    border-radius: 0.25rem;
+    font-size: 0.9em;
+}
+
+.markdown-content pre {
+    background-color: #2d3748;
+    color: #e2e8f0;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+}
+
+.markdown-content pre code {
+    background-color: transparent;
+    color: inherit;
+    padding: 0;
+}
+
+.markdown-content strong {
+    font-weight: 700;
+    color: #1a202c;
+}
+
+.document-sidebar {
+    position: sticky;
+    top: 100px;
+}
+
+.document-tags .badge {
+    margin-right: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.document-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Dashboard Navbar -->
+{% include 'components/navbar_auth.html' %}
+
+<!-- Flash Messages -->
+<div class="container mt-3">
+    {% include 'components/flash_messages.html' %}
+</div>
+
+<!-- Document Content -->
+<div class="dashboard-container">
+    <!-- Back Button -->
+    <div class="mb-3">
+        <a href="/documents" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Back to Documents
+        </a>
+    </div>
+
+    <!-- Document Header (loaded dynamically) -->
+    <div id="document-header-container">
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-9">
+            <div class="document-content" id="document-content-container">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-3">
+            <div class="document-sidebar" id="document-sidebar">
+                <!-- Sidebar loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="/static/js/common.js"></script>
+<script>
+// Get slug from URL
+const documentSlug = '{{ slug }}';
+
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadDocument();
+});
+
+async function loadDocument() {
+    try {
+        const response = await API.get(`/api/document/slug/${documentSlug}`);
+        const doc = response.data;
+
+        if (!doc) {
+            showError('Document not found');
+            return;
+        }
+
+        // Update page title
+        document.title = `${doc.title} - Vitruvian Tracker`;
+
+        // Render header
+        document.getElementById('document-header-container').innerHTML = `
+            <div class="document-header">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="badge document-type-badge document-type-${doc.document_type} mb-2">
+                            ${doc.document_type_display}
+                        </span>
+                        <h1 class="mb-2">${escapeHtml(doc.title)}</h1>
+                        ${doc.summary ? `<p class="mb-0 opacity-75">${escapeHtml(doc.summary)}</p>` : ''}
+                    </div>
+                    <div class="document-actions">
+                        <button class="btn btn-light btn-sm" onclick="printDocument()">
+                            <i class="bi bi-printer"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Render content
+        const contentHtml = marked.parse(doc.content || '');
+        document.getElementById('document-content-container').innerHTML = `
+            <div class="markdown-content">${contentHtml}</div>
+        `;
+
+        // Render sidebar
+        let tagsHtml = '';
+        if (doc.tags && doc.tags.length > 0) {
+            tagsHtml = `
+                <div class="mb-3">
+                    <h6>Tags</h6>
+                    <div class="document-tags">
+                        ${doc.tags.map(tag => `<span class="badge bg-secondary">${escapeHtml(tag)}</span>`).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        document.getElementById('document-sidebar').innerHTML = `
+            <div class="card">
+                <div class="card-body">
+                    <h6>Document Info</h6>
+                    <dl class="mb-0">
+                        <dt class="text-muted small">Created</dt>
+                        <dd>${DateUtils.formatDateDisplay(doc.created_at)}</dd>
+                        <dt class="text-muted small">Last Updated</dt>
+                        <dd>${DateUtils.formatDateDisplay(doc.updated_at)}</dd>
+                        <dt class="text-muted small">Source</dt>
+                        <dd>${doc.source_display}</dd>
+                    </dl>
+                    ${tagsHtml}
+                    <hr>
+                    <div class="d-grid gap-2">
+                        <a href="/ai-coach" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-robot"></i> Discuss with AI Coach
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `;
+
+    } catch (error) {
+        console.error('Error loading document:', error);
+        showError('Failed to load document');
+    }
+}
+
+function showError(message) {
+    document.getElementById('document-header-container').innerHTML = `
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-circle"></i> ${message}
+        </div>
+    `;
+    document.getElementById('document-content-container').innerHTML = '';
+    document.getElementById('document-sidebar').innerHTML = '';
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function printDocument() {
+    window.print();
+}
+</script>
+{% endblock %}
