@@ -91,11 +91,14 @@ def parse_coaching_sessions(file_path):
         elif "Motivational" in session_title:
             session_type = "Motivational Session"
 
+        # Note: Field mapping for template compatibility:
+        # - coach_feedback: displayed as card title (short summary)
+        # - discussion_notes: rendered as markdown content (full notes)
         sessions.append({
             'session_date': session_date,
             'session_type': session_type,
-            'notes': f"{session_title}\n\n{subject}" if subject else session_title,
-            'trainer_notes': session_content[:2000],  # Limit trainer notes
+            'coach_feedback': f"{session_title}\n\n{subject}" if subject else session_title,
+            'discussion_notes': session_content[:2000],  # Full markdown content
             'trainer': trainer or "The Transformative Trainer"
         })
 
@@ -143,8 +146,8 @@ def import_to_database(sessions, skip_duplicates=True):
                         skipped += 1
                         continue
                     else:
-                        existing.discussion_notes = session_data['notes']
-                        existing.coach_feedback = session_data['trainer_notes']
+                        existing.coach_feedback = session_data['coach_feedback']
+                        existing.discussion_notes = session_data['discussion_notes']
                         print(f"🔄 Updated {session_data['session_date']}")
                 else:
                     # Create coaching session
@@ -152,8 +155,8 @@ def import_to_database(sessions, skip_duplicates=True):
                         user_id=user.id,
                         coach_id=coach_user.id,
                         session_date=session_data['session_date'],
-                        discussion_notes=session_data['notes'],
-                        coach_feedback=session_data['trainer_notes']
+                        coach_feedback=session_data['coach_feedback'],
+                        discussion_notes=session_data['discussion_notes']
                     )
                     db.session.add(coaching)
                     print(f"✅ Imported {session_data['session_date']} - {session_data['session_type']}")

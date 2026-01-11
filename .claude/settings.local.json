@@ -89,7 +89,8 @@
       "Bash(sshpass -p \"Serbatik11!!\" ssh -v -o StrictHostKeyChecking=no nathan@vit-dev-website 'echo connected && docker ps')",
       "Bash(sshpass -p \"Serbatik11!!\" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 nathan@vit-dev-website 'cd /home/nathan/vitruvian-developer && docker-compose -f docker-compose.yml -f docker-compose.remote.yml ps')",
       "Bash(sshpass -p 'Serbatik11!!' ssh:*)",
-      "Bash(ssh:*)"
+      "Bash(ssh:*)",
+      "Bash(sshpass -p 'Serbatik11!!' scp:*)"
     ],
     "deny": [],
     "ask": []
