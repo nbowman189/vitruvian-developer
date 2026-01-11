@@ -32,6 +32,7 @@ from .nutrition import MealLog
 from .session import UserSession
 from .conversation import ConversationLog
 from .document import Document, DocumentType
+from .behavior import BehaviorDefinition, BehaviorLog, BehaviorCategory
 
 # Export all models and db instance
 __all__ = [
@@ -49,4 +50,7 @@ __all__ = [
     'ConversationLog',
     'Document',
     'DocumentType',
+    'BehaviorDefinition',
+    'BehaviorLog',
+    'BehaviorCategory',
 ]

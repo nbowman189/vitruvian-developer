@@ -83,7 +83,13 @@
       "Bash(pgrep:*)",
       "Bash(FLASK_APP=website/app.py flask db migrate:*)",
       "Bash(docker restart:*)",
-      "Bash(docker logs:*)"
+      "Bash(docker logs:*)",
+      "Bash(sshpass -p \"Serbatik11!!\" ssh -o StrictHostKeyChecking=no nathan@vit-dev-website 'cd /home/nathan/vitruvian-developer && docker-compose -f docker-compose.yml -f docker-compose.remote.yml exec -T web flask db upgrade')",
+      "Bash(sshpass -p \"Serbatik11!!\" ssh -o StrictHostKeyChecking=no nathan@vit-dev-website 'docker ps')",
+      "Bash(sshpass -p \"Serbatik11!!\" ssh -v -o StrictHostKeyChecking=no nathan@vit-dev-website 'echo connected && docker ps')",
+      "Bash(sshpass -p \"Serbatik11!!\" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 nathan@vit-dev-website 'cd /home/nathan/vitruvian-developer && docker-compose -f docker-compose.yml -f docker-compose.remote.yml ps')",
+      "Bash(sshpass -p 'Serbatik11!!' ssh:*)",
+      "Bash(ssh:*)"
     ],
     "deny": [],
     "ask": []
