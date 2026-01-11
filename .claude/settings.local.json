@@ -76,7 +76,14 @@
       "Bash(FLASK_APP=website/app.py FLASK_ENV=development python3:*)",
       "Bash(docker exec:*)",
       "Bash(sshpass -p \"Serbatik11!!\" ssh -o StrictHostKeyChecking=no nathan@vit-dev-website \"ls /home/nathan/vitruvian-developer/website/static/js/\")",
-      "Bash(kill:*)"
+      "Bash(kill:*)",
+      "WebSearch",
+      "WebFetch(domain:ai.google.dev)",
+      "WebFetch(domain:googleapis.github.io)",
+      "Bash(pgrep:*)",
+      "Bash(FLASK_APP=website/app.py flask db migrate:*)",
+      "Bash(docker restart:*)",
+      "Bash(docker logs:*)"
     ],
     "deny": [],
     "ask": []
