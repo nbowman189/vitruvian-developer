@@ -123,9 +123,9 @@ This became the pattern: AI isn't a tool you use—**it's a system you design in
 
 ---
 
-## Act 6: The Four Pillars - The Framework
+## Act 6: The Five Pillars - The Framework
 
-Over time, I realized the pattern underlying all of this. There are four principles that define the Vitruvian Developer approach:
+Over time, I realized the pattern underlying all of this. There are five principles that define the Vitruvian Developer approach:
 
 ### Pillar 1: Know Your System's Architecture
 
@@ -174,6 +174,18 @@ I spent 8 years in the military. Four years in college. Years returning to techn
 
 The trap is abandoning the system because you're not seeing results after 6 weeks. Programming gives you sprints. Fitness gives you marathons. Career gives you decades. The timeline changes, but the principle is identical: **maintain the system, and the results follow.**
 
+### Pillar 5: Ask the Next Question
+
+Progress isn't a destination—it's a new starting point. Every achievement changes your system's architecture. Every optimization reveals new opportunities. Every milestone shifts what's possible.
+
+The discipline that got you here won't be enough to get you there. The questions that drove your last phase of growth may not be the right questions for your next phase. The Vitruvian Developer understands this: **each new reality demands new inquiry.**
+
+Stay curious. Stay hungry. When you reach a goal, don't just celebrate—reassess. What does this new state make possible? What constraints have been removed? What new bottlenecks have emerged?
+
+The best engineers never stop asking: "What's next?"
+
+**The Vitruvian Developer treats every milestone as a new baseline, not a finish line.**
+
 ---
 
 ## The Unified Philosophy: The Vitruvian Developer
@@ -185,6 +197,7 @@ It's the understanding that:
 - The structured thinking used to architect a database can be used to plan a lifetime of health
 - The forward-looking potential of AI can be used to optimize both technology and ourselves
 - The long-term thinking learned from history ensures sustainability, not burnout
+- The curiosity that drives better code also drives continuous personal evolution
 
 **The Vitruvian Developer isn't about perfection. It's about the conscious, deliberate engineering of a better life.**
 
@@ -198,7 +211,7 @@ This isn't a finished story. I'm actively building the Vitruvian Developer.
 
 **Professionally:** I'm a Sr. Data Solutions Engineer who has progressed through three levels over four years. I'm leading database architecture and automation. I'm actively learning Python, AI, and modern development practices. I'm building systems that scale from 21,000+ contacts to enterprise operations.
 
-**Physically:** I'm rebuilding my fitness after a 5-year lapse. I'm on a plant-based diet that I've maintained since my teaching years. I'm implementing a structured training program, applying engineering principles to every aspect. I'm tracking metrics—weight, body composition, performance. My goal is realistic and measurable: return to the fitness level I achieved during military service.
+**Physically:** I'm rebuilding my fitness after a multi-year lapse. My nutrition strategy is plant-forward and whole-foods focused, though I'm currently relying on chicken as my primary protein source—a pragmatic choice that supports muscle retention during weight loss. I understand the science favoring plant-based eating for long-term heart health and insulin sensitivity, but the Vitruvian Developer works from reality, not ideology. This is a step in the right direction that I can sustain. I'm implementing a structured training program, applying engineering principles to every aspect. I'm tracking metrics—weight, body composition, performance. My goal is realistic and measurable: return to the fitness level I achieved during military service.
 
 **Intellectually:** I've completed designing a four-stage AI curriculum. I've created detailed personas that encode expertise and communication patterns. I've built a dynamic portfolio system that demonstrates systems thinking. I'm synthesizing lessons from all three disciplines.
 
@@ -233,6 +246,7 @@ Every domain has the same underlying principles:
 - Identifying failure points
 - Deploying the right tools
 - Trusting the long-term process
+- Asking the next question
 
 These principles transfer. They compound. They create momentum that accelerates across all domains.
 
