@@ -1,3 +1,67 @@
+## Gemini Added Memories
+- For `Health_and_Fitness/data/check-in-log`, `Health_and_Fitness/data/exercise-log`, `Health_and_Fitness/data/meal-log`, and `Health_and_Fitness/data/behavior-tracker`, always use the `.csv` versions for logging data instead of the `.md` versions.
+
+## Session Summary (2026-01-13)
+
+This session focused on finalizing the previous day's nutrition log and pre-logging today's meals and workout.
+
+### Significant Updates:
+
+*   **`Health_and_Fitness/data/meal-log.md`:**
+    *   Finalized all meal entries for Monday, January 12th. Removed uneaten snacks and recalculated the final daily totals to `~1616 kcal` and `~201g protein`.
+    *   Pre-logged today's (January 13th) meals (Breakfast, Lunch, Dinner) based on the previous day's intake, with placeholder satiety/energy scores.
+    *   Calculated initial daily totals for January 13th as `~1616 kcal` and `~201g protein`.
+*   **`Health_and_Fitness/data/exercise-log.md`:**
+    *   Logged today's "Lower Body & Core" workout, including Goblet Squats, Dumbbell RDLs, Walking Lunges, Ab Wheel Rollouts, and Kettlebell Swings with corresponding sets, reps, and weights.
+
+---
+
+## Session Summary (2026-01-12)
+
+This session involved a comprehensive weekly check-in, detailed meal and exercise logging for the day, and strategy discussion.
+
+### Significant Updates:
+
+*   **Weekly Check-in and Coaching Session:**
+    *   Conducted a thorough analysis of the previous week's (Jan 5-11) weigh-in, nutrition, and exercise data.
+    *   Highlighted successes: 2.2 lbs weight loss, consistent protein intake, and adherence to daily walks.
+    *   Identified key areas for improvement: missing meal logs for January 5th and a missed resistance workout on the same day.
+    *   Presented a coaching brief and initiated a discussion on addressing identified obstacles.
+*   **`Health_and_Fitness/data/check-in-log.md`**:
+    *   Logged today's weigh-in: 302.3 lbs and 34.8% bodyfat.
+*   **`Health_and_Fitness/data/meal-log.md` (Daily Log - January 12th):**
+    *   Logged Breakfast: "Engine Block" Casserole (no cottage cheese).
+    *   Logged Lunch: Modified "Optimal Prep-Friendly" with 8oz chipotle chicken.
+    *   Logged Dinner: "Recomp Salad" with 8oz chipotle chicken.
+    *   Calculated remaining daily calorie/protein gap and then logged the user's proposed snack plan (modified protein shake, cottage cheese, grapes, apple) to meet targets.
+    *   **Daily Totals:** `~2543 kcal`, `~265g protein`.
+*   **`Health_and_Fitness/data/exercise-log.md`**:
+    *   Logged today's "Upper Body (Pull-up Focus)" workout.
+    *   Added a 2-hour walk to today's log.
+*   **General Inquiry:**
+    *   Confirmed that red wine vinaigrette is generally considered a "lite" dressing option.
+
+---
+
+## Session Summary (2026-01-11)
+
+This session focused on comprehensive meal planning for the day, data integrity checks, and preparing for the weekly review.
+
+### Significant Updates:
+
+*   **`Health_and_Fitness/data/meal-log.md` (Daily Log - January 11th):**
+    *   Logged Breakfast: "Engine Block" Casserole (no cottage cheese), calculating the adjusted macros (`~545 kcal`, `~70g protein`).
+    *   Pre-logged Lunch (Optimal Prep-Friendly) and Dinner (Recomp Salad), and calculated the remaining calorie/protein gap.
+    *   Strategized and logged a complete snack plan (modified protein shake, cottage cheese, apple, grapes) to precisely meet daily targets.
+    *   Finalized all of today's planned entries.
+    *   **Daily Totals:** `~2478 kcal`, `~252g protein`.
+*   **`Health_and_Fitness/data/exercise-log.md`**:
+    *   Investigated and confirmed a "Daily Walk Progression" for 2 hours was logged on Thursday, January 8th.
+    *   Back-filled missing 2-hour "Daily Walk Progression" entries for Monday (Jan 5), Tuesday (Jan 6), and Friday (Jan 9) to ensure data accuracy.
+*   **`Health_and_Fitness/data/Coaching_sessions.md`**:
+    *   Transferred all recent, non-duplicate session summaries from the root `GEMINI.md` to the centralized coaching log, ensuring proper formatting and chronological order.
+
+---
 ## Session Summary (2026-01-10)
 
 This session focused on diligently logging all of today's meal entries and a final check of the daily totals.
